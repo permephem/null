@@ -3,9 +3,8 @@
 ## Verifiable Digital Closure: Technical Architecture & Implementation
 
 **Version:** 1.0  
-**Date:** January 2025  
-**Authors:** Null Foundation Technical Team
-
+**Date:** September 2025  
+**Authors:** Null Foundation
 ---
 
 ## Abstract
