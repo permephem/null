@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,255 +21,132 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface CanonRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "DEFAULT_ADMIN_ROLE"
-      | "FEE_DENOMINATOR"
-      | "FOUNDATION_FEE"
-      | "IMPLEMENTER_FEE"
-      | "RELAYER_ROLE"
-      | "TREASURY_ROLE"
-      | "anchor"
-      | "anchorAttestation"
-      | "anchorReceipt"
-      | "anchorWarrant"
-      | "balances"
-      | "baseFee"
-      | "emergencyWithdraw"
-      | "foundationTreasury"
-      | "getRoleAdmin"
-      | "grantRole"
-      | "hasRole"
-      | "implementerTreasury"
-      | "isAnchored"
-      | "lastAnchorBlock"
-      | "pause"
-      | "paused"
-      | "renounceRole"
-      | "revokeRole"
-      | "setBaseFee"
-      | "setTreasuries"
-      | "supportsInterface"
-      | "totalAnchors"
-      | "totalFeesCollected"
-      | "unpause"
-      | "withdraw"
+      | 'DEFAULT_ADMIN_ROLE'
+      | 'FEE_DENOMINATOR'
+      | 'FOUNDATION_FEE'
+      | 'IMPLEMENTER_FEE'
+      | 'RELAYER_ROLE'
+      | 'TREASURY_ROLE'
+      | 'anchor'
+      | 'anchorAttestation'
+      | 'anchorReceipt'
+      | 'anchorWarrant'
+      | 'balances'
+      | 'baseFee'
+      | 'emergencyWithdraw'
+      | 'foundationTreasury'
+      | 'getRoleAdmin'
+      | 'grantRole'
+      | 'hasRole'
+      | 'implementerTreasury'
+      | 'isAnchored'
+      | 'lastAnchorBlock'
+      | 'pause'
+      | 'paused'
+      | 'renounceRole'
+      | 'revokeRole'
+      | 'setBaseFee'
+      | 'setTreasuries'
+      | 'supportsInterface'
+      | 'totalAnchors'
+      | 'totalFeesCollected'
+      | 'unpause'
+      | 'withdraw'
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "Anchored"
-      | "AttestationAnchored"
-      | "Paused"
-      | "ReceiptAnchored"
-      | "RoleAdminChanged"
-      | "RoleGranted"
-      | "RoleRevoked"
-      | "Unpaused"
-      | "WarrantAnchored"
+      | 'Anchored'
+      | 'AttestationAnchored'
+      | 'Paused'
+      | 'ReceiptAnchored'
+      | 'RoleAdminChanged'
+      | 'RoleGranted'
+      | 'RoleRevoked'
+      | 'Unpaused'
+      | 'WarrantAnchored'
   ): EventFragment;
 
+  encodeFunctionData(functionFragment: 'DEFAULT_ADMIN_ROLE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'FEE_DENOMINATOR', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'FOUNDATION_FEE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'IMPLEMENTER_FEE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'RELAYER_ROLE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'TREASURY_ROLE', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "FEE_DENOMINATOR",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "FOUNDATION_FEE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "IMPLEMENTER_FEE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "RELAYER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "TREASURY_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "anchor",
+    functionFragment: 'anchor',
     values: [BytesLike, BytesLike, BytesLike, BytesLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "anchorAttestation",
+    functionFragment: 'anchorAttestation',
     values: [BytesLike, BytesLike, BytesLike, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "anchorReceipt",
+    functionFragment: 'anchorReceipt',
     values: [BytesLike, BytesLike, BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "anchorWarrant",
+    functionFragment: 'anchorWarrant',
     values: [BytesLike, BytesLike, BytesLike, string, string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "balances",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "baseFee", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "emergencyWithdraw",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "foundationTreasury",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleAdmin",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "grantRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "implementerTreasury",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isAnchored",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "lastAnchorBlock",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
-  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "renounceRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokeRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setBaseFee",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setTreasuries",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supportsInterface",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalAnchors",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalFeesCollected",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
-  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'balances', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'baseFee', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'emergencyWithdraw', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'foundationTreasury', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'getRoleAdmin', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'grantRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'hasRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'implementerTreasury', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'isAnchored', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'lastAnchorBlock', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'pause', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'paused', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'renounceRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'revokeRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setBaseFee', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setTreasuries', values: [AddressLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'supportsInterface', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'totalAnchors', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'totalFeesCollected', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'unpause', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'withdraw', values?: undefined): string;
 
-  decodeFunctionResult(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "FEE_DENOMINATOR",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "FOUNDATION_FEE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "IMPLEMENTER_FEE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "RELAYER_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "TREASURY_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "anchor", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "anchorAttestation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "anchorReceipt",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "anchorWarrant",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "balances", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "baseFee", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "emergencyWithdraw",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "foundationTreasury",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleAdmin",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "implementerTreasury",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "isAnchored", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "lastAnchorBlock",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceRole",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setBaseFee", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setTreasuries",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalAnchors",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalFeesCollected",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'DEFAULT_ADMIN_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'FEE_DENOMINATOR', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'FOUNDATION_FEE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'IMPLEMENTER_FEE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'RELAYER_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'TREASURY_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'anchor', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'anchorAttestation', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'anchorReceipt', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'anchorWarrant', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'balances', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'baseFee', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'emergencyWithdraw', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'foundationTreasury', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getRoleAdmin', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'grantRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'hasRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'implementerTreasury', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isAnchored', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'lastAnchorBlock', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'pause', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'paused', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'renounceRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'revokeRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setBaseFee', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setTreasuries', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'supportsInterface', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'totalAnchors', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'totalFeesCollected', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'unpause', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
 }
 
 export namespace AnchoredEvent {
@@ -280,7 +157,7 @@ export namespace AnchoredEvent {
     subjectTag: BytesLike,
     controllerDidHash: BytesLike,
     assurance: BigNumberish,
-    timestamp: BigNumberish
+    timestamp: BigNumberish,
   ];
   export type OutputTuple = [
     warrantDigest: string,
@@ -289,7 +166,7 @@ export namespace AnchoredEvent {
     subjectTag: string,
     controllerDidHash: string,
     assurance: bigint,
-    timestamp: bigint
+    timestamp: bigint,
   ];
   export interface OutputObject {
     warrantDigest: string;
@@ -314,7 +191,7 @@ export namespace AttestationAnchoredEvent {
     enterpriseId: string,
     attestationId: string,
     submitter: AddressLike,
-    ts: BigNumberish
+    ts: BigNumberish,
   ];
   export type OutputTuple = [
     attestationHash: string,
@@ -323,7 +200,7 @@ export namespace AttestationAnchoredEvent {
     enterpriseId: string,
     attestationId: string,
     submitter: string,
-    ts: bigint
+    ts: bigint,
   ];
   export interface OutputObject {
     attestationHash: string;
@@ -359,7 +236,7 @@ export namespace ReceiptAnchoredEvent {
     attestationHash: BytesLike,
     subjectWallet: AddressLike,
     submitter: AddressLike,
-    ts: BigNumberish
+    ts: BigNumberish,
   ];
   export type OutputTuple = [
     receiptHash: string,
@@ -367,7 +244,7 @@ export namespace ReceiptAnchoredEvent {
     attestationHash: string,
     subjectWallet: string,
     submitter: string,
-    ts: bigint
+    ts: bigint,
   ];
   export interface OutputObject {
     receiptHash: string;
@@ -384,16 +261,8 @@ export namespace ReceiptAnchoredEvent {
 }
 
 export namespace RoleAdminChangedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    previousAdminRole: BytesLike,
-    newAdminRole: BytesLike
-  ];
-  export type OutputTuple = [
-    role: string,
-    previousAdminRole: string,
-    newAdminRole: string
-  ];
+  export type InputTuple = [role: BytesLike, previousAdminRole: BytesLike, newAdminRole: BytesLike];
+  export type OutputTuple = [role: string, previousAdminRole: string, newAdminRole: string];
   export interface OutputObject {
     role: string;
     previousAdminRole: string;
@@ -406,11 +275,7 @@ export namespace RoleAdminChangedEvent {
 }
 
 export namespace RoleGrantedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    account: AddressLike,
-    sender: AddressLike
-  ];
+  export type InputTuple = [role: BytesLike, account: AddressLike, sender: AddressLike];
   export type OutputTuple = [role: string, account: string, sender: string];
   export interface OutputObject {
     role: string;
@@ -424,11 +289,7 @@ export namespace RoleGrantedEvent {
 }
 
 export namespace RoleRevokedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    account: AddressLike,
-    sender: AddressLike
-  ];
+  export type InputTuple = [role: BytesLike, account: AddressLike, sender: AddressLike];
   export type OutputTuple = [role: string, account: string, sender: string];
   export interface OutputObject {
     role: string;
@@ -461,7 +322,7 @@ export namespace WarrantAnchoredEvent {
     enterpriseId: string,
     warrantId: string,
     submitter: AddressLike,
-    ts: BigNumberish
+    ts: BigNumberish,
   ];
   export type OutputTuple = [
     warrantHash: string,
@@ -470,7 +331,7 @@ export namespace WarrantAnchoredEvent {
     enterpriseId: string,
     warrantId: string,
     submitter: string,
-    ts: bigint
+    ts: bigint,
   ];
   export interface OutputObject {
     warrantHash: string;
@@ -526,21 +387,19 @@ export interface CanonRegistry extends BaseContract {
     event: TCEvent
   ): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
-  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], 'view'>;
 
-  FEE_DENOMINATOR: TypedContractMethod<[], [bigint], "view">;
+  FEE_DENOMINATOR: TypedContractMethod<[], [bigint], 'view'>;
 
-  FOUNDATION_FEE: TypedContractMethod<[], [bigint], "view">;
+  FOUNDATION_FEE: TypedContractMethod<[], [bigint], 'view'>;
 
-  IMPLEMENTER_FEE: TypedContractMethod<[], [bigint], "view">;
+  IMPLEMENTER_FEE: TypedContractMethod<[], [bigint], 'view'>;
 
-  RELAYER_ROLE: TypedContractMethod<[], [string], "view">;
+  RELAYER_ROLE: TypedContractMethod<[], [string], 'view'>;
 
-  TREASURY_ROLE: TypedContractMethod<[], [string], "view">;
+  TREASURY_ROLE: TypedContractMethod<[], [string], 'view'>;
 
   anchor: TypedContractMethod<
     [
@@ -548,10 +407,10 @@ export interface CanonRegistry extends BaseContract {
       attestationDigest: BytesLike,
       subjectTag: BytesLike,
       controllerDidHash: BytesLike,
-      assurance: BigNumberish
+      assurance: BigNumberish,
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
   anchorAttestation: TypedContractMethod<
@@ -560,10 +419,10 @@ export interface CanonRegistry extends BaseContract {
       warrantHash: BytesLike,
       enterpriseHash: BytesLike,
       enterpriseId: string,
-      attestationId: string
+      attestationId: string,
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
   anchorReceipt: TypedContractMethod<
@@ -571,10 +430,10 @@ export interface CanonRegistry extends BaseContract {
       receiptHash: BytesLike,
       warrantHash: BytesLike,
       attestationHash: BytesLike,
-      subjectWallet: AddressLike
+      subjectWallet: AddressLike,
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
   anchorWarrant: TypedContractMethod<
@@ -583,297 +442,223 @@ export interface CanonRegistry extends BaseContract {
       subjectHandleHash: BytesLike,
       enterpriseHash: BytesLike,
       enterpriseId: string,
-      warrantId: string
+      warrantId: string,
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
-  balances: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  balances: TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
 
-  baseFee: TypedContractMethod<[], [bigint], "view">;
+  baseFee: TypedContractMethod<[], [bigint], 'view'>;
 
-  emergencyWithdraw: TypedContractMethod<[], [void], "nonpayable">;
+  emergencyWithdraw: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  foundationTreasury: TypedContractMethod<[], [string], "view">;
+  foundationTreasury: TypedContractMethod<[], [string], 'view'>;
 
-  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], 'view'>;
 
-  grantRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  grantRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
 
-  hasRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [boolean],
-    "view"
-  >;
+  hasRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [boolean], 'view'>;
 
-  implementerTreasury: TypedContractMethod<[], [string], "view">;
+  implementerTreasury: TypedContractMethod<[], [string], 'view'>;
 
-  isAnchored: TypedContractMethod<[hash: BytesLike], [boolean], "view">;
+  isAnchored: TypedContractMethod<[hash: BytesLike], [boolean], 'view'>;
 
-  lastAnchorBlock: TypedContractMethod<[hash: BytesLike], [bigint], "view">;
+  lastAnchorBlock: TypedContractMethod<[hash: BytesLike], [bigint], 'view'>;
 
-  pause: TypedContractMethod<[], [void], "nonpayable">;
+  pause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  paused: TypedContractMethod<[], [boolean], "view">;
+  paused: TypedContractMethod<[], [boolean], 'view'>;
 
   renounceRole: TypedContractMethod<
     [role: BytesLike, callerConfirmation: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  revokeRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  revokeRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
 
-  setBaseFee: TypedContractMethod<
-    [_baseFee: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setBaseFee: TypedContractMethod<[_baseFee: BigNumberish], [void], 'nonpayable'>;
 
   setTreasuries: TypedContractMethod<
     [_foundationTreasury: AddressLike, _implementerTreasury: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  supportsInterface: TypedContractMethod<
-    [interfaceId: BytesLike],
-    [boolean],
-    "view"
-  >;
+  supportsInterface: TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
 
-  totalAnchors: TypedContractMethod<[], [bigint], "view">;
+  totalAnchors: TypedContractMethod<[], [bigint], 'view'>;
 
-  totalFeesCollected: TypedContractMethod<[], [bigint], "view">;
+  totalFeesCollected: TypedContractMethod<[], [bigint], 'view'>;
 
-  unpause: TypedContractMethod<[], [void], "nonpayable">;
+  unpause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  withdraw: TypedContractMethod<[], [void], "nonpayable">;
+  withdraw: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
+  getFunction(nameOrSignature: 'DEFAULT_ADMIN_ROLE'): TypedContractMethod<[], [string], 'view'>;
+  getFunction(nameOrSignature: 'FEE_DENOMINATOR'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'FOUNDATION_FEE'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'IMPLEMENTER_FEE'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'RELAYER_ROLE'): TypedContractMethod<[], [string], 'view'>;
+  getFunction(nameOrSignature: 'TREASURY_ROLE'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "DEFAULT_ADMIN_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "FEE_DENOMINATOR"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "FOUNDATION_FEE"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "IMPLEMENTER_FEE"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "RELAYER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "TREASURY_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "anchor"
+    nameOrSignature: 'anchor'
   ): TypedContractMethod<
     [
       warrantDigest: BytesLike,
       attestationDigest: BytesLike,
       subjectTag: BytesLike,
       controllerDidHash: BytesLike,
-      assurance: BigNumberish
+      assurance: BigNumberish,
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "anchorAttestation"
+    nameOrSignature: 'anchorAttestation'
   ): TypedContractMethod<
     [
       attestationHash: BytesLike,
       warrantHash: BytesLike,
       enterpriseHash: BytesLike,
       enterpriseId: string,
-      attestationId: string
+      attestationId: string,
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "anchorReceipt"
+    nameOrSignature: 'anchorReceipt'
   ): TypedContractMethod<
     [
       receiptHash: BytesLike,
       warrantHash: BytesLike,
       attestationHash: BytesLike,
-      subjectWallet: AddressLike
+      subjectWallet: AddressLike,
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "anchorWarrant"
+    nameOrSignature: 'anchorWarrant'
   ): TypedContractMethod<
     [
       warrantHash: BytesLike,
       subjectHandleHash: BytesLike,
       enterpriseHash: BytesLike,
       enterpriseId: string,
-      warrantId: string
+      warrantId: string,
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "balances"
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+    nameOrSignature: 'balances'
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'baseFee'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'emergencyWithdraw'): TypedContractMethod<[], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'foundationTreasury'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "baseFee"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: 'getRoleAdmin'
+  ): TypedContractMethod<[role: BytesLike], [string], 'view'>;
   getFunction(
-    nameOrSignature: "emergencyWithdraw"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'grantRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "foundationTreasury"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'hasRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'implementerTreasury'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "getRoleAdmin"
-  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+    nameOrSignature: 'isAnchored'
+  ): TypedContractMethod<[hash: BytesLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "grantRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'lastAnchorBlock'
+  ): TypedContractMethod<[hash: BytesLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'pause'): TypedContractMethod<[], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'paused'): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "hasRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [boolean],
-    "view"
-  >;
+    nameOrSignature: 'renounceRole'
+  ): TypedContractMethod<[role: BytesLike, callerConfirmation: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "implementerTreasury"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'revokeRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "isAnchored"
-  ): TypedContractMethod<[hash: BytesLike], [boolean], "view">;
+    nameOrSignature: 'setBaseFee'
+  ): TypedContractMethod<[_baseFee: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "lastAnchorBlock"
-  ): TypedContractMethod<[hash: BytesLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "pause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "paused"
-  ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "renounceRole"
-  ): TypedContractMethod<
-    [role: BytesLike, callerConfirmation: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "revokeRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setBaseFee"
-  ): TypedContractMethod<[_baseFee: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setTreasuries"
+    nameOrSignature: 'setTreasuries'
   ): TypedContractMethod<
     [_foundationTreasury: AddressLike, _implementerTreasury: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "supportsInterface"
-  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "totalAnchors"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "totalFeesCollected"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "unpause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "withdraw"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+    nameOrSignature: 'supportsInterface'
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'totalAnchors'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'totalFeesCollected'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'unpause'): TypedContractMethod<[], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'withdraw'): TypedContractMethod<[], [void], 'nonpayable'>;
 
   getEvent(
-    key: "Anchored"
+    key: 'Anchored'
   ): TypedContractEvent<
     AnchoredEvent.InputTuple,
     AnchoredEvent.OutputTuple,
     AnchoredEvent.OutputObject
   >;
   getEvent(
-    key: "AttestationAnchored"
+    key: 'AttestationAnchored'
   ): TypedContractEvent<
     AttestationAnchoredEvent.InputTuple,
     AttestationAnchoredEvent.OutputTuple,
     AttestationAnchoredEvent.OutputObject
   >;
   getEvent(
-    key: "Paused"
-  ): TypedContractEvent<
-    PausedEvent.InputTuple,
-    PausedEvent.OutputTuple,
-    PausedEvent.OutputObject
-  >;
+    key: 'Paused'
+  ): TypedContractEvent<PausedEvent.InputTuple, PausedEvent.OutputTuple, PausedEvent.OutputObject>;
   getEvent(
-    key: "ReceiptAnchored"
+    key: 'ReceiptAnchored'
   ): TypedContractEvent<
     ReceiptAnchoredEvent.InputTuple,
     ReceiptAnchoredEvent.OutputTuple,
     ReceiptAnchoredEvent.OutputObject
   >;
   getEvent(
-    key: "RoleAdminChanged"
+    key: 'RoleAdminChanged'
   ): TypedContractEvent<
     RoleAdminChangedEvent.InputTuple,
     RoleAdminChangedEvent.OutputTuple,
     RoleAdminChangedEvent.OutputObject
   >;
   getEvent(
-    key: "RoleGranted"
+    key: 'RoleGranted'
   ): TypedContractEvent<
     RoleGrantedEvent.InputTuple,
     RoleGrantedEvent.OutputTuple,
     RoleGrantedEvent.OutputObject
   >;
   getEvent(
-    key: "RoleRevoked"
+    key: 'RoleRevoked'
   ): TypedContractEvent<
     RoleRevokedEvent.InputTuple,
     RoleRevokedEvent.OutputTuple,
     RoleRevokedEvent.OutputObject
   >;
   getEvent(
-    key: "Unpaused"
+    key: 'Unpaused'
   ): TypedContractEvent<
     UnpausedEvent.InputTuple,
     UnpausedEvent.OutputTuple,
     UnpausedEvent.OutputObject
   >;
   getEvent(
-    key: "WarrantAnchored"
+    key: 'WarrantAnchored'
   ): TypedContractEvent<
     WarrantAnchoredEvent.InputTuple,
     WarrantAnchoredEvent.OutputTuple,
@@ -881,7 +666,7 @@ export interface CanonRegistry extends BaseContract {
   >;
 
   filters: {
-    "Anchored(bytes32,bytes32,address,bytes32,bytes32,uint8,uint256)": TypedContractEvent<
+    'Anchored(bytes32,bytes32,address,bytes32,bytes32,uint8,uint256)': TypedContractEvent<
       AnchoredEvent.InputTuple,
       AnchoredEvent.OutputTuple,
       AnchoredEvent.OutputObject
@@ -892,7 +677,7 @@ export interface CanonRegistry extends BaseContract {
       AnchoredEvent.OutputObject
     >;
 
-    "AttestationAnchored(bytes32,bytes32,bytes32,string,string,address,uint256)": TypedContractEvent<
+    'AttestationAnchored(bytes32,bytes32,bytes32,string,string,address,uint256)': TypedContractEvent<
       AttestationAnchoredEvent.InputTuple,
       AttestationAnchoredEvent.OutputTuple,
       AttestationAnchoredEvent.OutputObject
@@ -903,7 +688,7 @@ export interface CanonRegistry extends BaseContract {
       AttestationAnchoredEvent.OutputObject
     >;
 
-    "Paused(address)": TypedContractEvent<
+    'Paused(address)': TypedContractEvent<
       PausedEvent.InputTuple,
       PausedEvent.OutputTuple,
       PausedEvent.OutputObject
@@ -914,7 +699,7 @@ export interface CanonRegistry extends BaseContract {
       PausedEvent.OutputObject
     >;
 
-    "ReceiptAnchored(bytes32,bytes32,bytes32,address,address,uint256)": TypedContractEvent<
+    'ReceiptAnchored(bytes32,bytes32,bytes32,address,address,uint256)': TypedContractEvent<
       ReceiptAnchoredEvent.InputTuple,
       ReceiptAnchoredEvent.OutputTuple,
       ReceiptAnchoredEvent.OutputObject
@@ -925,7 +710,7 @@ export interface CanonRegistry extends BaseContract {
       ReceiptAnchoredEvent.OutputObject
     >;
 
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+    'RoleAdminChanged(bytes32,bytes32,bytes32)': TypedContractEvent<
       RoleAdminChangedEvent.InputTuple,
       RoleAdminChangedEvent.OutputTuple,
       RoleAdminChangedEvent.OutputObject
@@ -936,7 +721,7 @@ export interface CanonRegistry extends BaseContract {
       RoleAdminChangedEvent.OutputObject
     >;
 
-    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+    'RoleGranted(bytes32,address,address)': TypedContractEvent<
       RoleGrantedEvent.InputTuple,
       RoleGrantedEvent.OutputTuple,
       RoleGrantedEvent.OutputObject
@@ -947,7 +732,7 @@ export interface CanonRegistry extends BaseContract {
       RoleGrantedEvent.OutputObject
     >;
 
-    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+    'RoleRevoked(bytes32,address,address)': TypedContractEvent<
       RoleRevokedEvent.InputTuple,
       RoleRevokedEvent.OutputTuple,
       RoleRevokedEvent.OutputObject
@@ -958,7 +743,7 @@ export interface CanonRegistry extends BaseContract {
       RoleRevokedEvent.OutputObject
     >;
 
-    "Unpaused(address)": TypedContractEvent<
+    'Unpaused(address)': TypedContractEvent<
       UnpausedEvent.InputTuple,
       UnpausedEvent.OutputTuple,
       UnpausedEvent.OutputObject
@@ -969,7 +754,7 @@ export interface CanonRegistry extends BaseContract {
       UnpausedEvent.OutputObject
     >;
 
-    "WarrantAnchored(bytes32,bytes32,bytes32,string,string,address,uint256)": TypedContractEvent<
+    'WarrantAnchored(bytes32,bytes32,bytes32,string,string,address,uint256)': TypedContractEvent<
       WarrantAnchoredEvent.InputTuple,
       WarrantAnchoredEvent.OutputTuple,
       WarrantAnchoredEvent.OutputObject

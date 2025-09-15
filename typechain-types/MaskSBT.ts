@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,344 +21,172 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export interface MaskSBTInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "ADMIN_ROLE"
-      | "DEFAULT_ADMIN_ROLE"
-      | "MINTER_ROLE"
-      | "approve"
-      | "balanceOf"
-      | "burnReceipt"
-      | "getApproved"
-      | "getMintTimestamp"
-      | "getOriginalMinter"
-      | "getReceiptHash"
-      | "getRoleAdmin"
-      | "grantRole"
-      | "hasRole"
-      | "isApprovedForAll"
-      | "isReceiptMinted"
-      | "mintReceipt"
-      | "mintTimestamps"
-      | "name"
-      | "originalMinter"
-      | "ownerOf"
-      | "pause"
-      | "paused"
-      | "receiptHashes"
-      | "renounceRole"
-      | "revokeRole"
-      | "safeTransferFrom(address,address,uint256)"
-      | "safeTransferFrom(address,address,uint256,bytes)"
-      | "sbtMintingEnabled"
-      | "setApprovalForAll"
-      | "supportsInterface"
-      | "symbol"
-      | "toggleSBTMinting"
-      | "toggleTransfer"
-      | "tokenURI"
-      | "totalBurned"
-      | "totalMinted"
-      | "totalSupply"
-      | "transferEnabled"
-      | "transferFrom"
-      | "unpause"
+      | 'ADMIN_ROLE'
+      | 'DEFAULT_ADMIN_ROLE'
+      | 'MINTER_ROLE'
+      | 'approve'
+      | 'balanceOf'
+      | 'burnReceipt'
+      | 'getApproved'
+      | 'getMintTimestamp'
+      | 'getOriginalMinter'
+      | 'getReceiptHash'
+      | 'getRoleAdmin'
+      | 'grantRole'
+      | 'hasRole'
+      | 'isApprovedForAll'
+      | 'isReceiptMinted'
+      | 'mintReceipt'
+      | 'mintTimestamps'
+      | 'name'
+      | 'originalMinter'
+      | 'ownerOf'
+      | 'pause'
+      | 'paused'
+      | 'receiptHashes'
+      | 'renounceRole'
+      | 'revokeRole'
+      | 'safeTransferFrom(address,address,uint256)'
+      | 'safeTransferFrom(address,address,uint256,bytes)'
+      | 'sbtMintingEnabled'
+      | 'setApprovalForAll'
+      | 'supportsInterface'
+      | 'symbol'
+      | 'toggleSBTMinting'
+      | 'toggleTransfer'
+      | 'tokenURI'
+      | 'totalBurned'
+      | 'totalMinted'
+      | 'totalSupply'
+      | 'transferEnabled'
+      | 'transferFrom'
+      | 'unpause'
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "Approval"
-      | "ApprovalForAll"
-      | "Paused"
-      | "ReceiptBurned"
-      | "ReceiptMinted"
-      | "RoleAdminChanged"
-      | "RoleGranted"
-      | "RoleRevoked"
-      | "SBTMintingToggled"
-      | "Transfer"
-      | "TransferToggled"
-      | "Unpaused"
+      | 'Approval'
+      | 'ApprovalForAll'
+      | 'Paused'
+      | 'ReceiptBurned'
+      | 'ReceiptMinted'
+      | 'RoleAdminChanged'
+      | 'RoleGranted'
+      | 'RoleRevoked'
+      | 'SBTMintingToggled'
+      | 'Transfer'
+      | 'TransferToggled'
+      | 'Unpaused'
   ): EventFragment;
 
+  encodeFunctionData(functionFragment: 'ADMIN_ROLE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'DEFAULT_ADMIN_ROLE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'MINTER_ROLE', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'approve', values: [AddressLike, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'balanceOf', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'burnReceipt', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getApproved', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getMintTimestamp', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getOriginalMinter', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getReceiptHash', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getRoleAdmin', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'grantRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'hasRole', values: [BytesLike, AddressLike]): string;
   encodeFunctionData(
-    functionFragment: "ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "MINTER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "approve",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "balanceOf",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "burnReceipt",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getApproved",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMintTimestamp",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getOriginalMinter",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getReceiptHash",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleAdmin",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "grantRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isApprovedForAll",
+    functionFragment: 'isApprovedForAll',
     values: [AddressLike, AddressLike]
   ): string;
+  encodeFunctionData(functionFragment: 'isReceiptMinted', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'mintReceipt', values: [AddressLike, BytesLike]): string;
+  encodeFunctionData(functionFragment: 'mintTimestamps', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'name', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'originalMinter', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'ownerOf', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'pause', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'paused', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'receiptHashes', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'renounceRole', values: [BytesLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'revokeRole', values: [BytesLike, AddressLike]): string;
   encodeFunctionData(
-    functionFragment: "isReceiptMinted",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mintReceipt",
-    values: [AddressLike, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mintTimestamps",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "originalMinter",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "ownerOf",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
-  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "receiptHashes",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokeRole",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "safeTransferFrom(address,address,uint256)",
+    functionFragment: 'safeTransferFrom(address,address,uint256)',
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "safeTransferFrom(address,address,uint256,bytes)",
+    functionFragment: 'safeTransferFrom(address,address,uint256,bytes)',
     values: [AddressLike, AddressLike, BigNumberish, BytesLike]
   ): string;
+  encodeFunctionData(functionFragment: 'sbtMintingEnabled', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'setApprovalForAll', values: [AddressLike, boolean]): string;
+  encodeFunctionData(functionFragment: 'supportsInterface', values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: 'symbol', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'toggleSBTMinting', values: [boolean]): string;
+  encodeFunctionData(functionFragment: 'toggleTransfer', values: [boolean]): string;
+  encodeFunctionData(functionFragment: 'tokenURI', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'totalBurned', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'totalMinted', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'totalSupply', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'transferEnabled', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "sbtMintingEnabled",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setApprovalForAll",
-    values: [AddressLike, boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supportsInterface",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "toggleSBTMinting",
-    values: [boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "toggleTransfer",
-    values: [boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "tokenURI",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalBurned",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalMinted",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "totalSupply",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferEnabled",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferFrom",
+    functionFragment: 'transferFrom',
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'unpause', values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "ADMIN_ROLE", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'ADMIN_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'DEFAULT_ADMIN_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'MINTER_ROLE', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'approve', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'balanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'burnReceipt', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getApproved', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getMintTimestamp', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getOriginalMinter', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getReceiptHash', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getRoleAdmin', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'grantRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'hasRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isApprovedForAll', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isReceiptMinted', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'mintReceipt', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'mintTimestamps', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'name', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'originalMinter', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'ownerOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'pause', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'paused', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'receiptHashes', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'renounceRole', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'revokeRole', data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
+    functionFragment: 'safeTransferFrom(address,address,uint256)',
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "MINTER_ROLE",
+    functionFragment: 'safeTransferFrom(address,address,uint256,bytes)',
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "burnReceipt",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getApproved",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getMintTimestamp",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getOriginalMinter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getReceiptHash",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleAdmin",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "isApprovedForAll",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isReceiptMinted",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mintReceipt",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mintTimestamps",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "originalMinter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "receiptHashes",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceRole",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "safeTransferFrom(address,address,uint256)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "safeTransferFrom(address,address,uint256,bytes)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sbtMintingEnabled",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setApprovalForAll",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "toggleSBTMinting",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "toggleTransfer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "tokenURI", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "totalBurned",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalMinted",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalSupply",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferEnabled",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferFrom",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'sbtMintingEnabled', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setApprovalForAll', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'supportsInterface', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'symbol', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'toggleSBTMinting', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'toggleTransfer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'tokenURI', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'totalBurned', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'totalMinted', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'totalSupply', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferEnabled', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferFrom', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'unpause', data: BytesLike): Result;
 }
 
 export namespace ApprovalEvent {
-  export type InputTuple = [
-    owner: AddressLike,
-    approved: AddressLike,
-    tokenId: BigNumberish
-  ];
+  export type InputTuple = [owner: AddressLike, approved: AddressLike, tokenId: BigNumberish];
   export type OutputTuple = [owner: string, approved: string, tokenId: bigint];
   export interface OutputObject {
     owner: string;
@@ -372,16 +200,8 @@ export namespace ApprovalEvent {
 }
 
 export namespace ApprovalForAllEvent {
-  export type InputTuple = [
-    owner: AddressLike,
-    operator: AddressLike,
-    approved: boolean
-  ];
-  export type OutputTuple = [
-    owner: string,
-    operator: string,
-    approved: boolean
-  ];
+  export type InputTuple = [owner: AddressLike, operator: AddressLike, approved: boolean];
+  export type OutputTuple = [owner: string, operator: string, approved: boolean];
   export interface OutputObject {
     owner: string;
     operator: string;
@@ -410,13 +230,13 @@ export namespace ReceiptBurnedEvent {
     tokenId: BigNumberish,
     receiptHash: BytesLike,
     owner: AddressLike,
-    timestamp: BigNumberish
+    timestamp: BigNumberish,
   ];
   export type OutputTuple = [
     tokenId: bigint,
     receiptHash: string,
     owner: string,
-    timestamp: bigint
+    timestamp: bigint,
   ];
   export interface OutputObject {
     tokenId: bigint;
@@ -436,14 +256,14 @@ export namespace ReceiptMintedEvent {
     receiptHash: BytesLike,
     recipient: AddressLike,
     minter: AddressLike,
-    timestamp: BigNumberish
+    timestamp: BigNumberish,
   ];
   export type OutputTuple = [
     tokenId: bigint,
     receiptHash: string,
     recipient: string,
     minter: string,
-    timestamp: bigint
+    timestamp: bigint,
   ];
   export interface OutputObject {
     tokenId: bigint;
@@ -459,16 +279,8 @@ export namespace ReceiptMintedEvent {
 }
 
 export namespace RoleAdminChangedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    previousAdminRole: BytesLike,
-    newAdminRole: BytesLike
-  ];
-  export type OutputTuple = [
-    role: string,
-    previousAdminRole: string,
-    newAdminRole: string
-  ];
+  export type InputTuple = [role: BytesLike, previousAdminRole: BytesLike, newAdminRole: BytesLike];
+  export type OutputTuple = [role: string, previousAdminRole: string, newAdminRole: string];
   export interface OutputObject {
     role: string;
     previousAdminRole: string;
@@ -481,11 +293,7 @@ export namespace RoleAdminChangedEvent {
 }
 
 export namespace RoleGrantedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    account: AddressLike,
-    sender: AddressLike
-  ];
+  export type InputTuple = [role: BytesLike, account: AddressLike, sender: AddressLike];
   export type OutputTuple = [role: string, account: string, sender: string];
   export interface OutputObject {
     role: string;
@@ -499,11 +307,7 @@ export namespace RoleGrantedEvent {
 }
 
 export namespace RoleRevokedEvent {
-  export type InputTuple = [
-    role: BytesLike,
-    account: AddressLike,
-    sender: AddressLike
-  ];
+  export type InputTuple = [role: BytesLike, account: AddressLike, sender: AddressLike];
   export type OutputTuple = [role: string, account: string, sender: string];
   export interface OutputObject {
     role: string;
@@ -529,11 +333,7 @@ export namespace SBTMintingToggledEvent {
 }
 
 export namespace TransferEvent {
-  export type InputTuple = [
-    from: AddressLike,
-    to: AddressLike,
-    tokenId: BigNumberish
-  ];
+  export type InputTuple = [from: AddressLike, to: AddressLike, tokenId: BigNumberish];
   export type OutputTuple = [from: string, to: string, tokenId: bigint];
   export interface OutputObject {
     from: string;
@@ -609,420 +409,300 @@ export interface MaskSBT extends BaseContract {
     event: TCEvent
   ): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
-  ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+  ADMIN_ROLE: TypedContractMethod<[], [string], 'view'>;
 
-  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], 'view'>;
 
-  MINTER_ROLE: TypedContractMethod<[], [string], "view">;
+  MINTER_ROLE: TypedContractMethod<[], [string], 'view'>;
 
-  approve: TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  approve: TypedContractMethod<[to: AddressLike, tokenId: BigNumberish], [void], 'nonpayable'>;
 
-  balanceOf: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+  balanceOf: TypedContractMethod<[owner: AddressLike], [bigint], 'view'>;
 
-  burnReceipt: TypedContractMethod<
-    [tokenId: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  burnReceipt: TypedContractMethod<[tokenId: BigNumberish], [void], 'nonpayable'>;
 
-  getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
 
-  getMintTimestamp: TypedContractMethod<
-    [tokenId: BigNumberish],
-    [bigint],
-    "view"
-  >;
+  getMintTimestamp: TypedContractMethod<[tokenId: BigNumberish], [bigint], 'view'>;
 
-  getOriginalMinter: TypedContractMethod<
-    [tokenId: BigNumberish],
-    [string],
-    "view"
-  >;
+  getOriginalMinter: TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
 
-  getReceiptHash: TypedContractMethod<
-    [tokenId: BigNumberish],
-    [string],
-    "view"
-  >;
+  getReceiptHash: TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
 
-  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], 'view'>;
 
-  grantRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  grantRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
 
-  hasRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [boolean],
-    "view"
-  >;
+  hasRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [boolean], 'view'>;
 
   isApprovedForAll: TypedContractMethod<
     [owner: AddressLike, operator: AddressLike],
     [boolean],
-    "view"
+    'view'
   >;
 
-  isReceiptMinted: TypedContractMethod<
-    [receiptHash: BytesLike],
-    [boolean],
-    "view"
-  >;
+  isReceiptMinted: TypedContractMethod<[receiptHash: BytesLike], [boolean], 'view'>;
 
   mintReceipt: TypedContractMethod<
     [to: AddressLike, receiptHash: BytesLike],
     [bigint],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  mintTimestamps: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  mintTimestamps: TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
 
-  name: TypedContractMethod<[], [string], "view">;
+  name: TypedContractMethod<[], [string], 'view'>;
 
-  originalMinter: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  originalMinter: TypedContractMethod<[arg0: BigNumberish], [string], 'view'>;
 
-  ownerOf: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  ownerOf: TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
 
-  pause: TypedContractMethod<[], [void], "nonpayable">;
+  pause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  paused: TypedContractMethod<[], [boolean], "view">;
+  paused: TypedContractMethod<[], [boolean], 'view'>;
 
-  receiptHashes: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  receiptHashes: TypedContractMethod<[arg0: BigNumberish], [string], 'view'>;
 
   renounceRole: TypedContractMethod<
     [role: BytesLike, callerConfirmation: AddressLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  revokeRole: TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  revokeRole: TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
 
-  "safeTransferFrom(address,address,uint256)": TypedContractMethod<
+  'safeTransferFrom(address,address,uint256)': TypedContractMethod<
     [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  "safeTransferFrom(address,address,uint256,bytes)": TypedContractMethod<
-    [
-      from: AddressLike,
-      to: AddressLike,
-      tokenId: BigNumberish,
-      data: BytesLike
-    ],
+  'safeTransferFrom(address,address,uint256,bytes)': TypedContractMethod<
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  sbtMintingEnabled: TypedContractMethod<[], [boolean], "view">;
+  sbtMintingEnabled: TypedContractMethod<[], [boolean], 'view'>;
 
   setApprovalForAll: TypedContractMethod<
     [operator: AddressLike, approved: boolean],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  supportsInterface: TypedContractMethod<
-    [interfaceId: BytesLike],
-    [boolean],
-    "view"
-  >;
+  supportsInterface: TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
 
-  symbol: TypedContractMethod<[], [string], "view">;
+  symbol: TypedContractMethod<[], [string], 'view'>;
 
-  toggleSBTMinting: TypedContractMethod<
-    [enabled: boolean],
-    [void],
-    "nonpayable"
-  >;
+  toggleSBTMinting: TypedContractMethod<[enabled: boolean], [void], 'nonpayable'>;
 
-  toggleTransfer: TypedContractMethod<[enabled: boolean], [void], "nonpayable">;
+  toggleTransfer: TypedContractMethod<[enabled: boolean], [void], 'nonpayable'>;
 
-  tokenURI: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  tokenURI: TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
 
-  totalBurned: TypedContractMethod<[], [bigint], "view">;
+  totalBurned: TypedContractMethod<[], [bigint], 'view'>;
 
-  totalMinted: TypedContractMethod<[], [bigint], "view">;
+  totalMinted: TypedContractMethod<[], [bigint], 'view'>;
 
-  totalSupply: TypedContractMethod<[], [bigint], "view">;
+  totalSupply: TypedContractMethod<[], [bigint], 'view'>;
 
-  transferEnabled: TypedContractMethod<[], [boolean], "view">;
+  transferEnabled: TypedContractMethod<[], [boolean], 'view'>;
 
   transferFrom: TypedContractMethod<
     [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  unpause: TypedContractMethod<[], [void], "nonpayable">;
+  unpause: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
+  getFunction(nameOrSignature: 'ADMIN_ROLE'): TypedContractMethod<[], [string], 'view'>;
+  getFunction(nameOrSignature: 'DEFAULT_ADMIN_ROLE'): TypedContractMethod<[], [string], 'view'>;
+  getFunction(nameOrSignature: 'MINTER_ROLE'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "ADMIN_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'approve'
+  ): TypedContractMethod<[to: AddressLike, tokenId: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "DEFAULT_ADMIN_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'balanceOf'
+  ): TypedContractMethod<[owner: AddressLike], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "MINTER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'burnReceipt'
+  ): TypedContractMethod<[tokenId: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "approve"
-  ): TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'getApproved'
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
   getFunction(
-    nameOrSignature: "balanceOf"
-  ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+    nameOrSignature: 'getMintTimestamp'
+  ): TypedContractMethod<[tokenId: BigNumberish], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: "burnReceipt"
-  ): TypedContractMethod<[tokenId: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: 'getOriginalMinter'
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
   getFunction(
-    nameOrSignature: "getApproved"
-  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+    nameOrSignature: 'getReceiptHash'
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
   getFunction(
-    nameOrSignature: "getMintTimestamp"
-  ): TypedContractMethod<[tokenId: BigNumberish], [bigint], "view">;
+    nameOrSignature: 'getRoleAdmin'
+  ): TypedContractMethod<[role: BytesLike], [string], 'view'>;
   getFunction(
-    nameOrSignature: "getOriginalMinter"
-  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+    nameOrSignature: 'grantRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "getReceiptHash"
-  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+    nameOrSignature: 'hasRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "getRoleAdmin"
-  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+    nameOrSignature: 'isApprovedForAll'
+  ): TypedContractMethod<[owner: AddressLike, operator: AddressLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "grantRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'isReceiptMinted'
+  ): TypedContractMethod<[receiptHash: BytesLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "hasRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [boolean],
-    "view"
-  >;
+    nameOrSignature: 'mintReceipt'
+  ): TypedContractMethod<[to: AddressLike, receiptHash: BytesLike], [bigint], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "isApprovedForAll"
-  ): TypedContractMethod<
-    [owner: AddressLike, operator: AddressLike],
-    [boolean],
-    "view"
-  >;
+    nameOrSignature: 'mintTimestamps'
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'name'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "isReceiptMinted"
-  ): TypedContractMethod<[receiptHash: BytesLike], [boolean], "view">;
+    nameOrSignature: 'originalMinter'
+  ): TypedContractMethod<[arg0: BigNumberish], [string], 'view'>;
   getFunction(
-    nameOrSignature: "mintReceipt"
-  ): TypedContractMethod<
-    [to: AddressLike, receiptHash: BytesLike],
-    [bigint],
-    "nonpayable"
-  >;
+    nameOrSignature: 'ownerOf'
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
+  getFunction(nameOrSignature: 'pause'): TypedContractMethod<[], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'paused'): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "mintTimestamps"
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+    nameOrSignature: 'receiptHashes'
+  ): TypedContractMethod<[arg0: BigNumberish], [string], 'view'>;
   getFunction(
-    nameOrSignature: "name"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'renounceRole'
+  ): TypedContractMethod<[role: BytesLike, callerConfirmation: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "originalMinter"
-  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+    nameOrSignature: 'revokeRole'
+  ): TypedContractMethod<[role: BytesLike, account: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "ownerOf"
-  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "pause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "paused"
-  ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "receiptHashes"
-  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "renounceRole"
-  ): TypedContractMethod<
-    [role: BytesLike, callerConfirmation: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "revokeRole"
-  ): TypedContractMethod<
-    [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "safeTransferFrom(address,address,uint256)"
+    nameOrSignature: 'safeTransferFrom(address,address,uint256)'
   ): TypedContractMethod<
     [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "safeTransferFrom(address,address,uint256,bytes)"
+    nameOrSignature: 'safeTransferFrom(address,address,uint256,bytes)'
   ): TypedContractMethod<
-    [
-      from: AddressLike,
-      to: AddressLike,
-      tokenId: BigNumberish,
-      data: BytesLike
-    ],
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
+  getFunction(nameOrSignature: 'sbtMintingEnabled'): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "sbtMintingEnabled"
-  ): TypedContractMethod<[], [boolean], "view">;
+    nameOrSignature: 'setApprovalForAll'
+  ): TypedContractMethod<[operator: AddressLike, approved: boolean], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setApprovalForAll"
-  ): TypedContractMethod<
-    [operator: AddressLike, approved: boolean],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'supportsInterface'
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'symbol'): TypedContractMethod<[], [string], 'view'>;
   getFunction(
-    nameOrSignature: "supportsInterface"
-  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+    nameOrSignature: 'toggleSBTMinting'
+  ): TypedContractMethod<[enabled: boolean], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "symbol"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: 'toggleTransfer'
+  ): TypedContractMethod<[enabled: boolean], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "toggleSBTMinting"
-  ): TypedContractMethod<[enabled: boolean], [void], "nonpayable">;
+    nameOrSignature: 'tokenURI'
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], 'view'>;
+  getFunction(nameOrSignature: 'totalBurned'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'totalMinted'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'totalSupply'): TypedContractMethod<[], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'transferEnabled'): TypedContractMethod<[], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "toggleTransfer"
-  ): TypedContractMethod<[enabled: boolean], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "tokenURI"
-  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "totalBurned"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "totalMinted"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "totalSupply"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "transferEnabled"
-  ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "transferFrom"
+    nameOrSignature: 'transferFrom'
   ): TypedContractMethod<
     [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
-  getFunction(
-    nameOrSignature: "unpause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(nameOrSignature: 'unpause'): TypedContractMethod<[], [void], 'nonpayable'>;
 
   getEvent(
-    key: "Approval"
+    key: 'Approval'
   ): TypedContractEvent<
     ApprovalEvent.InputTuple,
     ApprovalEvent.OutputTuple,
     ApprovalEvent.OutputObject
   >;
   getEvent(
-    key: "ApprovalForAll"
+    key: 'ApprovalForAll'
   ): TypedContractEvent<
     ApprovalForAllEvent.InputTuple,
     ApprovalForAllEvent.OutputTuple,
     ApprovalForAllEvent.OutputObject
   >;
   getEvent(
-    key: "Paused"
-  ): TypedContractEvent<
-    PausedEvent.InputTuple,
-    PausedEvent.OutputTuple,
-    PausedEvent.OutputObject
-  >;
+    key: 'Paused'
+  ): TypedContractEvent<PausedEvent.InputTuple, PausedEvent.OutputTuple, PausedEvent.OutputObject>;
   getEvent(
-    key: "ReceiptBurned"
+    key: 'ReceiptBurned'
   ): TypedContractEvent<
     ReceiptBurnedEvent.InputTuple,
     ReceiptBurnedEvent.OutputTuple,
     ReceiptBurnedEvent.OutputObject
   >;
   getEvent(
-    key: "ReceiptMinted"
+    key: 'ReceiptMinted'
   ): TypedContractEvent<
     ReceiptMintedEvent.InputTuple,
     ReceiptMintedEvent.OutputTuple,
     ReceiptMintedEvent.OutputObject
   >;
   getEvent(
-    key: "RoleAdminChanged"
+    key: 'RoleAdminChanged'
   ): TypedContractEvent<
     RoleAdminChangedEvent.InputTuple,
     RoleAdminChangedEvent.OutputTuple,
     RoleAdminChangedEvent.OutputObject
   >;
   getEvent(
-    key: "RoleGranted"
+    key: 'RoleGranted'
   ): TypedContractEvent<
     RoleGrantedEvent.InputTuple,
     RoleGrantedEvent.OutputTuple,
     RoleGrantedEvent.OutputObject
   >;
   getEvent(
-    key: "RoleRevoked"
+    key: 'RoleRevoked'
   ): TypedContractEvent<
     RoleRevokedEvent.InputTuple,
     RoleRevokedEvent.OutputTuple,
     RoleRevokedEvent.OutputObject
   >;
   getEvent(
-    key: "SBTMintingToggled"
+    key: 'SBTMintingToggled'
   ): TypedContractEvent<
     SBTMintingToggledEvent.InputTuple,
     SBTMintingToggledEvent.OutputTuple,
     SBTMintingToggledEvent.OutputObject
   >;
   getEvent(
-    key: "Transfer"
+    key: 'Transfer'
   ): TypedContractEvent<
     TransferEvent.InputTuple,
     TransferEvent.OutputTuple,
     TransferEvent.OutputObject
   >;
   getEvent(
-    key: "TransferToggled"
+    key: 'TransferToggled'
   ): TypedContractEvent<
     TransferToggledEvent.InputTuple,
     TransferToggledEvent.OutputTuple,
     TransferToggledEvent.OutputObject
   >;
   getEvent(
-    key: "Unpaused"
+    key: 'Unpaused'
   ): TypedContractEvent<
     UnpausedEvent.InputTuple,
     UnpausedEvent.OutputTuple,
@@ -1030,7 +710,7 @@ export interface MaskSBT extends BaseContract {
   >;
 
   filters: {
-    "Approval(address,address,uint256)": TypedContractEvent<
+    'Approval(address,address,uint256)': TypedContractEvent<
       ApprovalEvent.InputTuple,
       ApprovalEvent.OutputTuple,
       ApprovalEvent.OutputObject
@@ -1041,7 +721,7 @@ export interface MaskSBT extends BaseContract {
       ApprovalEvent.OutputObject
     >;
 
-    "ApprovalForAll(address,address,bool)": TypedContractEvent<
+    'ApprovalForAll(address,address,bool)': TypedContractEvent<
       ApprovalForAllEvent.InputTuple,
       ApprovalForAllEvent.OutputTuple,
       ApprovalForAllEvent.OutputObject
@@ -1052,7 +732,7 @@ export interface MaskSBT extends BaseContract {
       ApprovalForAllEvent.OutputObject
     >;
 
-    "Paused(address)": TypedContractEvent<
+    'Paused(address)': TypedContractEvent<
       PausedEvent.InputTuple,
       PausedEvent.OutputTuple,
       PausedEvent.OutputObject
@@ -1063,7 +743,7 @@ export interface MaskSBT extends BaseContract {
       PausedEvent.OutputObject
     >;
 
-    "ReceiptBurned(uint256,bytes32,address,uint256)": TypedContractEvent<
+    'ReceiptBurned(uint256,bytes32,address,uint256)': TypedContractEvent<
       ReceiptBurnedEvent.InputTuple,
       ReceiptBurnedEvent.OutputTuple,
       ReceiptBurnedEvent.OutputObject
@@ -1074,7 +754,7 @@ export interface MaskSBT extends BaseContract {
       ReceiptBurnedEvent.OutputObject
     >;
 
-    "ReceiptMinted(uint256,bytes32,address,address,uint256)": TypedContractEvent<
+    'ReceiptMinted(uint256,bytes32,address,address,uint256)': TypedContractEvent<
       ReceiptMintedEvent.InputTuple,
       ReceiptMintedEvent.OutputTuple,
       ReceiptMintedEvent.OutputObject
@@ -1085,7 +765,7 @@ export interface MaskSBT extends BaseContract {
       ReceiptMintedEvent.OutputObject
     >;
 
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+    'RoleAdminChanged(bytes32,bytes32,bytes32)': TypedContractEvent<
       RoleAdminChangedEvent.InputTuple,
       RoleAdminChangedEvent.OutputTuple,
       RoleAdminChangedEvent.OutputObject
@@ -1096,7 +776,7 @@ export interface MaskSBT extends BaseContract {
       RoleAdminChangedEvent.OutputObject
     >;
 
-    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+    'RoleGranted(bytes32,address,address)': TypedContractEvent<
       RoleGrantedEvent.InputTuple,
       RoleGrantedEvent.OutputTuple,
       RoleGrantedEvent.OutputObject
@@ -1107,7 +787,7 @@ export interface MaskSBT extends BaseContract {
       RoleGrantedEvent.OutputObject
     >;
 
-    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+    'RoleRevoked(bytes32,address,address)': TypedContractEvent<
       RoleRevokedEvent.InputTuple,
       RoleRevokedEvent.OutputTuple,
       RoleRevokedEvent.OutputObject
@@ -1118,7 +798,7 @@ export interface MaskSBT extends BaseContract {
       RoleRevokedEvent.OutputObject
     >;
 
-    "SBTMintingToggled(bool)": TypedContractEvent<
+    'SBTMintingToggled(bool)': TypedContractEvent<
       SBTMintingToggledEvent.InputTuple,
       SBTMintingToggledEvent.OutputTuple,
       SBTMintingToggledEvent.OutputObject
@@ -1129,7 +809,7 @@ export interface MaskSBT extends BaseContract {
       SBTMintingToggledEvent.OutputObject
     >;
 
-    "Transfer(address,address,uint256)": TypedContractEvent<
+    'Transfer(address,address,uint256)': TypedContractEvent<
       TransferEvent.InputTuple,
       TransferEvent.OutputTuple,
       TransferEvent.OutputObject
@@ -1140,7 +820,7 @@ export interface MaskSBT extends BaseContract {
       TransferEvent.OutputObject
     >;
 
-    "TransferToggled(bool)": TypedContractEvent<
+    'TransferToggled(bool)': TypedContractEvent<
       TransferToggledEvent.InputTuple,
       TransferToggledEvent.OutputTuple,
       TransferToggledEvent.OutputObject
@@ -1151,7 +831,7 @@ export interface MaskSBT extends BaseContract {
       TransferToggledEvent.OutputObject
     >;
 
-    "Unpaused(address)": TypedContractEvent<
+    'Unpaused(address)': TypedContractEvent<
       UnpausedEvent.InputTuple,
       UnpausedEvent.OutputTuple,
       UnpausedEvent.OutputObject
