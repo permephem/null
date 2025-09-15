@@ -8,7 +8,6 @@ import hre from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-const { ethers } = hre;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,26 +18,26 @@ async function main() {
   console.log('💰 Make sure you have sufficient ETH for gas fees');
 
   // Get the deployer account
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await (hre as any).ethers.getSigners();
   console.log('📝 Deploying contracts with account:', deployer.address);
   console.log(
     '💰 Account balance:',
-    ethers.formatEther(await ethers.provider.getBalance(deployer.address)),
+    (hre as any).ethers.formatEther(await (hre as any).ethers.provider.getBalance(deployer.address)),
     'ETH'
   );
 
   // Check if we have enough ETH
-  const balance = await ethers.provider.getBalance(deployer.address);
-  const minBalance = ethers.parseEther('0.1'); // Minimum 0.1 ETH
+  const balance = await (hre as any).ethers.provider.getBalance(deployer.address);
+  const minBalance = (hre as any).ethers.parseEther('0.1'); // Minimum 0.1 ETH
   if (balance < minBalance) {
     throw new Error(
-      `Insufficient balance. Need at least ${ethers.formatEther(minBalance)} ETH, have ${ethers.formatEther(balance)} ETH`
+      `Insufficient balance. Need at least ${(hre as any).ethers.formatEther(minBalance)} ETH, have ${(hre as any).ethers.formatEther(balance)} ETH`
     );
   }
 
   // Deploy CanonRegistry
   console.log('\n📋 Deploying CanonRegistry...');
-  const CanonRegistry = await ethers.getContractFactory('CanonRegistry');
+  const CanonRegistry = await (hre as any).ethers.getContractFactory('CanonRegistry');
   const canonRegistry = await CanonRegistry.deploy(
     deployer.address, // foundationTreasury
     deployer.address, // implementerTreasury
@@ -50,7 +49,7 @@ async function main() {
 
   // Deploy MaskSBT
   console.log('\n🎭 Deploying MaskSBT...');
-  const MaskSBT = await ethers.getContractFactory('MaskSBT');
+  const MaskSBT = await (hre as any).ethers.getContractFactory('MaskSBT');
   const maskSBT = await MaskSBT.deploy('Null Protocol Mask Receipts', 'NULLMASK', deployer.address);
   await maskSBT.waitForDeployment();
   const maskSBTAddress = await maskSBT.getAddress();
@@ -69,15 +68,15 @@ async function main() {
   // Output deployment summary
   console.log('\n🎉 MAINNET Deployment Summary:');
   console.log('=====================================');
-  console.log('Network:', await ethers.provider.getNetwork().then((n) => n.name));
-  console.log('Chain ID:', (await ethers.provider.getNetwork()).chainId);
+  console.log('Network:', await (hre as any).ethers.provider.getNetwork().then((n: any) => n.name));
+  console.log('Chain ID:', (await (hre as any).ethers.provider.getNetwork()).chainId);
   console.log('Deployer:', deployer.address);
   console.log('CanonRegistry:', canonRegistryAddress);
   console.log('MaskSBT:', maskSBTAddress);
   console.log('=====================================');
 
   // Save deployment info to file
-  const network = await ethers.provider.getNetwork();
+  const network = await (hre as any).ethers.provider.getNetwork();
   const deploymentInfo = {
     network: network.name,
     chainId: network.chainId.toString(),
@@ -87,7 +86,7 @@ async function main() {
       MaskSBT: maskSBTAddress,
     },
     timestamp: new Date().toISOString(),
-    blockNumber: await ethers.provider.getBlockNumber(),
+    blockNumber: await (hre as any).ethers.provider.getBlockNumber(),
     gasUsed: {
       canonRegistry: 'TBD', // Would need to track gas usage
       maskSBT: 'TBD',

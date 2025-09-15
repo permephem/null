@@ -8,7 +8,6 @@ import hre from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-const { ethers } = hre;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +16,7 @@ async function main() {
   console.log('🔍 Starting contract verification...');
 
   // Get network info
-  const network = await ethers.provider.getNetwork();
+  const network = await (hre as any).ethers.provider.getNetwork();
   console.log('Network:', network.name);
   console.log('Chain ID:', network.chainId);
 
