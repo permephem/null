@@ -1,8 +1,14 @@
 import { Router } from 'express';
-import { RelayerService } from '../services/RelayerService.js';
+import type { RelayerService } from '../services/RelayerService.js';
 
 const router = Router();
-const relayerService = new RelayerService();
+
+// This will be injected by the main application
+let relayerService: RelayerService;
+
+export function setRelayerService(service: RelayerService) {
+  relayerService = service;
+}
 
 // Health check endpoint
 router.get('/health', (req, res) => {

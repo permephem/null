@@ -1,12 +1,12 @@
 import { createHash } from 'crypto';
-import { blake3 } from 'blake3';
+import { hash } from 'blake3';
 
 export class CryptoService {
   /**
    * Generate a Blake3 hash of the input data
    */
   static hashBlake3(data: string): string {
-    return blake3(data).toString('hex');
+    return hash(data).toString('hex');
   }
 
   /**

@@ -30,7 +30,11 @@ export class SBTService {
     try {
       logger.info('Minting SBT receipt', { to, receiptHash });
 
-      const tx = await this.contract.safeMint(to, receiptHash);
+      if (!this.contract) {
+        throw new Error('Contract not initialized');
+      }
+      
+      const tx = await (this.contract as any).safeMint(to, receiptHash);
       const receipt = await tx.wait();
 
       logger.info('SBT receipt minted successfully', {
@@ -49,7 +53,11 @@ export class SBTService {
 
   async isMintingEnabled(): Promise<boolean> {
     try {
-      return await this.contract.sbtMintingEnabled();
+      if (!this.contract) {
+        return false;
+      }
+      
+      return await (this.contract as any).sbtMintingEnabled();
     } catch (error) {
       logger.error('Failed to check SBT minting status', { error });
       return false;
@@ -60,7 +68,11 @@ export class SBTService {
     try {
       logger.info('Setting SBT minting status', { enabled });
 
-      const tx = await this.contract.setSbtMintingEnabled(enabled);
+      if (!this.contract) {
+        throw new Error('Contract not initialized');
+      }
+      
+      const tx = await (this.contract as any).setSbtMintingEnabled(enabled);
       const receipt = await tx.wait();
 
       logger.info('SBT minting status updated', {

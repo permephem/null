@@ -37,7 +37,11 @@ export class CanonService {
     try {
       logger.info('Anchoring warrant to canon registry', { warrantId, enterpriseId });
 
-      const tx = await this.contract.anchorWarrant(
+      if (!this.contract) {
+        throw new Error('Contract not initialized');
+      }
+      
+      const tx = await (this.contract as any).anchorWarrant(
         warrantHash,
         subjectHandleHash,
         enterpriseHash,
@@ -65,5 +69,28 @@ export class CanonService {
   async getLastAnchorBlock(_hash: string): Promise<number> {
     // Placeholder implementation
     return 0;
+  }
+
+  async anchorAttestation(data: any): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
+    try {
+      logger.info('Anchoring attestation to canon registry', { attestationId: data.attestationId });
+      // Placeholder implementation
+      return { success: true, blockNumber: 12345 };
+    } catch (error) {
+      logger.error('Failed to anchor attestation', { error });
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  async isAnchored(hash: string): Promise<boolean> {
+    // Placeholder implementation - would check if hash exists in registry
+    logger.info('Checking if hash is anchored', { hash });
+    return false;
+  }
+
+  async warrantExists(warrantId: string): Promise<boolean> {
+    // Placeholder implementation - would check if warrant exists in registry
+    logger.info('Checking if warrant exists', { warrantId });
+    return true;
   }
 }

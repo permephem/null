@@ -3,9 +3,8 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title MaskSBT
@@ -14,7 +13,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * @author Null Foundation
  */
 contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
-    using Counters for Counters.Counter;
+    uint256 private _tokenIdCounter;
 
     // Roles
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -25,7 +24,6 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     bool public transferEnabled = false;   // SBTs are non-transferable by default
 
     // Counters
-    Counters.Counter private _tokenIdCounter;
 
     // Token metadata
     mapping(uint256 => bytes32) public receiptHashes;
@@ -79,8 +77,8 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         require(to != address(0), "Cannot mint to zero address");
         require(receiptHash != bytes32(0), "Invalid receipt hash");
 
-        _tokenIdCounter.increment();
-        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter++;
+        uint256 tokenId = _tokenIdCounter;
 
         _safeMint(to, tokenId);
         
@@ -100,7 +98,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @param tokenId Token ID to burn
      */
     function burnReceipt(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         
         bytes32 receiptHash = receiptHashes[tokenId];
         address owner = ownerOf(tokenId);
@@ -140,7 +138,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return receiptHash The receipt hash
      */
     function getReceiptHash(uint256 tokenId) external view returns (bytes32) {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         return receiptHashes[tokenId];
     }
 
@@ -150,7 +148,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return timestamp The mint timestamp
      */
     function getMintTimestamp(uint256 tokenId) external view returns (uint256) {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         return mintTimestamps[tokenId];
     }
 
@@ -160,7 +158,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return minter The original minter address
      */
     function getOriginalMinter(uint256 tokenId) external view returns (address) {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         return originalMinter[tokenId];
     }
 
@@ -170,8 +168,8 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return exists Whether the hash has been minted
      */
     function isReceiptMinted(bytes32 receiptHash) external view returns (bool) {
-        for (uint256 i = 1; i <= _tokenIdCounter.current(); i++) {
-            if (_exists(i) && receiptHashes[i] == receiptHash) {
+        for (uint256 i = 1; i <= _tokenIdCounter; i++) {
+            if (ownerOf(i) != address(0) && receiptHashes[i] == receiptHash) {
                 return true;
             }
         }
@@ -183,27 +181,27 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return supply The total number of minted tokens
      */
     function totalSupply() external view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
 
     /**
      * @dev Override transfer functions to enforce SBT behavior
      */
-    function _beforeTokenTransfer(
-        address from,
+    function _update(
         address to,
         uint256 tokenId,
-        uint256 batchSize
-    ) internal override {
+        address auth
+    ) internal override returns (address) {
+        address from = _ownerOf(tokenId);
+        
         // Allow minting and burning
         if (from == address(0) || to == address(0)) {
-            super._beforeTokenTransfer(from, to, tokenId, batchSize);
-            return;
+            return super._update(to, tokenId, auth);
         }
 
         // Block transfers unless explicitly enabled
         require(transferEnabled, "Transfers are disabled for SBTs");
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        return super._update(to, tokenId, auth);
     }
 
     /**

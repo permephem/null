@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 interface RateLimitStore {
   [key: string]: {
@@ -17,7 +17,8 @@ export const rateLimiter = (req: Request, res: Response, next: NextFunction) => 
 
   // Clean up expired entries
   Object.keys(store).forEach((k) => {
-    if (store[k].resetTime < now) {
+    const entry = store[k];
+    if (entry && entry.resetTime < now) {
       delete store[k];
     }
   });

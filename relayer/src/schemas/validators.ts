@@ -91,3 +91,22 @@ export type NullWarrant = z.infer<typeof NullWarrantSchema>;
 export type DeletionAttestation = z.infer<typeof DeletionAttestationSchema>;
 export type MaskReceipt = z.infer<typeof MaskReceiptSchema>;
 export type ProcessingResult = z.infer<typeof ProcessingResultSchema>;
+
+// Validation functions
+export function validateWarrant(warrant: any): { valid: boolean; error?: string } {
+  try {
+    NullWarrantSchema.parse(warrant);
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : 'Validation error' };
+  }
+}
+
+export function validateAttestation(attestation: any): { valid: boolean; error?: string } {
+  try {
+    DeletionAttestationSchema.parse(attestation);
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : 'Validation error' };
+  }
+}

@@ -11,10 +11,10 @@ import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { logger } from './utils/logger.js';
+import logger from './utils/logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
-import { apiRoutes } from './api/routes.js';
+import apiRoutes, { setRelayerService } from './api/routes.js';
 import { RelayerService } from './services/RelayerService.js';
 import { CanonService } from './canon/CanonService.js';
 import { SBTService } from './sbt/SBTService.js';
@@ -30,11 +30,28 @@ async function main() {
   try {
     logger.info('Starting Null Protocol Relayer...');
 
-    // Initialize services
-    const canonService = new CanonService();
-    const sbtService = new SBTService();
-    const emailService = new EmailService();
+    // Initialize services with configuration
+    const canonService = new CanonService({
+      rpcUrl: process.env.ETHEREUM_RPC_URL || 'http://localhost:8545',
+      privateKey: process.env.RELAYER_PRIVATE_KEY || '',
+      contractAddress: process.env.CANON_REGISTRY_ADDRESS || '',
+    });
+    const sbtService = new SBTService({
+      rpcUrl: process.env.ETHEREUM_RPC_URL || 'http://localhost:8545',
+      privateKey: process.env.RELAYER_PRIVATE_KEY || '',
+      contractAddress: process.env.MASK_SBT_ADDRESS || '',
+    });
+    const emailService = new EmailService({
+      smtpHost: process.env.SMTP_HOST || 'localhost',
+      smtpPort: parseInt(process.env.SMTP_PORT || '587'),
+      smtpUser: process.env.SMTP_USER || '',
+      smtpPass: process.env.SMTP_PASS || '',
+      fromEmail: process.env.FROM_EMAIL || '',
+    });
     const _relayerService = new RelayerService(canonService, sbtService, emailService);
+
+    // Set the relayer service for routes
+    setRelayerService(_relayerService);
 
     // Initialize Express app
     const app = express();

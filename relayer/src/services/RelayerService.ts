@@ -5,13 +5,13 @@
  */
 
 import { ethers } from 'ethers';
-import { blake3 } from 'blake3';
+import { hash } from 'blake3';
 // import { createHash } from 'crypto';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import { CanonService } from '../canon/CanonService.js';
 import { SBTService } from '../sbt/SBTService.js';
 import { EmailService } from '../email/EmailService.js';
-import {
+import type {
   NullWarrant,
   DeletionAttestation,
   MaskReceipt,
@@ -19,7 +19,7 @@ import {
   ValidationResult,
 } from '../types/index.js';
 import { validateWarrant, validateAttestation } from '../schemas/validators.js';
-import { generateSubjectTag, verifySignature } from '../crypto/crypto.js';
+import { CryptoService } from '../crypto/crypto.js';
 
 export class RelayerService {
   private canonService: CanonService;
@@ -52,13 +52,13 @@ export class RelayerService {
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error,
+          error: validation.error || 'Validation failed',
           code: 'VALIDATION_ERROR',
         };
       }
 
       // Generate privacy-preserving subject tag
-      const subjectTag = await generateSubjectTag(
+      const subjectTag = CryptoService.generateSubjectTag(
         warrant.subject.subject_handle,
         warrant.enterprise_id,
         warrant.warrant_id
@@ -68,21 +68,16 @@ export class RelayerService {
       const warrantDigest = this.computeWarrantDigest(warrant);
 
       // Anchor warrant to Canon Registry
-      const anchorResult = await this.canonService.anchorWarrant({
+      const anchorTxHash = await this.canonService.anchorWarrant(
         warrantDigest,
+        warrantDigest, // subjectHandleHash placeholder
+        warrantDigest, // enterpriseHash placeholder
+        warrant.enterprise_id,
+        warrant.warrant_id,
+        warrantDigest, // controllerDidHash placeholder
         subjectTag,
-        enterpriseId: warrant.enterprise_id,
-        warrantId: warrant.warrant_id,
-        assurance: this.determineAssuranceLevel(warrant),
-      });
-
-      if (!anchorResult.success) {
-        return {
-          success: false,
-          error: anchorResult.error,
-          code: 'ANCHOR_ERROR',
-        };
-      }
+        this.determineAssuranceLevel(warrant)
+      );
 
       // Send warrant to enterprise endpoint
       const enterpriseResult = await this.sendWarrantToEnterprise(warrant);
@@ -92,7 +87,7 @@ export class RelayerService {
         data: {
           warrantDigest,
           subjectTag,
-          anchorBlock: anchorResult.blockNumber,
+          anchorTxHash,
           enterpriseResponse: enterpriseResult,
         },
       };
@@ -120,7 +115,7 @@ export class RelayerService {
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error,
+          error: validation.error || 'Validation failed',
           code: 'VALIDATION_ERROR',
         };
       }
@@ -140,7 +135,7 @@ export class RelayerService {
       if (!anchorResult.success) {
         return {
           success: false,
-          error: anchorResult.error,
+          error: anchorResult.error || 'Anchor failed',
           code: 'ANCHOR_ERROR',
         };
       }
@@ -189,7 +184,11 @@ export class RelayerService {
       }
 
       // Signature verification
-      const signatureValid = await verifySignature(warrant);
+      const signatureValid = CryptoService.verifySignature(
+        JSON.stringify(warrant),
+        warrant.signature?.sig || '',
+        warrant.signature?.kid || ''
+      );
       if (!signatureValid) {
         return {
           valid: false,
@@ -239,7 +238,11 @@ export class RelayerService {
       }
 
       // Signature verification
-      const signatureValid = await verifySignature(attestation);
+      const signatureValid = CryptoService.verifySignature(
+        JSON.stringify(attestation),
+        attestation.signature?.sig || '',
+        attestation.signature?.kid || ''
+      );
       if (!signatureValid) {
         return {
           valid: false,
@@ -272,7 +275,7 @@ export class RelayerService {
    */
   private computeWarrantDigest(warrant: NullWarrant): string {
     const canonicalWarrant = this.canonicalizeWarrant(warrant);
-    return blake3(canonicalWarrant).toString('hex');
+    return hash(canonicalWarrant).toString('hex');
   }
 
   /**
@@ -282,7 +285,17 @@ export class RelayerService {
    */
   private computeAttestationDigest(attestation: DeletionAttestation): string {
     const canonicalAttestation = this.canonicalizeAttestation(attestation);
-    return blake3(canonicalAttestation).toString('hex');
+    return hash(canonicalAttestation).toString('hex');
+  }
+
+  /**
+   * Compute receipt digest
+   * @param receipt The receipt
+   * @returns The digest
+   */
+  private computeReceiptDigest(receipt: MaskReceipt): string {
+    const canonicalReceipt = this.canonicalizeReceipt(receipt);
+    return hash(canonicalReceipt).toString('hex');
   }
 
   /**
@@ -305,6 +318,17 @@ export class RelayerService {
     // Remove signature for canonicalization
     const { signature: _signature, ...canonicalAttestation } = attestation;
     return JSON.stringify(canonicalAttestation, Object.keys(canonicalAttestation).sort());
+  }
+
+  /**
+   * Canonicalize receipt for hashing
+   * @param receipt The receipt
+   * @returns Canonical JSON string
+   */
+  private canonicalizeReceipt(receipt: MaskReceipt): string {
+    // Remove signature for canonicalization
+    const { signature: _signature, ...canonicalReceipt } = receipt;
+    return JSON.stringify(canonicalReceipt, Object.keys(canonicalReceipt).sort());
   }
 
   /**
@@ -371,17 +395,43 @@ export class RelayerService {
           kid: 'relayer-key-1',
           sig: 'placeholder-signature', // Would be actual signature
         },
+        version: 'v0.2',
+        controller_did_hash: 'placeholder-controller-hash',
+        jurisdiction_bits: 0,
+        evidence_class_bits: 0,
+        timestamp: Math.floor(Date.now() / 1000),
       };
 
       // Mint SBT if enabled
       if (process.env.SBT_MINTING_ENABLED === 'true') {
-        const sbtResult = await this.sbtService.mintReceipt(receipt);
+        const receiptHash = this.computeReceiptDigest(receipt);
+        const sbtResult = await this.sbtService.mintReceipt(attestation.subject_handle, receiptHash);
         return { receipt, sbt: sbtResult };
       }
 
       return { receipt };
     } catch (error) {
       logger.error('Error generating receipt:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get status of a processing request
+   * @param id The request ID
+   * @returns Status information
+   */
+  async getStatus(id: string): Promise<any> {
+    try {
+      logger.info('Getting status for request:', { id });
+      // Placeholder implementation
+      return {
+        id,
+        status: 'processing',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      logger.error('Error getting status:', error);
       throw error;
     }
   }
