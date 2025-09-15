@@ -71,7 +71,9 @@ export class SBTService {
 
       // Note: This method may not be available in the current contract version
       // For now, we'll just log the attempt
-      logger.warn('setSbtMintingEnabled method not available in current contract version', { enabled });
+      logger.warn('setSbtMintingEnabled method not available in current contract version', {
+        enabled,
+      });
       return 'not-implemented';
     } catch (error) {
       logger.error('Failed to set SBT minting status', { enabled, error });
