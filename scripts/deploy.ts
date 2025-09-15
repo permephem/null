@@ -16,7 +16,15 @@ async function main() {
   console.log('🚀 Starting Null Protocol deployment...');
 
   // Get the deployer account
-  const [deployer] = await (hre as any).ethers.getSigners();
+  const signers = await (hre as any).ethers.getSigners();
+  if (signers.length === 0) {
+    console.error('❌ No signers available. Please check your network configuration and private key.');
+    console.log('💡 For testnet deployment, set RELAYER_PRIVATE_KEY environment variable.');
+    console.log('💡 For local development, use: npm run deploy:local');
+    process.exit(1);
+  }
+  
+  const [deployer] = signers;
   console.log('📝 Deploying contracts with account:', deployer.address);
   console.log(
     '💰 Account balance:',

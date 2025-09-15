@@ -18,7 +18,14 @@ async function main() {
   console.log('💰 Make sure you have sufficient ETH for gas fees');
 
   // Get the deployer account
-  const [deployer] = await (hre as any).ethers.getSigners();
+  const signers = await (hre as any).ethers.getSigners();
+  if (signers.length === 0) {
+    console.error('❌ No signers available. Please check your network configuration and private key.');
+    console.log('💡 For mainnet deployment, set RELAYER_PRIVATE_KEY environment variable.');
+    process.exit(1);
+  }
+  
+  const [deployer] = signers;
   console.log('📝 Deploying contracts with account:', deployer.address);
   console.log(
     '💰 Account balance:',

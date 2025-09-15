@@ -3,6 +3,18 @@ require('@nomicfoundation/hardhat-verify');
 require('hardhat-gas-reporter');
 require('solidity-coverage');
 
+// Configure ts-node for ES modules
+require('ts-node').register({
+  esm: true,
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'ESNext',
+    moduleResolution: 'node',
+    allowSyntheticDefaultImports: true,
+    esModuleInterop: true,
+  },
+});
+
 const config = {
   solidity: {
     version: '0.8.20',
