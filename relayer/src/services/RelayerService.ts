@@ -4,7 +4,6 @@
  * @author Null Foundation
  */
 
-import { ethers } from 'ethers';
 import { hash } from 'blake3';
 // import { createHash } from 'crypto';
 import logger from '../utils/logger.js';
@@ -24,18 +23,10 @@ import { CryptoService } from '../crypto/crypto.js';
 export class RelayerService {
   private canonService: CanonService;
   private sbtService: SBTService;
-  private _emailService: EmailService;
-  private provider: ethers.Provider;
-  private _wallet: ethers.Wallet;
 
-  constructor(canonService: CanonService, sbtService: SBTService, emailService: EmailService) {
+  constructor(canonService: CanonService, sbtService: SBTService, _emailService: EmailService) {
     this.canonService = canonService;
     this.sbtService = sbtService;
-    this._emailService = emailService;
-
-    // Initialize Ethereum provider and wallet
-    this.provider = new ethers.JsonRpcProvider(process.env['ETHEREUM_RPC_URL']);
-    this._wallet = new ethers.Wallet(process.env['RELAYER_PRIVATE_KEY']!, this.provider);
   }
 
   /**

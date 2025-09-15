@@ -9,10 +9,8 @@ export interface EmailConfig {
 }
 
 export class EmailService {
-  private config: EmailConfig;
-
-  constructor(config: EmailConfig) {
-    this.config = config;
+  constructor(_config: EmailConfig) {
+    // Email service placeholder - config stored for future use
   }
 
   async sendDeletionConfirmation(
