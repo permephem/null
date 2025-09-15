@@ -34,7 +34,7 @@ async function main() {
     const canonService = new CanonService();
     const sbtService = new SBTService();
     const emailService = new EmailService();
-    const relayerService = new RelayerService(canonService, sbtService, emailService);
+    const _relayerService = new RelayerService(canonService, sbtService, emailService);
 
     // Initialize Express app
     const app = express();

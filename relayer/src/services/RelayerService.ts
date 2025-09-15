@@ -6,7 +6,7 @@
 
 import { ethers } from 'ethers';
 import { blake3 } from 'blake3';
-import { createHash } from 'crypto';
+// import { createHash } from 'crypto';
 import { logger } from '../utils/logger.js';
 import { CanonService } from '../canon/CanonService.js';
 import { SBTService } from '../sbt/SBTService.js';
@@ -300,7 +300,7 @@ export class RelayerService {
    */
   private canonicalizeWarrant(warrant: NullWarrant): string {
     // Remove signature for canonicalization
-    const { signature, ...canonicalWarrant } = warrant;
+    const { signature: _signature, ...canonicalWarrant } = warrant;
     return JSON.stringify(canonicalWarrant, Object.keys(canonicalWarrant).sort());
   }
 
@@ -311,7 +311,7 @@ export class RelayerService {
    */
   private canonicalizeAttestation(attestation: DeletionAttestation): string {
     // Remove signature for canonicalization
-    const { signature, ...canonicalAttestation } = attestation;
+    const { signature: _signature, ...canonicalAttestation } = attestation;
     return JSON.stringify(canonicalAttestation, Object.keys(canonicalAttestation).sort());
   }
 
