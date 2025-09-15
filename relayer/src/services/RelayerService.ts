@@ -405,7 +405,10 @@ export class RelayerService {
       // Mint SBT if enabled
       if (process.env.SBT_MINTING_ENABLED === 'true') {
         const receiptHash = this.computeReceiptDigest(receipt);
-        const sbtResult = await this.sbtService.mintReceipt(attestation.subject_handle, receiptHash);
+        const sbtResult = await this.sbtService.mintReceipt(
+          attestation.subject_handle,
+          receiptHash
+        );
         return { receipt, sbt: sbtResult };
       }
 

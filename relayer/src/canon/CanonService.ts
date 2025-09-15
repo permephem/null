@@ -40,7 +40,7 @@ export class CanonService {
       if (!this.contract) {
         throw new Error('Contract not initialized');
       }
-      
+
       const tx = await (this.contract as any).anchorWarrant(
         warrantHash,
         subjectHandleHash,
@@ -71,7 +71,9 @@ export class CanonService {
     return 0;
   }
 
-  async anchorAttestation(data: any): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
+  async anchorAttestation(
+    data: any
+  ): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
     try {
       logger.info('Anchoring attestation to canon registry', { attestationId: data.attestationId });
       // Placeholder implementation

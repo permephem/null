@@ -33,7 +33,7 @@ export class SBTService {
       if (!this.contract) {
         throw new Error('Contract not initialized');
       }
-      
+
       const tx = await (this.contract as any).safeMint(to, receiptHash);
       const receipt = await tx.wait();
 
@@ -56,7 +56,7 @@ export class SBTService {
       if (!this.contract) {
         return false;
       }
-      
+
       return await (this.contract as any).sbtMintingEnabled();
     } catch (error) {
       logger.error('Failed to check SBT minting status', { error });
@@ -71,7 +71,7 @@ export class SBTService {
       if (!this.contract) {
         throw new Error('Contract not initialized');
       }
-      
+
       const tx = await (this.contract as any).setSbtMintingEnabled(enabled);
       const receipt = await tx.wait();
 
