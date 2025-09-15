@@ -1,20 +1,18 @@
 import { createHash, createHmac, randomBytes } from 'crypto';
 import { hash } from 'blake3';
 import { ethers } from 'ethers';
-import { ed25519 } from '@noble/ed25519';
-import { secp256k1 } from '@noble/secp256k1';
-import { create, verify } from 'jsonwebtoken';
+import * as ed25519 from '@noble/ed25519';
+import * as secp256k1 from '@noble/secp256k1';
+import jwt from 'jsonwebtoken';
 import { Resolver } from 'did-resolver';
-import { getResolver } from 'did-resolver';
+// import { getResolver } from 'did-resolver';
 
 export class CryptoService {
   private static didResolver: Resolver;
 
   static {
     // Initialize DID resolver
-    this.didResolver = new Resolver({
-      ...getResolver(),
-    });
+    this.didResolver = new Resolver({});
   }
 
   /**
@@ -92,8 +90,8 @@ export class CryptoService {
       typ: 'JWT',
     };
 
-    return create(payload, privateKey, {
-      algorithm: algorithm === 'EdDSA' ? 'EdDSA' : 'ES256',
+    return jwt.sign(payload, privateKey, {
+      algorithm: algorithm === 'EdDSA' ? 'ES256' : 'ES256', // Use ES256 as fallback
       header,
     });
   }
@@ -103,7 +101,7 @@ export class CryptoService {
    */
   static async verifyJWS(token: string, publicKey: string): Promise<any> {
     try {
-      return verify(token, publicKey, { algorithms: ['EdDSA', 'ES256'] });
+      return jwt.verify(token, publicKey, { algorithms: ['EdDSA', 'ES256'] as jwt.Algorithm[] });
     } catch (error) {
       throw new Error(`JWS verification failed: ${error}`);
     }

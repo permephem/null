@@ -1,11 +1,12 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
+import '@nomicfoundation/hardhat-chai-matchers';
 import type { MaskSBT } from '../../typechain-types';
 
 const { ethers } = hre;
 
 describe('MaskSBT', function () {
-  let maskSBT: MaskSBT;
+  let maskSBT: any;
   let owner: any;
   let minter: any;
   let user: any;

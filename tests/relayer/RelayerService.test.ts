@@ -44,18 +44,36 @@ describe('RelayerService', () => {
   describe('processWarrant', () => {
     it('should process a valid warrant successfully', async () => {
       const mockWarrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
         },
+        aud: 'test-controller',
+        jti: 'test-jti',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       // Mock successful validation
@@ -94,7 +112,7 @@ describe('RelayerService', () => {
         error: 'Missing signature',
       });
 
-      const result = await relayerService.processWarrant(mockWarrant);
+      const result = await relayerService.processWarrant(mockWarrant as any);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Missing signature');
@@ -103,18 +121,36 @@ describe('RelayerService', () => {
 
     it('should handle anchoring failures with retry logic', async () => {
       const mockWarrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
         },
+        aud: 'test-controller',
+        jti: 'test-jti',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       // Mock successful validation
@@ -165,18 +201,36 @@ describe('RelayerService', () => {
 
     it('should reject invalid signatures', async () => {
       const mockWarrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
         signature: {
           sig: 'invalid-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
         },
+        aud: 'test-controller',
+        jti: 'test-jti',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       // Mock failed signature verification
@@ -193,18 +247,36 @@ describe('RelayerService', () => {
   describe('error handling', () => {
     it('should handle network timeouts gracefully', async () => {
       const mockWarrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
         },
+        aud: 'test-controller',
+        jti: 'test-jti',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       // Mock successful validation

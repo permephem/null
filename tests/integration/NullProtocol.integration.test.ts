@@ -5,18 +5,20 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { ethers } from 'hardhat';
+import hre from 'hardhat';
 import { RelayerService } from '../../relayer/src/services/RelayerService';
 import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
-import { CanonRegistry } from '../../typechain-types';
-import { MaskSBT } from '../../typechain-types';
+import type { CanonRegistry } from '../../typechain-types';
+import type { MaskSBT } from '../../typechain-types';
+
+const { ethers } = hre;
 
 describe('Null Protocol Integration Tests', () => {
-  let canonRegistry: CanonRegistry;
-  let maskSBT: MaskSBT;
+  let canonRegistry: any;
+  let maskSBT: any;
   let relayerService: RelayerService;
   let canonService: CanonService;
   let sbtService: SBTService;
@@ -41,7 +43,7 @@ describe('Null Protocol Integration Tests', () => {
     await maskSBT.waitForDeployment();
 
     // Enable SBT minting
-    await maskSBT.setSbtMintingEnabled(true);
+    // await maskSBT.setSbtMintingEnabled(true); // Method not available in current contract
 
     // Initialize services
     canonService = new CanonService({
@@ -71,21 +73,25 @@ describe('Null Protocol Integration Tests', () => {
     it('should complete full deletion workflow successfully', async () => {
       // Step 1: Create a warrant
       const warrant = {
-        type: 'NullWarrant@v0.2',
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
         scope: ['personal_data'],
         jurisdiction: 'US',
         legal_basis: 'GDPR',
         issued_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: ['email'],
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
         nonce: CryptoService.generateNonce(),
         signature: {
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
           kid: 'test-key-id',
           sig: 'test-signature',
         },
@@ -111,16 +117,16 @@ describe('Null Protocol Integration Tests', () => {
 
       // Step 3: Create attestation
       const attestation = {
-        type: 'DeletionAttestation@v0.2',
+        type: 'DeletionAttestation@v0.2' as const,
         attestation_id: 'test-attestation-1',
         warrant_id: warrant.warrant_id,
         enterprise_id: warrant.enterprise_id,
         subject_handle: warrant.subject.subject_handle,
-        status: 'deleted',
+        status: 'deleted' as const,
         completed_at: new Date().toISOString(),
         evidence_hash: 'test-evidence-hash',
         signature: {
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
           kid: 'test-key-id',
           sig: 'test-signature',
         },
@@ -129,6 +135,7 @@ describe('Null Protocol Integration Tests', () => {
         processing_window: 3600,
         accepted_claims: ['US'],
         controller_policy_digest: 'test-policy-hash',
+        evidence: {},
       };
 
       // Step 4: Process attestation
@@ -147,21 +154,25 @@ describe('Null Protocol Integration Tests', () => {
 
     it('should handle workflow with SBT minting', async () => {
       const warrant = {
-        type: 'NullWarrant@v0.2',
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-2',
         enterprise_id: 'test-enterprise',
         subject: {
           subject_handle: 'test-subject',
+          anchors: [],
         },
         scope: ['personal_data'],
         jurisdiction: 'US',
         legal_basis: 'GDPR',
         issued_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: ['email'],
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
         nonce: CryptoService.generateNonce(),
         signature: {
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
           kid: 'test-key-id',
           sig: 'test-signature',
         },
@@ -185,16 +196,16 @@ describe('Null Protocol Integration Tests', () => {
 
       // Create attestation
       const attestation = {
-        type: 'DeletionAttestation@v0.2',
+        type: 'DeletionAttestation@v0.2' as const,
         attestation_id: 'test-attestation-2',
         warrant_id: warrant.warrant_id,
         enterprise_id: warrant.enterprise_id,
         subject_handle: warrant.subject.subject_handle,
-        status: 'deleted',
+        status: 'deleted' as const,
         completed_at: new Date().toISOString(),
         evidence_hash: 'test-evidence-hash',
         signature: {
-          alg: 'EdDSA',
+          alg: 'ed25519' as const,
           kid: 'test-key-id',
           sig: 'test-signature',
         },
@@ -203,6 +214,7 @@ describe('Null Protocol Integration Tests', () => {
         processing_window: 3600,
         accepted_claims: ['US'],
         controller_policy_digest: 'test-policy-hash',
+        evidence: {},
       };
 
       // Process attestation
@@ -270,9 +282,7 @@ describe('Null Protocol Integration Tests', () => {
         enterpriseHash,
         'test-enterprise',
         'test-warrant',
-        controllerDidHash,
-        subjectTag,
-        1
+        { value: ethers.parseEther('0.01') }
       );
       await tx.wait();
 
@@ -288,7 +298,7 @@ describe('Null Protocol Integration Tests', () => {
       const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
 
       // Mint SBT directly to contract
-      const tx = await maskSBT.safeMint(user.address, receiptHash);
+      const tx = await maskSBT.mintReceipt(user.address, receiptHash);
       await tx.wait();
 
       // Verify through service
@@ -307,12 +317,29 @@ describe('Null Protocol Integration Tests', () => {
       jest.spyOn(canonService, 'anchorWarrant').mockRejectedValue(new Error('Contract error'));
 
       const warrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-error',
         enterprise_id: 'test-enterprise',
-        subject: { subject_handle: 'test-subject' },
-        signature: { sig: 'test', kid: 'test', alg: 'EdDSA' },
+        subject: { subject_handle: 'test-subject', anchors: [] },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
+        signature: { sig: 'test', kid: 'test', alg: 'ed25519' as const },
+        aud: 'test-controller',
+        jti: 'test-jti-error',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
@@ -335,12 +362,29 @@ describe('Null Protocol Integration Tests', () => {
       });
 
       const warrant = {
+        type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-retry',
         enterprise_id: 'test-enterprise',
-        subject: { subject_handle: 'test-subject' },
-        signature: { sig: 'test', kid: 'test', alg: 'EdDSA' },
+        subject: { subject_handle: 'test-subject', anchors: [] },
+        scope: ['personal_data'],
+        jurisdiction: 'US',
+        legal_basis: 'GDPR',
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        return_channels: {
+          email: 'test@example.com',
+          callback_url: 'https://example.com/callback',
+        },
+        nonce: 'test-nonce',
+        signature: { sig: 'test', kid: 'test', alg: 'ed25519' as const },
+        aud: 'test-controller',
+        jti: 'test-jti-retry',
         nbf: Math.floor(Date.now() / 1000) - 3600,
         exp: Math.floor(Date.now() / 1000) + 3600,
+        audience_bindings: ['test-enterprise.com'],
+        version: 'v0.2',
+        evidence_requested: ['API_LOG'],
+        sla_seconds: 3600,
       };
 
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);

@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
-import { CanonRegistry, CanonRegistry__factory } from '../../../typechain-types/index.js';
+import type { CanonRegistry } from '../../../typechain-types';
+import { CanonRegistry__factory } from '../../../typechain-types';
 import logger from '../utils/logger.js';
 
 export interface CanonServiceConfig {
@@ -42,12 +43,13 @@ export class CanonService {
         enterpriseHash,
         enterpriseId,
         warrantId,
-        controllerDidHash,
-        subjectTag,
-        assurance
+        { value: ethers.parseEther('0.01') } // Pay the base fee
       );
 
       const receipt = await tx.wait();
+      if (!receipt) {
+        throw new Error('Transaction receipt is null');
+      }
       logger.info('Warrant anchored successfully', {
         warrantId,
         txHash: receipt.hash,
@@ -91,12 +93,13 @@ export class CanonService {
         enterpriseHash,
         enterpriseId,
         attestationId,
-        controllerDidHash,
-        subjectTag,
-        assurance
+        { value: ethers.parseEther('0.01') } // Pay the base fee
       );
 
       const receipt = await tx.wait();
+      if (!receipt) {
+        throw new Error('Transaction receipt is null');
+      }
       logger.info('Attestation anchored successfully', {
         attestationId,
         txHash: receipt.hash,

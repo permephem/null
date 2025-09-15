@@ -1,11 +1,12 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
+import '@nomicfoundation/hardhat-chai-matchers';
 import type { CanonRegistry } from '../../typechain-types';
 
 const { ethers } = hre;
 
 describe('CanonRegistry', function () {
-  let canonRegistry: CanonRegistry;
+  let canonRegistry: any;
   let owner: any;
   let _relayer: any;
   let user: any;

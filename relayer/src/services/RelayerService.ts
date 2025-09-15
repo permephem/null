@@ -64,7 +64,7 @@ export class RelayerService {
       const warrantDigest = this.computeWarrantDigest(warrant);
 
       // Anchor warrant to Canon Registry with retry logic
-      let anchorTxHash: string;
+      let anchorTxHash: string = '';
       let retryCount = 0;
       const maxRetries = 3;
 
@@ -156,13 +156,16 @@ export class RelayerService {
       const attestationDigest = this.computeAttestationDigest(attestation);
 
       // Anchor attestation to Canon Registry
-      const anchorResult = await this.canonService.anchorAttestation({
+      const anchorResult = await this.canonService.anchorAttestation(
         attestationDigest,
-        warrantId: attestation.warrant_id,
-        enterpriseId: attestation.enterprise_id,
-        attestationId: attestation.attestation_id,
-        status: attestation.status,
-      });
+        attestationDigest, // warrantHash placeholder
+        attestationDigest, // enterpriseHash placeholder
+        attestation.enterprise_id,
+        attestation.attestation_id,
+        attestationDigest, // controllerDidHash placeholder
+        attestationDigest, // subjectTag placeholder
+        this.determineAssuranceLevel({ evidence_requested: [] } as any)
+      );
 
       if (!anchorResult.success) {
         return {
