@@ -15,12 +15,12 @@ export class CanonService {
   constructor(config: CanonServiceConfig) {
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
     this.wallet = new ethers.Wallet(config.privateKey, this.provider);
-    
+
     // Placeholder contract ABI - would be imported from compiled contracts
     const contractABI = [
-      'function anchorWarrant(bytes32 warrantHash, bytes32 subjectHandleHash, bytes32 enterpriseHash, string enterpriseId, string warrantId, bytes32 controllerDidHash, bytes32 subjectTag, uint8 assurance) external'
+      'function anchorWarrant(bytes32 warrantHash, bytes32 subjectHandleHash, bytes32 enterpriseHash, string enterpriseId, string warrantId, bytes32 controllerDidHash, bytes32 subjectTag, uint8 assurance) external',
     ];
-    
+
     this.contract = new ethers.Contract(config.contractAddress, contractABI, this.wallet);
   }
 
@@ -36,7 +36,7 @@ export class CanonService {
   ): Promise<string> {
     try {
       logger.info('Anchoring warrant to canon registry', { warrantId, enterpriseId });
-      
+
       const tx = await this.contract.anchorWarrant(
         warrantHash,
         subjectHandleHash,
@@ -47,14 +47,14 @@ export class CanonService {
         subjectTag,
         assurance
       );
-      
+
       const receipt = await tx.wait();
-      logger.info('Warrant anchored successfully', { 
-        warrantId, 
+      logger.info('Warrant anchored successfully', {
+        warrantId,
         txHash: receipt.hash,
-        blockNumber: receipt.blockNumber 
+        blockNumber: receipt.blockNumber,
       });
-      
+
       return receipt.hash;
     } catch (error) {
       logger.error('Failed to anchor warrant', { warrantId, error });

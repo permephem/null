@@ -17,7 +17,7 @@ export const NullWarrantSchema = z.object({
     type: z.string(),
     created: z.string(),
     verificationMethod: z.string(),
-    proofValue: z.string()
+    proofValue: z.string(),
   }),
   aud: z.string(),
   jti: z.string(),
@@ -26,7 +26,7 @@ export const NullWarrantSchema = z.object({
   audience_bindings: z.array(z.string()),
   version: z.string(),
   evidence_requested: z.array(z.string()),
-  sla_seconds: z.number()
+  sla_seconds: z.number(),
 });
 
 // Deletion Attestation Schema
@@ -43,7 +43,7 @@ export const DeletionAttestationSchema = z.object({
     type: z.string(),
     created: z.string(),
     verificationMethod: z.string(),
-    proofValue: z.string()
+    proofValue: z.string(),
   }),
   aud: z.string(),
   ref: z.string(),
@@ -51,7 +51,9 @@ export const DeletionAttestationSchema = z.object({
   accepted_claims: z.array(z.string()),
   controller_policy_digest: z.string(),
   evidence: z.record(z.any()).optional(),
-  denial_reason: z.enum(['not_found', 'legal_obligation', 'technical_constraint', 'policy_violation']).optional()
+  denial_reason: z
+    .enum(['not_found', 'legal_obligation', 'technical_constraint', 'policy_violation'])
+    .optional(),
 });
 
 // Mask Receipt Schema
@@ -68,13 +70,13 @@ export const MaskReceiptSchema = z.object({
     type: z.string(),
     created: z.string(),
     verificationMethod: z.string(),
-    proofValue: z.string()
+    proofValue: z.string(),
   }),
   version: z.string(),
   controller_did_hash: z.string(),
   jurisdiction_bits: z.number(),
   evidence_class_bits: z.number(),
-  timestamp: z.number()
+  timestamp: z.number(),
 });
 
 // Processing Result Schema
@@ -82,7 +84,7 @@ export const ProcessingResultSchema = z.object({
   success: z.boolean(),
   error: z.string().optional(),
   code: z.string(),
-  data: z.any().optional()
+  data: z.any().optional(),
 });
 
 export type NullWarrant = z.infer<typeof NullWarrantSchema>;

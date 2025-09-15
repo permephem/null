@@ -11,12 +11,12 @@ import { logger } from '../utils/logger.js';
 import { CanonService } from '../canon/CanonService.js';
 import { SBTService } from '../sbt/SBTService.js';
 import { EmailService } from '../email/EmailService.js';
-import { 
-  NullWarrant, 
-  DeletionAttestation, 
+import {
+  NullWarrant,
+  DeletionAttestation,
   MaskReceipt,
   ProcessingResult,
-  ValidationResult 
+  ValidationResult,
 } from '../types/index.js';
 import { validateWarrant, validateAttestation } from '../schemas/validators.js';
 import { generateSubjectTag, verifySignature } from '../crypto/crypto.js';
@@ -28,15 +28,11 @@ export class RelayerService {
   private provider: ethers.Provider;
   private wallet: ethers.Wallet;
 
-  constructor(
-    canonService: CanonService,
-    sbtService: SBTService,
-    emailService: EmailService
-  ) {
+  constructor(canonService: CanonService, sbtService: SBTService, emailService: EmailService) {
     this.canonService = canonService;
     this.sbtService = sbtService;
     this.emailService = emailService;
-    
+
     // Initialize Ethereum provider and wallet
     this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_RPC_URL);
     this.wallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY!, this.provider);
@@ -57,7 +53,7 @@ export class RelayerService {
         return {
           success: false,
           error: validation.error,
-          code: 'VALIDATION_ERROR'
+          code: 'VALIDATION_ERROR',
         };
       }
 
@@ -77,14 +73,14 @@ export class RelayerService {
         subjectTag,
         enterpriseId: warrant.enterprise_id,
         warrantId: warrant.warrant_id,
-        assurance: this.determineAssuranceLevel(warrant)
+        assurance: this.determineAssuranceLevel(warrant),
       });
 
       if (!anchorResult.success) {
         return {
           success: false,
           error: anchorResult.error,
-          code: 'ANCHOR_ERROR'
+          code: 'ANCHOR_ERROR',
         };
       }
 
@@ -97,16 +93,15 @@ export class RelayerService {
           warrantDigest,
           subjectTag,
           anchorBlock: anchorResult.blockNumber,
-          enterpriseResponse: enterpriseResult
-        }
+          enterpriseResponse: enterpriseResult,
+        },
       };
-
     } catch (error) {
       logger.error('Error processing warrant:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        code: 'PROCESSING_ERROR'
+        code: 'PROCESSING_ERROR',
       };
     }
   }
@@ -126,7 +121,7 @@ export class RelayerService {
         return {
           success: false,
           error: validation.error,
-          code: 'VALIDATION_ERROR'
+          code: 'VALIDATION_ERROR',
         };
       }
 
@@ -139,14 +134,14 @@ export class RelayerService {
         warrantId: attestation.warrant_id,
         enterpriseId: attestation.enterprise_id,
         attestationId: attestation.attestation_id,
-        status: attestation.status
+        status: attestation.status,
       });
 
       if (!anchorResult.success) {
         return {
           success: false,
           error: anchorResult.error,
-          code: 'ANCHOR_ERROR'
+          code: 'ANCHOR_ERROR',
         };
       }
 
@@ -158,8 +153,8 @@ export class RelayerService {
           data: {
             attestationDigest,
             receipt: receiptResult,
-            anchorBlock: anchorResult.blockNumber
-          }
+            anchorBlock: anchorResult.blockNumber,
+          },
         };
       }
 
@@ -167,16 +162,15 @@ export class RelayerService {
         success: true,
         data: {
           attestationDigest,
-          anchorBlock: anchorResult.blockNumber
-        }
+          anchorBlock: anchorResult.blockNumber,
+        },
       };
-
     } catch (error) {
       logger.error('Error processing attestation:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        code: 'PROCESSING_ERROR'
+        code: 'PROCESSING_ERROR',
       };
     }
   }
@@ -199,7 +193,7 @@ export class RelayerService {
       if (!signatureValid) {
         return {
           valid: false,
-          error: 'Invalid signature'
+          error: 'Invalid signature',
         };
       }
 
@@ -209,7 +203,7 @@ export class RelayerService {
       if (isAnchored) {
         return {
           valid: false,
-          error: 'Warrant already processed (replay attack)'
+          error: 'Warrant already processed (replay attack)',
         };
       }
 
@@ -218,16 +212,15 @@ export class RelayerService {
       if (warrant.exp && warrant.exp < now) {
         return {
           valid: false,
-          error: 'Warrant has expired'
+          error: 'Warrant has expired',
         };
       }
 
       return { valid: true };
-
     } catch (error) {
       return {
         valid: false,
-        error: error instanceof Error ? error.message : 'Validation error'
+        error: error instanceof Error ? error.message : 'Validation error',
       };
     }
   }
@@ -250,7 +243,7 @@ export class RelayerService {
       if (!signatureValid) {
         return {
           valid: false,
-          error: 'Invalid signature'
+          error: 'Invalid signature',
         };
       }
 
@@ -259,16 +252,15 @@ export class RelayerService {
       if (!warrantExists) {
         return {
           valid: false,
-          error: 'Referenced warrant does not exist'
+          error: 'Referenced warrant does not exist',
         };
       }
 
       return { valid: true };
-
     } catch (error) {
       return {
         valid: false,
-        error: error instanceof Error ? error.message : 'Validation error'
+        error: error instanceof Error ? error.message : 'Validation error',
       };
     }
   }
@@ -322,14 +314,18 @@ export class RelayerService {
    */
   private determineAssuranceLevel(warrant: NullWarrant): number {
     // High assurance: TEE or HSM evidence requested
-    if (warrant.evidence_requested?.includes('TEE_QUOTE') || 
-        warrant.evidence_requested?.includes('KEY_DESTROY')) {
+    if (
+      warrant.evidence_requested?.includes('TEE_QUOTE') ||
+      warrant.evidence_requested?.includes('KEY_DESTROY')
+    ) {
       return 2;
     }
 
     // Medium assurance: API logs or DKIM
-    if (warrant.evidence_requested?.includes('API_LOG') || 
-        warrant.evidence_requested?.includes('DKIM_ATTESTATION')) {
+    if (
+      warrant.evidence_requested?.includes('API_LOG') ||
+      warrant.evidence_requested?.includes('DKIM_ATTESTATION')
+    ) {
       return 1;
     }
 
@@ -345,11 +341,11 @@ export class RelayerService {
   private async sendWarrantToEnterprise(warrant: NullWarrant): Promise<any> {
     // Implementation for sending warrant to enterprise
     // This would typically make an HTTP request to the enterprise's /null/closure endpoint
-    logger.info('Sending warrant to enterprise:', { 
+    logger.info('Sending warrant to enterprise:', {
       enterpriseId: warrant.enterprise_id,
-      warrantId: warrant.warrant_id 
+      warrantId: warrant.warrant_id,
     });
-    
+
     // Placeholder implementation
     return { status: 'sent', timestamp: new Date().toISOString() };
   }
@@ -373,8 +369,8 @@ export class RelayerService {
         signature: {
           alg: 'ed25519',
           kid: 'relayer-key-1',
-          sig: 'placeholder-signature' // Would be actual signature
-        }
+          sig: 'placeholder-signature', // Would be actual signature
+        },
       };
 
       // Mint SBT if enabled
@@ -384,7 +380,6 @@ export class RelayerService {
       }
 
       return { receipt };
-
     } catch (error) {
       logger.error('Error generating receipt:', error);
       throw error;

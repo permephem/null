@@ -4,9 +4,9 @@ on:
   schedule:
     - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   NODE_VERSION: '18'
@@ -129,10 +129,10 @@ jobs:
         run: |
           # Test for reentrancy vulnerabilities
           npm run test:reentrancy
-          
+
           # Test for access control issues
           npm run test:access-control
-          
+
           # Test for integer overflow/underflow
           npm run test:integer-overflow
         continue-on-error: true
@@ -151,13 +151,13 @@ jobs:
             echo "❌ Potential private key found!"
             exit 1
           fi
-          
+
           # Check for API keys
           if grep -r "sk-[a-zA-Z0-9]" --include="*.ts" --include="*.js" .; then
             echo "❌ Potential API key found!"
             exit 1
           fi
-          
+
           echo "✅ No hardcoded secrets found"
 
       - name: Check for sensitive data
@@ -166,7 +166,7 @@ jobs:
           if grep -r "@" --include="*.ts" --include="*.js" --include="*.sol" . | grep -v "//" | grep -v "/*"; then
             echo "⚠️  Email addresses found in code"
           fi
-          
+
           # Check for IP addresses
           if grep -r "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" --include="*.ts" --include="*.js" .; then
             echo "⚠️  IP addresses found in code"
@@ -175,7 +175,15 @@ jobs:
   security-report:
     name: Generate Security Report
     runs-on: ubuntu-latest
-    needs: [dependency-audit, smart-contract-security, code-scanning, secret-scanning, security-tests, compliance-check]
+    needs:
+      [
+        dependency-audit,
+        smart-contract-security,
+        code-scanning,
+        secret-scanning,
+        security-tests,
+        compliance-check,
+      ]
     if: always()
     steps:
       - name: Download all artifacts
@@ -186,14 +194,14 @@ jobs:
           echo "# Security Audit Report" > security-report.md
           echo "Generated on: $(date)" >> security-report.md
           echo "" >> security-report.md
-          
+
           echo "## Dependency Audit" >> security-report.md
           if [ -f audit-results.json ]; then
             echo "✅ Dependency audit completed" >> security-report.md
           else
             echo "❌ Dependency audit failed" >> security-report.md
           fi
-          
+
           echo "" >> security-report.md
           echo "## Smart Contract Security" >> security-report.md
           if [ -f slither-results.json ]; then
@@ -201,11 +209,11 @@ jobs:
           else
             echo "❌ Slither analysis failed" >> security-report.md
           fi
-          
+
           echo "" >> security-report.md
           echo "## Code Scanning" >> security-report.md
           echo "✅ CodeQL analysis completed" >> security-report.md
-          
+
           echo "" >> security-report.md
           echo "## Secret Scanning" >> security-report.md
           echo "✅ TruffleHog scan completed" >> security-report.md

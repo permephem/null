@@ -14,9 +14,9 @@ const MAX_REQUESTS = 100; // requests per window
 export const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
   const key = req.ip || 'unknown';
   const now = Date.now();
-  
+
   // Clean up expired entries
-  Object.keys(store).forEach(k => {
+  Object.keys(store).forEach((k) => {
     if (store[k].resetTime < now) {
       delete store[k];
     }
@@ -25,7 +25,7 @@ export const rateLimiter = (req: Request, res: Response, next: NextFunction) => 
   if (!store[key]) {
     store[key] = {
       count: 1,
-      resetTime: now + WINDOW_MS
+      resetTime: now + WINDOW_MS,
     };
     return next();
   }
@@ -35,8 +35,8 @@ export const rateLimiter = (req: Request, res: Response, next: NextFunction) => 
       error: {
         message: 'Too many requests',
         statusCode: 429,
-        retryAfter: Math.ceil((store[key].resetTime - now) / 1000)
-      }
+        retryAfter: Math.ceil((store[key].resetTime - now) / 1000),
+      },
     });
   }
 

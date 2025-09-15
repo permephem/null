@@ -105,18 +105,21 @@ null-protocol/
 ## 🔧 Core Features
 
 ### Privacy-Preserving Architecture
+
 - **HMAC-Based Subject Tags** - Prevents correlation attacks
 - **W3C Verifiable Credentials** - Default receipt format
 - **VOPRF Support** - Negative-registry checks without revealing identity
 - **Stealth Address Support** - Optional on-chain proof (EIP-5564)
 
 ### Security Hardening
+
 - **Replay Protection** - Unique identifiers and timestamps
 - **Gas Optimization** - Hashed fields and pull payment pattern
 - **Access Control** - DID doc pinning and key rotation
 - **Evidence Standardization** - Structured evidence types
 
 ### Enterprise Integration
+
 - **Dual-Layer Payment** - Fiat for enterprises, NULL for settlement
 - **Obol Economic Model** - 12/13 to implementer, 1/13 to Foundation
 - **Negative Registry** - Data broker compliance checking
@@ -185,4 +188,4 @@ This software is provided "as is" without warranty of any kind. Use at your own 
 
 **Built with ❤️ by the Null Foundation**
 
-*"Delete means delete. Not a checkbox, not a policy—a covenant enforced in code."*
+_"Delete means delete. Not a checkbox, not a policy—a covenant enforced in code."_

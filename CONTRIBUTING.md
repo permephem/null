@@ -50,26 +50,29 @@ We welcome various types of contributions:
 ### Environment Setup
 
 1. **Copy environment file**:
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Configure environment variables**:
+
    ```bash
    # Ethereum configuration
    ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
    RELAYER_PRIVATE_KEY=your_private_key_here
-   
+
    # Contract addresses
    CANON_REGISTRY_ADDRESS=0x...
    MASK_SBT_ADDRESS=0x...
-   
+
    # Security settings
    SBT_MINTING_ENABLED=false
    TRANSFER_ENABLED=false
    ```
 
 3. **Start local blockchain**:
+
    ```bash
    npm run hardhat:node
    ```
@@ -190,6 +193,7 @@ npm run security:test
 ### Before Submitting
 
 1. **Ensure tests pass**:
+
    ```bash
    npm test
    npm run lint
@@ -206,9 +210,11 @@ npm run security:test
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
@@ -216,16 +222,19 @@ Brief description of changes
 - [ ] Security improvement
 
 ## Testing
+
 - [ ] Tests pass locally
 - [ ] New tests added
 - [ ] Security tests pass
 
 ## Security Considerations
+
 - [ ] No sensitive data exposed
 - [ ] Input validation implemented
 - [ ] Access controls reviewed
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
 - [ ] Documentation updated
@@ -335,4 +344,4 @@ By contributing to Null Protocol, you agree that your contributions will be lice
 
 **Thank you for contributing to the future of digital rights!**
 
-*"Delete means delete. Not a checkbox, not a policy—a covenant enforced in code."*
+_"Delete means delete. Not a checkbox, not a policy—a covenant enforced in code."_

@@ -23,16 +23,16 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       logger.info('Sending deletion confirmation email', { to, warrantId, deletionStatus });
-      
+
       // Placeholder implementation - would integrate with actual email service
       const emailContent = {
         to,
         subject,
         body: `Your data deletion request (${warrantId}) has been processed with status: ${deletionStatus}`,
         warrantId,
-        deletionStatus
+        deletionStatus,
       };
-      
+
       logger.info('Email sent successfully', emailContent);
       return true;
     } catch (error) {
@@ -48,15 +48,15 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       logger.info('Sending error notification email', { to, error, context });
-      
+
       // Placeholder implementation
       const emailContent = {
         to,
         subject: 'Null Protocol Relayer Error',
         body: `An error occurred: ${error}`,
-        context
+        context,
       };
-      
+
       logger.info('Error notification sent successfully', emailContent);
       return true;
     } catch (error) {

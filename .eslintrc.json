@@ -1,7 +1,5 @@
 {
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "env": {
@@ -15,11 +13,14 @@
   },
   "rules": {
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": ["error", { 
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "caughtErrorsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "no-console": "warn"
   },
   "ignorePatterns": [

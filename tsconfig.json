@@ -30,19 +30,8 @@
     "verbatimModuleSyntax": true,
     "types": ["node", "jest"]
   },
-  "include": [
-    "relayer/src/**/*",
-    "scripts/**/*",
-    "tests/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "artifacts",
-    "cache",
-    "typechain-types",
-    "coverage"
-  ],
+  "include": ["relayer/src/**/*", "scripts/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist", "artifacts", "cache", "typechain-types", "coverage"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

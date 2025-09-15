@@ -50,11 +50,7 @@ export class CryptoService {
   /**
    * Generate a subject tag using HMAC-Blake3
    */
-  static generateSubjectTag(
-    controllerKey: string,
-    subjectDID: string,
-    context: string
-  ): string {
+  static generateSubjectTag(controllerKey: string, subjectDID: string, context: string): string {
     const message = `NULL_TAG${subjectDID}${context}`;
     // Using Blake3 as HMAC alternative for simplicity
     return this.hashBlake3(controllerKey + message);
@@ -63,11 +59,7 @@ export class CryptoService {
   /**
    * Verify a signature (placeholder implementation)
    */
-  static verifySignature(
-    _data: string,
-    _signature: string,
-    _publicKey: string
-  ): boolean {
+  static verifySignature(_data: string, _signature: string, _publicKey: string): boolean {
     // Placeholder implementation - would use actual signature verification
     return true;
   }

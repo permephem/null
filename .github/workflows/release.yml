@@ -159,7 +159,7 @@ jobs:
         run: |
           # Update version in package.json
           npm version ${{ github.ref_name }} --no-git-tag-version
-          
+
           # Update documentation with new version
           echo "Updated to version ${{ github.ref_name }}" > VERSION.md
 
@@ -186,7 +186,7 @@ jobs:
         run: |
           # Check for known vulnerabilities in dependencies
           npm audit --json > audit-results.json
-          
+
           # Check for security issues in code
           npm run security:audit
 

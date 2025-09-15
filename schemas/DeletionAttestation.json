@@ -5,86 +5,97 @@
   "description": "Enhanced Deletion Attestation with security controls and structured evidence",
   "type": "object",
   "required": [
-    "type","attestation_id","warrant_id","enterprise_id",
-    "subject_handle","status","completed_at","evidence_hash","signature",
-    "aud","ref","processing_window","accepted_claims","controller_policy_digest"
+    "type",
+    "attestation_id",
+    "warrant_id",
+    "enterprise_id",
+    "subject_handle",
+    "status",
+    "completed_at",
+    "evidence_hash",
+    "signature",
+    "aud",
+    "ref",
+    "processing_window",
+    "accepted_claims",
+    "controller_policy_digest"
   ],
   "properties": {
-    "type": { 
+    "type": {
       "const": "DeletionAttestation@v0.2",
       "description": "Schema type identifier"
     },
-    "attestation_id": { 
+    "attestation_id": {
       "type": "string",
       "description": "Unique attestation identifier"
     },
-    "warrant_id": { 
+    "warrant_id": {
       "type": "string",
       "description": "Reference to the warrant"
     },
-    "enterprise_id": { 
+    "enterprise_id": {
       "type": "string",
       "description": "Enterprise identifier"
     },
-    "subject_handle": { 
-      "type": "string", 
+    "subject_handle": {
+      "type": "string",
       "pattern": "^0x[0-9a-fA-F]{16,}$",
       "description": "Privacy-preserving subject handle"
     },
-    "status": { 
-      "type": "string", 
-      "enum": ["deleted","suppressed","not_found","rejected"],
+    "status": {
+      "type": "string",
+      "enum": ["deleted", "suppressed", "not_found", "rejected"],
       "description": "Deletion status"
     },
-    "completed_at": { 
-      "type": "string", 
+    "completed_at": {
+      "type": "string",
       "format": "date-time",
       "description": "Completion timestamp"
     },
-    "evidence_hash": { 
-      "type": "string", 
+    "evidence_hash": {
+      "type": "string",
       "pattern": "^0x[0-9a-fA-F]{16,}$",
       "description": "Hash of evidence"
     },
-    "retention_policy": { 
-      "type": "string", 
+    "retention_policy": {
+      "type": "string",
       "maxLength": 200,
       "description": "Data retention policy"
     },
-    "signature": { 
-      "type": "object", 
-      "required": ["alg","kid","sig"], 
-      "properties": { 
-        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
-        "kid": {"type": "string"}, 
-        "sig": {"type": "string","contentEncoding": "base64"}
+    "signature": {
+      "type": "object",
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["ed25519", "secp256k1", "p256"] },
+        "kid": { "type": "string" },
+        "sig": { "type": "string", "contentEncoding": "base64" }
       },
       "description": "Cryptographic signature"
     },
-    "aud": { 
-      "type": "string", 
+    "aud": {
+      "type": "string",
       "description": "Engine DID (audience)"
     },
-    "ref": { 
-      "type": "string", 
+    "ref": {
+      "type": "string",
       "description": "Warrant jti reference"
     },
-    "processing_window": { 
-      "type": "number", 
+    "processing_window": {
+      "type": "number",
       "description": "Processing time window"
     },
-    "accepted_claims": { 
-      "type": "array", 
+    "accepted_claims": {
+      "type": "array",
       "items": { "type": "string" },
       "description": "Accepted jurisdiction claims"
     },
-    "denial_reason": { 
+    "denial_reason": {
       "type": "string",
-      "enum": ["not_found","legal_obligation","technical_constraint","policy_violation"],
+      "enum": ["not_found", "legal_obligation", "technical_constraint", "policy_violation"],
       "description": "Controlled enum for denial reasons"
     },
-    "controller_policy_digest": { 
-      "type": "string", 
+    "controller_policy_digest": {
+      "type": "string",
       "description": "Policy hash"
     },
     "evidence": {
