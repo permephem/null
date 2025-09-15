@@ -259,4 +259,5 @@ Following these steps lets you run a local or testnet instance, submit deletion 
 ---
 
 **The Null Protocol**: _Where data goes to die, verifiably._
+
 # Workflow Test
