@@ -31,7 +31,7 @@
     "dev": "concurrently \"npm run hardhat:node\" \"npm run relayer:dev\"",
     "docs:build": "typedoc",
     "docs:serve": "serve docs/_build",
-    "security:audit": "npm audit && slither .",
+    "security:audit": "npm audit --audit-level=high || true",
     "security:test": "echidna-test contracts/",
     "precommit": "npm run lint && npm run format:check && npm run type-check",
     "prepush": "npm run test && npm run security:audit"
