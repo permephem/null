@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://null.foundation/schemas/DeletionAttestation.v0.2.json",
+  "title": "DeletionAttestation@v0.2",
+  "description": "Enhanced Deletion Attestation with security controls and structured evidence",
+  "type": "object",
+  "required": [
+    "type","attestation_id","warrant_id","enterprise_id",
+    "subject_handle","status","completed_at","evidence_hash","signature",
+    "aud","ref","processing_window","accepted_claims","controller_policy_digest"
+  ],
+  "properties": {
+    "type": { 
+      "const": "DeletionAttestation@v0.2",
+      "description": "Schema type identifier"
+    },
+    "attestation_id": { 
+      "type": "string",
+      "description": "Unique attestation identifier"
+    },
+    "warrant_id": { 
+      "type": "string",
+      "description": "Reference to the warrant"
+    },
+    "enterprise_id": { 
+      "type": "string",
+      "description": "Enterprise identifier"
+    },
+    "subject_handle": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Privacy-preserving subject handle"
+    },
+    "status": { 
+      "type": "string", 
+      "enum": ["deleted","suppressed","not_found","rejected"],
+      "description": "Deletion status"
+    },
+    "completed_at": { 
+      "type": "string", 
+      "format": "date-time",
+      "description": "Completion timestamp"
+    },
+    "evidence_hash": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Hash of evidence"
+    },
+    "retention_policy": { 
+      "type": "string", 
+      "maxLength": 200,
+      "description": "Data retention policy"
+    },
+    "signature": { 
+      "type": "object", 
+      "required": ["alg","kid","sig"], 
+      "properties": { 
+        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
+        "kid": {"type": "string"}, 
+        "sig": {"type": "string","contentEncoding": "base64"}
+      },
+      "description": "Cryptographic signature"
+    },
+    "aud": { 
+      "type": "string", 
+      "description": "Engine DID (audience)"
+    },
+    "ref": { 
+      "type": "string", 
+      "description": "Warrant jti reference"
+    },
+    "processing_window": { 
+      "type": "number", 
+      "description": "Processing time window"
+    },
+    "accepted_claims": { 
+      "type": "array", 
+      "items": { "type": "string" },
+      "description": "Accepted jurisdiction claims"
+    },
+    "denial_reason": { 
+      "type": "string",
+      "enum": ["not_found","legal_obligation","technical_constraint","policy_violation"],
+      "description": "Controlled enum for denial reasons"
+    },
+    "controller_policy_digest": { 
+      "type": "string", 
+      "description": "Policy hash"
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Structured evidence object",
+      "properties": {
+        "TEE_QUOTE": {
+          "type": "object",
+          "properties": {
+            "vendor": { "type": "string" },
+            "mrenclave": { "type": "string" },
+            "reportDigest": { "type": "string" }
+          }
+        },
+        "API_LOG": {
+          "type": "object",
+          "properties": {
+            "logService": { "type": "string" },
+            "range": { "type": "string" },
+            "digest": { "type": "string" }
+          }
+        },
+        "KEY_DESTROY": {
+          "type": "object",
+          "properties": {
+            "hsmVendor": { "type": "string" },
+            "keyIdHash": { "type": "string" },
+            "time": { "type": "number" }
+          }
+        },
+        "DKIM_ATTESTATION": {
+          "type": "object",
+          "properties": {
+            "domain": { "type": "string" },
+            "selector": { "type": "string" },
+            "signature": { "type": "string" },
+            "headers": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

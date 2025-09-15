@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://null.foundation/schemas/MaskReceipt.v0.2.json",
+  "title": "MaskReceipt@v0.2",
+  "description": "Enhanced Mask Receipt with privacy-preserving design and structured metadata",
+  "type": "object",
+  "required": [
+    "type","receipt_id","warrant_hash","attestation_hash",
+    "subject_handle","status","completed_at","evidence_hash","signature",
+    "version","controller_did_hash","jurisdiction_bits","evidence_class_bits","timestamp"
+  ],
+  "properties": {
+    "type": { 
+      "const": "MaskReceipt@v0.2",
+      "description": "Schema type identifier"
+    },
+    "receipt_id": { 
+      "type": "string",
+      "description": "Unique receipt identifier"
+    },
+    "warrant_hash": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Hash of the warrant"
+    },
+    "attestation_hash": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Hash of the attestation"
+    },
+    "subject_handle": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Privacy-preserving subject handle"
+    },
+    "status": { 
+      "type": "string", 
+      "enum": ["deleted","suppressed","not_found","rejected"],
+      "description": "Deletion status"
+    },
+    "completed_at": { 
+      "type": "string", 
+      "format": "date-time",
+      "description": "Completion timestamp"
+    },
+    "evidence_hash": { 
+      "type": "string", 
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Hash of evidence"
+    },
+    "signature": { 
+      "type": "object", 
+      "required": ["alg","kid","sig"], 
+      "properties": { 
+        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
+        "kid": {"type": "string"}, 
+        "sig": {"type": "string","contentEncoding": "base64"}
+      },
+      "description": "Cryptographic signature"
+    },
+    "version": { 
+      "type": "string", 
+      "description": "Schema version"
+    },
+    "controller_did_hash": { 
+      "type": "string", 
+      "description": "Hash of controller DID (not raw string)"
+    },
+    "jurisdiction_bits": { 
+      "type": "number", 
+      "description": "Bitfield for jurisdictions"
+    },
+    "evidence_class_bits": { 
+      "type": "number", 
+      "description": "Bitfield for evidence types"
+    },
+    "timestamp": { 
+      "type": "number", 
+      "description": "Receipt creation timestamp"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,201 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Generate changelog
+        run: |
+          # Extract version from tag
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "## Release $VERSION" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Features" >> CHANGELOG.md
+          echo "- Enhanced security hardening" >> CHANGELOG.md
+          echo "- Privacy-preserving subject tags" >> CHANGELOG.md
+          echo "- W3C Verifiable Credentials support" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Security" >> CHANGELOG.md
+          echo "- HMAC-based subject tags" >> CHANGELOG.md
+          echo "- Replay protection" >> CHANGELOG.md
+          echo "- Gas optimization" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Documentation" >> CHANGELOG.md
+          echo "- Updated technical whitepaper" >> CHANGELOG.md
+          echo "- Enhanced API documentation" >> CHANGELOG.md
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+
+  build-and-upload:
+    name: Build and Upload Assets
+    runs-on: ubuntu-latest
+    needs: create-release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Create archive
+        run: |
+          tar -czf null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz \
+            dist/ \
+            contracts/ \
+            schemas/ \
+            docs/ \
+            package.json \
+            README.md \
+            LICENSE
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
+          asset_name: null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
+          asset_content_type: application/gzip
+
+  deploy-mainnet:
+    name: Deploy to Mainnet
+    runs-on: ubuntu-latest
+    needs: [create-release, build-and-upload]
+    environment: mainnet
+    if: startsWith(github.ref, 'refs/tags/v1.')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Ethereum Mainnet
+        run: npm run deploy:mainnet
+        env:
+          ETHEREUM_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+          RELAYER_PRIVATE_KEY: ${{ secrets.RELAYER_PRIVATE_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+
+      - name: Verify contracts on Etherscan
+        run: npm run verify
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+
+      - name: Update contract addresses
+        run: |
+          echo "CANON_REGISTRY_ADDRESS=${{ steps.deploy.outputs.canonRegistry }}" >> $GITHUB_ENV
+          echo "MASK_SBT_ADDRESS=${{ steps.deploy.outputs.maskSBT }}" >> $GITHUB_ENV
+
+  notify-community:
+    name: Notify Community
+    runs-on: ubuntu-latest
+    needs: [create-release, deploy-mainnet]
+    if: always()
+    steps:
+      - name: Notify Discord
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content": "🚀 Null Protocol v${{ github.ref_name }} has been released! Check out the latest features and security improvements."}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Twitter
+        run: |
+          echo "🚀 Null Protocol v${{ github.ref_name }} is now live! Enhanced security, privacy-preserving tags, and W3C VC support. The future of verifiable deletion is here. #NullProtocol #DigitalRights"
+
+      - name: Update documentation
+        run: |
+          # Update version in package.json
+          npm version ${{ github.ref_name }} --no-git-tag-version
+          
+          # Update documentation with new version
+          echo "Updated to version ${{ github.ref_name }}" > VERSION.md
+
+  security-scan-release:
+    name: Security Scan Release
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Scan for vulnerabilities
+        run: |
+          # Check for known vulnerabilities in dependencies
+          npm audit --json > audit-results.json
+          
+          # Check for security issues in code
+          npm run security:audit
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results
+          path: audit-results.json
