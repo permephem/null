@@ -22,7 +22,9 @@ async function main() {
   console.log('📝 Deploying contracts with account:', deployer.address);
   console.log(
     '💰 Account balance:',
-    (hre as any).ethers.formatEther(await (hre as any).ethers.provider.getBalance(deployer.address)),
+    (hre as any).ethers.formatEther(
+      await (hre as any).ethers.provider.getBalance(deployer.address)
+    ),
     'ETH'
   );
 
