@@ -84,7 +84,7 @@ export class CanonService {
   ): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
     try {
       logger.info('Anchoring attestation to canon registry', { attestationId });
-      
+
       const tx = await this.contract.anchorAttestation(
         attestationHash,
         warrantHash,

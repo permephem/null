@@ -82,15 +82,19 @@ export class CryptoService {
   /**
    * Generate a JWS (JSON Web Signature) for a payload
    */
-  static async createJWS(payload: any, privateKey: string, algorithm: string = 'EdDSA'): Promise<string> {
+  static async createJWS(
+    payload: any,
+    privateKey: string,
+    algorithm: string = 'EdDSA'
+  ): Promise<string> {
     const header = {
       alg: algorithm,
       typ: 'JWT',
     };
 
-    return create(payload, privateKey, { 
+    return create(payload, privateKey, {
       algorithm: algorithm === 'EdDSA' ? 'EdDSA' : 'ES256',
-      header 
+      header,
     });
   }
 
@@ -123,12 +127,16 @@ export class CryptoService {
   /**
    * Verify a signature using Ed25519
    */
-  static async verifyEd25519Signature(data: string, signature: string, publicKey: string): Promise<boolean> {
+  static async verifyEd25519Signature(
+    data: string,
+    signature: string,
+    publicKey: string
+  ): Promise<boolean> {
     try {
       const message = new TextEncoder().encode(data);
       const sig = ethers.getBytes(signature);
       const pubKey = ethers.getBytes(publicKey);
-      
+
       return await ed25519.verify(sig, message, pubKey);
     } catch (error) {
       return false;
@@ -138,12 +146,16 @@ export class CryptoService {
   /**
    * Verify a signature using Secp256k1
    */
-  static async verifySecp256k1Signature(data: string, signature: string, publicKey: string): Promise<boolean> {
+  static async verifySecp256k1Signature(
+    data: string,
+    signature: string,
+    publicKey: string
+  ): Promise<boolean> {
     try {
       const message = new TextEncoder().encode(data);
       const sig = ethers.getBytes(signature);
       const pubKey = ethers.getBytes(publicKey);
-      
+
       return secp256k1.verify(sig, message, pubKey);
     } catch (error) {
       return false;
@@ -153,7 +165,12 @@ export class CryptoService {
   /**
    * Verify a signature based on the algorithm specified
    */
-  static async verifySignature(data: string, signature: string, publicKey: string, algorithm: string = 'EdDSA'): Promise<boolean> {
+  static async verifySignature(
+    data: string,
+    signature: string,
+    publicKey: string,
+    algorithm: string = 'EdDSA'
+  ): Promise<boolean> {
     try {
       switch (algorithm) {
         case 'EdDSA':

@@ -21,13 +21,13 @@ describe('RelayerService', () => {
     mockCanonService = new CanonService({
       rpcUrl: 'http://localhost:8545',
       privateKey: '0x123',
-      contractAddress: '0x456'
+      contractAddress: '0x456',
     }) as jest.Mocked<CanonService>;
 
     mockSBTService = new SBTService({
       rpcUrl: 'http://localhost:8545',
       privateKey: '0x123',
-      contractAddress: '0x789'
+      contractAddress: '0x789',
     }) as jest.Mocked<SBTService>;
 
     mockEmailService = new EmailService({
@@ -35,7 +35,7 @@ describe('RelayerService', () => {
       smtpPort: 587,
       smtpUser: 'test',
       smtpPass: 'test',
-      fromEmail: 'test@example.com'
+      fromEmail: 'test@example.com',
     }) as jest.Mocked<EmailService>;
 
     relayerService = new RelayerService(mockCanonService, mockSBTService, mockEmailService);
@@ -47,25 +47,27 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA'
+          alg: 'EdDSA',
         },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
-      
+
       // Mock successful anchoring
       mockCanonService.anchorWarrant.mockResolvedValue('0xtx123');
-      
+
       // Mock successful enterprise communication
-      jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
+      jest
+        .spyOn(relayerService as any, 'sendWarrantToEnterprise')
+        .mockResolvedValue({ status: 'sent' });
 
       const result = await relayerService.processWarrant(mockWarrant);
 
@@ -81,15 +83,15 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
-        }
+          subject_handle: 'test-subject',
+        },
         // Missing required fields
       };
 
       // Mock validation failure
-      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ 
-        valid: false, 
-        error: 'Missing signature' 
+      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({
+        valid: false,
+        error: 'Missing signature',
       });
 
       const result = await relayerService.processWarrant(mockWarrant);
@@ -104,20 +106,20 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA'
+          alg: 'EdDSA',
         },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
-      
+
       // Mock anchoring failure
       mockCanonService.anchorWarrant.mockRejectedValue(new Error('Network error'));
 
@@ -135,15 +137,15 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         signature: {
           sig: 'valid-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA'
+          alg: 'EdDSA',
         },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       // Mock successful signature verification
@@ -166,15 +168,15 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         signature: {
           sig: 'invalid-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA'
+          alg: 'EdDSA',
         },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       // Mock failed signature verification
@@ -194,20 +196,20 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA'
+          alg: 'EdDSA',
         },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
-      
+
       // Mock timeout error
       mockCanonService.anchorWarrant.mockRejectedValue(new Error('Request timeout'));
 

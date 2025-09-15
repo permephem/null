@@ -28,20 +28,16 @@ describe('Null Protocol Integration Tests', () => {
     [owner, user] = await ethers.getSigners();
 
     // Deploy contracts
-    const CanonRegistryFactory = await ethers.getContractFactory("CanonRegistry");
+    const CanonRegistryFactory = await ethers.getContractFactory('CanonRegistry');
     canonRegistry = await CanonRegistryFactory.deploy(
       owner.address, // foundationTreasury
       owner.address, // implementerTreasury
-      owner.address  // admin
+      owner.address // admin
     );
     await canonRegistry.waitForDeployment();
 
-    const MaskSBTFactory = await ethers.getContractFactory("MaskSBT");
-    maskSBT = await MaskSBTFactory.deploy(
-      "Null Protocol Mask Receipts",
-      "MASK",
-      owner.address
-    );
+    const MaskSBTFactory = await ethers.getContractFactory('MaskSBT');
+    maskSBT = await MaskSBTFactory.deploy('Null Protocol Mask Receipts', 'MASK', owner.address);
     await maskSBT.waitForDeployment();
 
     // Enable SBT minting
@@ -51,13 +47,13 @@ describe('Null Protocol Integration Tests', () => {
     canonService = new CanonService({
       rpcUrl: 'http://localhost:8545',
       privateKey: owner.privateKey,
-      contractAddress: await canonRegistry.getAddress()
+      contractAddress: await canonRegistry.getAddress(),
     });
 
     sbtService = new SBTService({
       rpcUrl: 'http://localhost:8545',
       privateKey: owner.privateKey,
-      contractAddress: await maskSBT.getAddress()
+      contractAddress: await maskSBT.getAddress(),
     });
 
     emailService = new EmailService({
@@ -65,7 +61,7 @@ describe('Null Protocol Integration Tests', () => {
       smtpPort: 587,
       smtpUser: 'test',
       smtpPass: 'test',
-      fromEmail: 'test@example.com'
+      fromEmail: 'test@example.com',
     });
 
     relayerService = new RelayerService(canonService, sbtService, emailService);
@@ -79,7 +75,7 @@ describe('Null Protocol Integration Tests', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         scope: ['personal_data'],
         jurisdiction: 'US',
@@ -91,7 +87,7 @@ describe('Null Protocol Integration Tests', () => {
         signature: {
           alg: 'EdDSA',
           kid: 'test-key-id',
-          sig: 'test-signature'
+          sig: 'test-signature',
         },
         aud: 'test-controller',
         jti: 'test-jti',
@@ -100,7 +96,7 @@ describe('Null Protocol Integration Tests', () => {
         audience_bindings: ['test-enterprise.com'],
         version: 'v0.2',
         evidence_requested: ['API_LOG'],
-        sla_seconds: 3600
+        sla_seconds: 3600,
       };
 
       // Mock signature verification
@@ -126,13 +122,13 @@ describe('Null Protocol Integration Tests', () => {
         signature: {
           alg: 'EdDSA',
           kid: 'test-key-id',
-          sig: 'test-signature'
+          sig: 'test-signature',
         },
         aud: 'test-engine',
         ref: warrant.jti,
         processing_window: 3600,
         accepted_claims: ['US'],
-        controller_policy_digest: 'test-policy-hash'
+        controller_policy_digest: 'test-policy-hash',
       };
 
       // Step 4: Process attestation
@@ -155,7 +151,7 @@ describe('Null Protocol Integration Tests', () => {
         warrant_id: 'test-warrant-2',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject'
+          subject_handle: 'test-subject',
         },
         scope: ['personal_data'],
         jurisdiction: 'US',
@@ -167,7 +163,7 @@ describe('Null Protocol Integration Tests', () => {
         signature: {
           alg: 'EdDSA',
           kid: 'test-key-id',
-          sig: 'test-signature'
+          sig: 'test-signature',
         },
         aud: 'test-controller',
         jti: 'test-jti-2',
@@ -176,7 +172,7 @@ describe('Null Protocol Integration Tests', () => {
         audience_bindings: ['test-enterprise.com'],
         version: 'v0.2',
         evidence_requested: ['API_LOG'],
-        sla_seconds: 3600
+        sla_seconds: 3600,
       };
 
       // Mock signature verification
@@ -200,13 +196,13 @@ describe('Null Protocol Integration Tests', () => {
         signature: {
           alg: 'EdDSA',
           kid: 'test-key-id',
-          sig: 'test-signature'
+          sig: 'test-signature',
         },
         aud: 'test-engine',
         ref: warrant.jti,
         processing_window: 3600,
         accepted_claims: ['US'],
-        controller_policy_digest: 'test-policy-hash'
+        controller_policy_digest: 'test-policy-hash',
       };
 
       // Process attestation
@@ -234,7 +230,11 @@ describe('Null Protocol Integration Tests', () => {
       expect(subjectTag).toBe(subjectTag2);
 
       // Verify tag changes with different inputs
-      const subjectTag3 = CryptoService.generateSubjectTag(controllerKey, subjectDID, 'different-context');
+      const subjectTag3 = CryptoService.generateSubjectTag(
+        controllerKey,
+        subjectDID,
+        'different-context'
+      );
       expect(subjectTag).not.toBe(subjectTag3);
     });
 
@@ -257,19 +257,19 @@ describe('Null Protocol Integration Tests', () => {
 
   describe('Contract Integration', () => {
     it('should integrate CanonRegistry with RelayerService', async () => {
-      const warrantHash = ethers.keccak256(ethers.toUtf8Bytes("test-warrant"));
-      const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes("test-subject"));
-      const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes("test-enterprise"));
-      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
-      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
+      const warrantHash = ethers.keccak256(ethers.toUtf8Bytes('test-warrant'));
+      const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes('test-subject'));
+      const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes('test-enterprise'));
+      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes('test-controller'));
+      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes('test-tag'));
 
       // Anchor warrant directly to contract
       const tx = await canonRegistry.anchorWarrant(
         warrantHash,
         subjectHandleHash,
         enterpriseHash,
-        "test-enterprise",
-        "test-warrant",
+        'test-enterprise',
+        'test-warrant',
         controllerDidHash,
         subjectTag,
         1
@@ -285,7 +285,7 @@ describe('Null Protocol Integration Tests', () => {
     });
 
     it('should integrate MaskSBT with RelayerService', async () => {
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes("test-receipt"));
+      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
 
       // Mint SBT directly to contract
       const tx = await maskSBT.safeMint(user.address, receiptHash);
@@ -312,7 +312,7 @@ describe('Null Protocol Integration Tests', () => {
         subject: { subject_handle: 'test-subject' },
         signature: { sig: 'test', kid: 'test', alg: 'EdDSA' },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
@@ -340,12 +340,14 @@ describe('Null Protocol Integration Tests', () => {
         subject: { subject_handle: 'test-subject' },
         signature: { sig: 'test', kid: 'test', alg: 'EdDSA' },
         nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600
+        exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
       jest.spyOn(CryptoService, 'canonicalizeJSON').mockReturnValue('canonical-data');
-      jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
+      jest
+        .spyOn(relayerService as any, 'sendWarrantToEnterprise')
+        .mockResolvedValue({ status: 'sent' });
 
       const result = await relayerService.processWarrant(warrant);
       expect(result.success).toBe(true);

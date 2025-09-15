@@ -8,7 +8,7 @@ The Null Protocol enables verifiable deletion of personal data through cryptogra
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Git
 
@@ -57,7 +57,7 @@ npm run deploy:local           # Deploy CanonRegistry + MaskSBT locally
 # For testnet deployment
 npm run deploy:testnet
 
-# For mainnet deployment  
+# For mainnet deployment
 npm run deploy:mainnet
 
 # Update .env with the deployed contract addresses
@@ -153,11 +153,11 @@ npx hardhat console --network localhost
 ```
 
 ```javascript
-const canon = await ethers.getContractAt("CanonRegistry", "<CanonRegistryAddress>")
-await canon.anchorWarrant(/* digest, subjectTag, ... */)
+const canon = await ethers.getContractAt('CanonRegistry', '<CanonRegistryAddress>');
+await canon.anchorWarrant(/* digest, subjectTag, ... */);
 
-const maskSBT = await ethers.getContractAt("MaskSBT", "<MaskSBTAddress>")
-await maskSBT.mintReceipt(/* recipient, receiptHash */)
+const maskSBT = await ethers.getContractAt('MaskSBT', '<MaskSBTAddress>');
+await maskSBT.mintReceipt(/* recipient, receiptHash */);
 ```
 
 ## 🧪 Testing
@@ -192,16 +192,19 @@ npm run test:coverage
 The Null Protocol consists of several key components:
 
 ### Smart Contracts
+
 - **CanonRegistry**: Append-only ledger for anchoring deletion events
 - **MaskSBT**: Soulbound tokens representing immutable proof of deletion
 
 ### Relayer System
+
 - **API Layer**: REST endpoints for warrant/attestation submission
 - **Validation**: Schema validation and cryptographic verification
 - **Blockchain Integration**: Contract interaction and transaction management
 - **Storage**: WORM storage for full artifacts
 
 ### Cryptographic Primitives
+
 - **HMAC-Blake3**: Privacy-preserving subject tag generation
 - **Ed25519/Secp256k1**: Digital signature verification
 - **JWS/DID**: Decentralized identity integration
@@ -255,4 +258,4 @@ Following these steps lets you run a local or testnet instance, submit deletion 
 
 ---
 
-**The Null Protocol**: *Where data goes to die, verifiably.*
+**The Null Protocol**: _Where data goes to die, verifiably._

@@ -122,7 +122,9 @@ export function validateAttestation(attestation: any): { valid: boolean; error?:
 }
 
 // Enhanced validation functions with cryptographic verification
-export async function validateWarrantWithCrypto(warrant: any): Promise<{ valid: boolean; error?: string }> {
+export async function validateWarrantWithCrypto(
+  warrant: any
+): Promise<{ valid: boolean; error?: string }> {
   try {
     // Basic schema validation
     const schemaValidation = validateWarrant(warrant);
@@ -161,7 +163,9 @@ export async function validateWarrantWithCrypto(warrant: any): Promise<{ valid: 
   }
 }
 
-export async function validateAttestationWithCrypto(attestation: any): Promise<{ valid: boolean; error?: string }> {
+export async function validateAttestationWithCrypto(
+  attestation: any
+): Promise<{ valid: boolean; error?: string }> {
   try {
     // Basic schema validation
     const schemaValidation = validateAttestation(attestation);
@@ -192,7 +196,12 @@ export async function validateAttestationWithCrypto(attestation: any): Promise<{
 }
 
 // HMAC-Blake3 validation for subject tags
-export function validateSubjectTag(subjectTag: string, controllerKey: string, subjectDID: string, context: string): boolean {
+export function validateSubjectTag(
+  subjectTag: string,
+  controllerKey: string,
+  subjectDID: string,
+  context: string
+): boolean {
   try {
     const expectedTag = CryptoService.generateSubjectTag(controllerKey, subjectDID, context);
     return subjectTag === expectedTag;

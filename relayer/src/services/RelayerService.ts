@@ -42,9 +42,9 @@ export class RelayerService {
       // Validate warrant
       const validation = await this.validateWarrant(warrant);
       if (!validation.valid) {
-        logger.warn('Warrant validation failed', { 
-          warrantId: warrant.warrant_id, 
-          error: validation.error 
+        logger.warn('Warrant validation failed', {
+          warrantId: warrant.warrant_id,
+          error: validation.error,
         });
         return {
           success: false,
@@ -67,7 +67,7 @@ export class RelayerService {
       let anchorTxHash: string;
       let retryCount = 0;
       const maxRetries = 3;
-      
+
       while (retryCount < maxRetries) {
         try {
           anchorTxHash = await this.canonService.anchorWarrant(
@@ -85,15 +85,15 @@ export class RelayerService {
           retryCount++;
           logger.warn(`Failed to anchor warrant (attempt ${retryCount}/${maxRetries})`, {
             warrantId: warrant.warrant_id,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
-          
+
           if (retryCount >= maxRetries) {
             throw new Error(`Failed to anchor warrant after ${maxRetries} attempts: ${error}`);
           }
-          
+
           // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
         }
       }
 
@@ -104,7 +104,7 @@ export class RelayerService {
       logger.info('Warrant processed successfully', {
         warrantId: warrant.warrant_id,
         processingTime,
-        anchorTxHash
+        anchorTxHash,
       });
 
       return {
@@ -122,9 +122,9 @@ export class RelayerService {
       logger.error('Error processing warrant:', {
         warrantId: warrant.warrant_id,
         error: error instanceof Error ? error.message : 'Unknown error',
-        processingTime
+        processingTime,
       });
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
