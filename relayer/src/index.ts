@@ -23,8 +23,8 @@ import { EmailService } from './email/EmailService.js';
 // Load environment variables
 config();
 
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const PORT = process.env['PORT'] || 3000;
+const NODE_ENV = process.env['NODE_ENV'] || 'development';
 
 async function main() {
   try {
@@ -32,21 +32,21 @@ async function main() {
 
     // Initialize services with configuration
     const canonService = new CanonService({
-      rpcUrl: process.env.ETHEREUM_RPC_URL || 'http://localhost:8545',
-      privateKey: process.env.RELAYER_PRIVATE_KEY || '',
-      contractAddress: process.env.CANON_REGISTRY_ADDRESS || '',
+      rpcUrl: process.env['ETHEREUM_RPC_URL'] || 'http://localhost:8545',
+      privateKey: process.env['RELAYER_PRIVATE_KEY'] || '',
+      contractAddress: process.env['CANON_REGISTRY_ADDRESS'] || '',
     });
     const sbtService = new SBTService({
-      rpcUrl: process.env.ETHEREUM_RPC_URL || 'http://localhost:8545',
-      privateKey: process.env.RELAYER_PRIVATE_KEY || '',
-      contractAddress: process.env.MASK_SBT_ADDRESS || '',
+      rpcUrl: process.env['ETHEREUM_RPC_URL'] || 'http://localhost:8545',
+      privateKey: process.env['RELAYER_PRIVATE_KEY'] || '',
+      contractAddress: process.env['MASK_SBT_ADDRESS'] || '',
     });
     const emailService = new EmailService({
-      smtpHost: process.env.SMTP_HOST || 'localhost',
-      smtpPort: parseInt(process.env.SMTP_PORT || '587'),
-      smtpUser: process.env.SMTP_USER || '',
-      smtpPass: process.env.SMTP_PASS || '',
-      fromEmail: process.env.FROM_EMAIL || '',
+      smtpHost: process.env['SMTP_HOST'] || 'localhost',
+      smtpPort: parseInt(process.env['SMTP_PORT'] || '587'),
+      smtpUser: process.env['SMTP_USER'] || '',
+      smtpPass: process.env['SMTP_PASS'] || '',
+      fromEmail: process.env['FROM_EMAIL'] || '',
     });
     const _relayerService = new RelayerService(canonService, sbtService, emailService);
 

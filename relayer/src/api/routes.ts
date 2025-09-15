@@ -11,7 +11,7 @@ export function setRelayerService(service: RelayerService) {
 }
 
 // Health check endpoint
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
