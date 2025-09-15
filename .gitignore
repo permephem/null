@@ -19,7 +19,6 @@ out/
 artifacts/
 cache/
 typechain/
-typechain-types/
 
 # Hardhat
 .hardhat/
