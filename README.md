@@ -1,193 +1,258 @@
 # Null Protocol
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Solidity](https://img.shields.io/badge/Solidity-363636?logo=solidity&logoColor=white)](https://soliditylang.org/)
-[![Ethereum](https://img.shields.io/badge/Ethereum-3C3C3D?logo=ethereum&logoColor=white)](https://ethereum.org/)
+**Verifiable Digital Closure: The Rights Layer for the Internet**
 
-> **Verifiable Digital Closure: The Rights Layer for the Internet**
-
-Null Protocol enables verifiable deletion, auditable closure, and enforceable consent—backed by receipts, not promises. Built on Ethereum with NULL tokens as the currency of absence, the protocol provides cryptographic guarantees of deletion through a dual-layer payment system.
-
-## 🎯 Mission
-
-**"What they take from your data, we take back for you—then prove it."**
-
-Null Protocol ensures that endings are not erasures but commemorations—transformations honored, witnessed, and inscribed into the canon of memory. The protocol integrates decentralized identity systems, zero-knowledge proofs, trusted execution environments, and crypto-shredding to provide cryptographic guarantees of deletion.
-
-## 🏗️ Architecture
-
-The protocol operates through three core components:
-
-- **Null Warrants** - Enforceable deletion commands with security controls
-- **Mask Receipts** - Privacy-preserving proof of closure (W3C VCs by default)
-- **Canon Ledger** - Append-only registry of closure events and negative registry for data brokers
-
-Coordinated by a **Null Engine** relayer system that mediates between users, enterprises, and blockchain infrastructure.
+The Null Protocol enables verifiable deletion of personal data through cryptographic proofs anchored on Ethereum. It provides a standardized way for individuals to request data deletion from enterprises and receive immutable proof that their data has been removed.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18+ 
+- npm or yarn
 - Git
-- Hardhat (for smart contract development)
-- TypeScript
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/null-foundation/protocol.git
 cd protocol
-
-# Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
-
-# Compile smart contracts
-npm run compile
-
-# Run tests
-npm test
-
-# Start the relayer
-npm run relayer:start
+cp env.example .env
+# Fill in ETHEREUM_RPC_URL, RELAYER_PRIVATE_KEY, CANON_REGISTRY_ADDRESS, etc.
 ```
 
-### Development Setup
+### Environment Configuration
+
+Edit `.env` with your configuration:
 
 ```bash
-# Install development dependencies
-npm install --dev
+# Ethereum Configuration
+ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+RELAYER_PRIVATE_KEY=your_private_key_here
 
-# Start local blockchain
-npm run hardhat:node
+# Contract Addresses (will be set after deployment)
+CANON_REGISTRY_ADDRESS=0x...
+MASK_SBT_ADDRESS=0x...
 
-# Deploy contracts to local network
-npm run deploy:local
-
-# Run linting and formatting
-npm run lint
-npm run format
+# API Keys
+ETHERSCAN_API_KEY=your_etherscan_api_key
+BASESCAN_API_KEY=your_basescan_api_key
 ```
 
-## 📁 Project Structure
+## 🏗️ Compile and Deploy Contracts
 
-```
-null-protocol/
-├── contracts/              # Smart contracts
-│   ├── CanonRegistry.sol   # Append-only ledger
-│   ├── MaskSBT.sol        # Soulbound receipts
-│   └── interfaces/        # Contract interfaces
-├── relayer/               # Relayer system
-│   ├── src/              # TypeScript source
-│   ├── api/              # REST API endpoints
-│   └── crypto/           # Cryptographic utilities
-├── schemas/              # JSON schemas
-│   ├── NullWarrant.json  # Warrant schema v0.2
-│   ├── DeletionAttestation.json
-│   └── MaskReceipt.json
-├── docs/                 # Documentation
-│   ├── whitepaper.md     # Technical whitepaper
-│   ├── api/              # API documentation
-│   └── security/         # Security considerations
-├── tests/                # Test suites
-│   ├── contracts/        # Contract tests
-│   ├── relayer/          # Relayer tests
-│   └── integration/      # Integration tests
-└── scripts/              # Deployment and utility scripts
+### Local Development
+
+```bash
+npm run hardhat:node           # Start local chain
+npm run deploy:local           # Deploy CanonRegistry + MaskSBT locally
+# Update .env with the deployed contract addresses
 ```
 
-## 🔧 Core Features
+### Testnet/Mainnet Deployment
 
-### Privacy-Preserving Architecture
+```bash
+# For testnet deployment
+npm run deploy:testnet
 
-- **HMAC-Based Subject Tags** - Prevents correlation attacks
-- **W3C Verifiable Credentials** - Default receipt format
-- **VOPRF Support** - Negative-registry checks without revealing identity
-- **Stealth Address Support** - Optional on-chain proof (EIP-5564)
+# For mainnet deployment  
+npm run deploy:mainnet
 
-### Security Hardening
+# Update .env with the deployed contract addresses
+```
 
-- **Replay Protection** - Unique identifiers and timestamps
-- **Gas Optimization** - Hashed fields and pull payment pattern
-- **Access Control** - DID doc pinning and key rotation
-- **Evidence Standardization** - Structured evidence types
+## 🔄 Start the Relayer
 
-### Enterprise Integration
+```bash
+npm run relayer:start          # Launches Express server on PORT (default 3000)
+# or: npm run dev              # Runs hardhat node + relayer concurrently
+```
 
-- **Dual-Layer Payment** - Fiat for enterprises, NULL for settlement
-- **Obol Economic Model** - 12/13 to implementer, 1/13 to Foundation
-- **Negative Registry** - Data broker compliance checking
-- **Transparency Logging** - Rekor-compatible audit trails
+## 📡 REST API Usage
+
+### Health Check
+
+```bash
+curl http://localhost:3000/health
+```
+
+### Submit a Warrant
+
+```bash
+curl -X POST http://localhost:3000/api/v1/warrants \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "NullWarrant@v0.2",
+    "warrant_id": "warrant_123",
+    "enterprise_id": "enterprise_456",
+    "subject": {
+      "subject_handle": "did:example:subject"
+    },
+    "scope": ["personal_data"],
+    "jurisdiction": "US",
+    "legal_basis": "GDPR",
+    "issued_at": "2024-01-01T00:00:00Z",
+    "expires_at": "2024-01-02T00:00:00Z",
+    "return_channels": ["email"],
+    "nonce": "random_nonce_123",
+    "signature": {
+      "alg": "EdDSA",
+      "kid": "key_id_123",
+      "sig": "signature_here"
+    },
+    "aud": "controller_did",
+    "jti": "unique_jti_123",
+    "nbf": 1704067200,
+    "exp": 1704153600,
+    "audience_bindings": ["enterprise.com"],
+    "version": "v0.2",
+    "evidence_requested": ["API_LOG"],
+    "sla_seconds": 3600
+  }'
+```
+
+### Submit an Attestation
+
+```bash
+curl -X POST http://localhost:3000/api/v1/attestations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "DeletionAttestation@v0.2",
+    "attestation_id": "attestation_789",
+    "warrant_id": "warrant_123",
+    "enterprise_id": "enterprise_456",
+    "subject_handle": "did:example:subject",
+    "status": "deleted",
+    "completed_at": "2024-01-01T12:00:00Z",
+    "evidence_hash": "evidence_hash_123",
+    "signature": {
+      "alg": "EdDSA",
+      "kid": "key_id_456",
+      "sig": "signature_here"
+    },
+    "aud": "engine_did",
+    "ref": "unique_jti_123",
+    "processing_window": 3600,
+    "accepted_claims": ["US"],
+    "controller_policy_digest": "policy_hash_123"
+  }'
+```
+
+### Check Processing Status
+
+```bash
+curl http://localhost:3000/api/v1/status/<request_id>
+```
+
+## 🔧 Direct Contract Interaction (Optional)
+
+```bash
+npx hardhat console --network localhost
+```
+
+```javascript
+const canon = await ethers.getContractAt("CanonRegistry", "<CanonRegistryAddress>")
+await canon.anchorWarrant(/* digest, subjectTag, ... */)
+
+const maskSBT = await ethers.getContractAt("MaskSBT", "<MaskSBTAddress>")
+await maskSBT.mintReceipt(/* recipient, receiptHash */)
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run contract tests only
+npm run test:contracts
+
+# Run relayer tests only
+npm run test:relayer
+
+# Run integration tests
+npm run test:integration
+
+# Run with coverage
+npm run test:coverage
+```
 
 ## 📚 Documentation
 
-- **[Technical Whitepaper](docs/whitepaper.md)** - Complete technical specification
+- **[Technical Whitepaper](docs/whitepaper.md)** - Complete protocol specification
+- **[Technical Considerations](docs/technical-considerations.md)** - Implementation details and ICO analysis
+- **[Manifesto](docs/manifesto.txt)** - Protocol philosophy and vision
 - **[API Documentation](docs/api/)** - REST API reference
-- **[Security Guide](docs/security/)** - Security considerations and hardening
-- **[Integration Guide](docs/integration/)** - Enterprise integration patterns
-- **[Schema Reference](schemas/)** - JSON schema definitions
+- **[Integration Examples](docs/examples/)** - Usage examples and tutorials
 
-## 🛡️ Security
+## 🏛️ Architecture
 
-Null Protocol implements comprehensive security measures:
+The Null Protocol consists of several key components:
 
-- **Professional Security Audits** - Regular third-party audits
-- **Privacy by Design** - HMAC-based subject tags, VOPRF support
-- **Replay Protection** - JWT-style security controls
-- **Gas Optimization** - Efficient smart contract design
-- **Transparency** - Public audit logs and verifiable proofs
+### Smart Contracts
+- **CanonRegistry**: Append-only ledger for anchoring deletion events
+- **MaskSBT**: Soulbound tokens representing immutable proof of deletion
+
+### Relayer System
+- **API Layer**: REST endpoints for warrant/attestation submission
+- **Validation**: Schema validation and cryptographic verification
+- **Blockchain Integration**: Contract interaction and transaction management
+- **Storage**: WORM storage for full artifacts
+
+### Cryptographic Primitives
+- **HMAC-Blake3**: Privacy-preserving subject tag generation
+- **Ed25519/Secp256k1**: Digital signature verification
+- **JWS/DID**: Decentralized identity integration
+- **Canonical JSON**: Consistent data serialization
+
+## 🔒 Security Features
+
+- **Privacy-Preserving**: HMAC-based subject tags prevent identity correlation
+- **Cryptographic Proofs**: All operations cryptographically signed and verified
+- **Replay Protection**: Nonce-based protection against replay attacks
+- **Access Control**: Role-based permissions for all contract functions
+- **Pausable Operations**: Emergency stop functionality for critical functions
+
+## 🌐 Network Support
+
+- **Ethereum Mainnet**: Production deployment
+- **Base**: Layer 2 scaling solution
+- **Sepolia**: Ethereum testnet
+- **Base Sepolia**: Base testnet
+- **Local Hardhat**: Development environment
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite (`npm test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🌐 Links
+## 🆘 Support
 
-- **Website**: https://null.foundation
-- **Documentation**: https://null.foundation/docs
-- **Discord**: https://discord.gg/null-protocol
-- **Twitter**: https://twitter.com/nullprotocol
+- **Documentation**: Check the [docs/](docs/) directory
+- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/null-foundation/protocol/issues)
+- **Discussions**: Join community discussions in [GitHub Discussions](https://github.com/null-foundation/protocol/discussions)
 
-## 🏛️ Foundation
+## 🎯 Next Steps
 
-Null Protocol is developed and maintained by the **Null Foundation**, a Swiss Verein dedicated to digital rights and verifiable deletion. The Foundation operates as a neutral steward, ensuring the protocol remains capture-resistant and aligned with its mission.
+1. **Study the documentation**: Read `docs/whitepaper.md` and `docs/technical-considerations.md` for protocol rationale
+2. **Replace placeholder implementations**: Update `relayer/src/crypto` and `relayer/src/canon` with production implementations
+3. **Expand test coverage**: Add more tests under `tests/` as new features are developed
+4. **Deploy to testnet**: Test the protocol on Base Sepolia or Ethereum Sepolia
+5. **Contribute**: Help improve the protocol by contributing code, documentation, or feedback
 
-### Token Economics
-
-- **NULL Token** - Currency of absence, required for protocol settlement
-- **Obol Model** - 1/13 tithe to Foundation for neutral stewardship
-- **Dual-Layer Payment** - Enterprises pay fiat, implementers convert to NULL
-- **Economic Alignment** - Incentives aligned across users, implementers, and Foundation
-
-## ⚠️ Disclaimer
-
-This software is provided "as is" without warranty of any kind. Use at your own risk. The Null Protocol is experimental software and may contain bugs or vulnerabilities. Always conduct your own security audits before using in production.
+Following these steps lets you run a local or testnet instance, submit deletion warrants/attestations, and observe on-chain anchoring and receipt generation.
 
 ---
 
-**Built with ❤️ by the Null Foundation**
-
-_"Delete means delete. Not a checkbox, not a policy—a covenant enforced in code."_
-
-# CI/CD Pipeline Test
+**The Null Protocol**: *Where data goes to die, verifiably.*

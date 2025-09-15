@@ -7,11 +7,11 @@ const { ethers } = hre;
 describe("CanonRegistry", function () {
   let canonRegistry: CanonRegistry;
   let owner: any;
-  let relayer: any;
+  let _relayer: any;
   let user: any;
 
   beforeEach(async function () {
-    [owner, relayer, user] = await ethers.getSigners();
+    [owner, _relayer, user] = await ethers.getSigners();
     
     const CanonRegistryFactory = await ethers.getContractFactory("CanonRegistry");
     canonRegistry = await CanonRegistryFactory.deploy(
@@ -41,8 +41,8 @@ describe("CanonRegistry", function () {
       const warrantHash = ethers.keccak256(ethers.toUtf8Bytes("test-warrant"));
       const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes("test-subject"));
       const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes("test-enterprise"));
-      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
-      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
+      const _controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
+      const _subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
 
       await expect(
         canonRegistry.anchorWarrant(
@@ -60,8 +60,8 @@ describe("CanonRegistry", function () {
       const warrantHash = ethers.keccak256(ethers.toUtf8Bytes("test-warrant"));
       const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes("test-subject"));
       const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes("test-enterprise"));
-      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
-      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
+      const _controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
+      const _subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
 
       await expect(
         canonRegistry.connect(user).anchorWarrant(
@@ -81,8 +81,8 @@ describe("CanonRegistry", function () {
       const warrantHash = ethers.keccak256(ethers.toUtf8Bytes("test-warrant"));
       const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes("test-subject"));
       const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes("test-enterprise"));
-      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
-      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
+      const _controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes("test-controller"));
+      const _subjectTag = ethers.keccak256(ethers.toUtf8Bytes("test-tag"));
 
       const tx = await canonRegistry.anchorWarrant(
         warrantHash,

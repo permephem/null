@@ -11,8 +11,8 @@ import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
-import { CanonRegistry, CanonRegistry__factory } from '../../typechain-types';
-import { MaskSBT, MaskSBT__factory } from '../../typechain-types';
+import { CanonRegistry } from '../../typechain-types';
+import { MaskSBT } from '../../typechain-types';
 
 describe('Null Protocol Integration Tests', () => {
   let canonRegistry: CanonRegistry;

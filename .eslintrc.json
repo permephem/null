@@ -31,5 +31,13 @@
     "typechain/",
     "*.js",
     "*.sol"
+  ],
+  "overrides": [
+    {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }
