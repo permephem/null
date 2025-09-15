@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+artifacts/
+cache/
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# Package lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Coverage reports
+coverage/
+
+# Generated files that should not be formatted
+typechain-types/
