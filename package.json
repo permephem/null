@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc && npm run build:contracts",
     "build:contracts": "hardhat compile",
-    "compile": "hardhat compile",
+    "compile": "hardhat compile && npm run generate:types",
+    "generate:types": "typechain --target ethers-v6 --out-dir typechain-types artifacts/contracts/CanonRegistry.sol/CanonRegistry.json artifacts/contracts/MaskSBT.sol/MaskSBT.json",
     "test": "hardhat test && npm run test:relayer",
     "test:contracts": "hardhat test",
     "test:relayer": "jest --testPathPattern=relayer",
@@ -33,7 +34,7 @@
     "docs:serve": "serve docs/_build",
     "security:audit": "npm audit --audit-level=high || true",
     "security:test": "echidna-test contracts/",
-    "precommit": "npm run lint && npm run format:check && npm run type-check",
+    "precommit": "npm run generate:types && npm run lint && npm run format:check && npm run type-check",
     "prepush": "npm run test && npm run security:audit"
   },
   "keywords": [
