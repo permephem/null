@@ -1,4 +1,19 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+
+// Mock TypeChain imports
+jest.mock('../../typechain-types', () => ({
+  CanonRegistry: jest.fn(),
+  CanonRegistry__factory: {
+    connect: jest.fn(),
+    deploy: jest.fn(),
+  },
+  MaskSBT: jest.fn(),
+  MaskSBT__factory: {
+    connect: jest.fn(),
+    deploy: jest.fn(),
+  },
+}));
+
 import { RelayerService } from '../../relayer/src/services/RelayerService';
 import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
@@ -10,6 +25,26 @@ jest.mock('../../relayer/src/canon/CanonService');
 jest.mock('../../relayer/src/sbt/SBTService');
 jest.mock('../../relayer/src/email/EmailService');
 jest.mock('../../relayer/src/crypto/crypto');
+
+// Mock crypto dependencies
+jest.mock('@noble/ed25519', () => ({
+  verify: jest.fn(),
+  sign: jest.fn(),
+}));
+
+jest.mock('@noble/secp256k1', () => ({
+  verify: jest.fn(),
+  sign: jest.fn(),
+}));
+
+jest.mock('jsonwebtoken', () => ({
+  verify: jest.fn(),
+  sign: jest.fn(),
+}));
+
+jest.mock('did-resolver', () => ({
+  Resolver: jest.fn(),
+}));
 
 describe('RelayerService', () => {
   let relayerService: RelayerService;

@@ -6,10 +6,10 @@
 
 import { hash } from 'blake3';
 // import { createHash } from 'crypto';
-import logger from '../utils/logger.js';
-import { CanonService } from '../canon/CanonService.js';
-import { SBTService } from '../sbt/SBTService.js';
-import { EmailService } from '../email/EmailService.js';
+import logger from '../utils/logger';
+import { CanonService } from '../canon/CanonService';
+import { SBTService } from '../sbt/SBTService';
+import { EmailService } from '../email/EmailService';
 import type {
   NullWarrant,
   DeletionAttestation,
