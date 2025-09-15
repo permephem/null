@@ -6,7 +6,6 @@
 **Date:** January 2025  
 **Authors:** Null Foundation Technical Team  
 **Status:** MVP Implementation Complete
-
 ---
 
 ## Abstract
