@@ -1,0 +1,30 @@
+{
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "env": {
+    "node": true,
+    "es2022": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-console": "warn"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "coverage/",
+    "artifacts/",
+    "typechain/",
+    "*.js",
+    "*.sol"
+  ]
+}
