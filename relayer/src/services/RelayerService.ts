@@ -24,18 +24,18 @@ import { CryptoService } from '../crypto/crypto.js';
 export class RelayerService {
   private canonService: CanonService;
   private sbtService: SBTService;
-  private emailService: EmailService;
+  private _emailService: EmailService;
   private provider: ethers.Provider;
-  private wallet: ethers.Wallet;
+  private _wallet: ethers.Wallet;
 
   constructor(canonService: CanonService, sbtService: SBTService, emailService: EmailService) {
     this.canonService = canonService;
     this.sbtService = sbtService;
-    this.emailService = emailService;
+    this._emailService = emailService;
 
     // Initialize Ethereum provider and wallet
-    this.provider = new ethers.JsonRpcProvider(process.env.ETHEREUM_RPC_URL);
-    this.wallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY!, this.provider);
+    this.provider = new ethers.JsonRpcProvider(process.env['ETHEREUM_RPC_URL']);
+    this._wallet = new ethers.Wallet(process.env['RELAYER_PRIVATE_KEY']!, this.provider);
   }
 
   /**
@@ -403,7 +403,7 @@ export class RelayerService {
       };
 
       // Mint SBT if enabled
-      if (process.env.SBT_MINTING_ENABLED === 'true') {
+      if (process.env['SBT_MINTING_ENABLED'] === 'true') {
         const receiptHash = this.computeReceiptDigest(receipt);
         const sbtResult = await this.sbtService.mintReceipt(
           attestation.subject_handle,

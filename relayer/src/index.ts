@@ -60,7 +60,7 @@ async function main() {
     app.use(helmet());
     app.use(
       cors({
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+        origin: process.env['ALLOWED_ORIGINS']?.split(',') || ['http://localhost:3000'],
         credentials: true,
       })
     );
@@ -73,11 +73,11 @@ async function main() {
     app.use(rateLimiter);
 
     // Health check endpoint
-    app.get('/health', (req, res) => {
+    app.get('/health', (_req, res) => {
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: process.env.npm_package_version || '0.1.0',
+        version: process.env['npm_package_version'] || '0.1.0',
         environment: NODE_ENV,
       });
     });
