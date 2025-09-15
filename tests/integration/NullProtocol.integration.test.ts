@@ -11,8 +11,8 @@ import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
-import type { CanonRegistry } from '../../typechain-types';
-import type { MaskSBT } from '../../typechain-types';
+import type { CanonRegistry as _CanonRegistry } from '../../typechain-types';
+import type { MaskSBT as _MaskSBT } from '../../typechain-types';
 
 const { ethers } = hre;
 
@@ -272,8 +272,8 @@ describe('Null Protocol Integration Tests', () => {
       const warrantHash = ethers.keccak256(ethers.toUtf8Bytes('test-warrant'));
       const subjectHandleHash = ethers.keccak256(ethers.toUtf8Bytes('test-subject'));
       const enterpriseHash = ethers.keccak256(ethers.toUtf8Bytes('test-enterprise'));
-      const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes('test-controller'));
-      const subjectTag = ethers.keccak256(ethers.toUtf8Bytes('test-tag'));
+      const _controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes('test-controller'));
+      const _subjectTag = ethers.keccak256(ethers.toUtf8Bytes('test-tag'));
 
       // Anchor warrant directly to contract
       const tx = await canonRegistry.anchorWarrant(

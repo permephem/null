@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
 import '@nomicfoundation/hardhat-chai-matchers';
-import type { CanonRegistry } from '../../typechain-types';
+import type { CanonRegistry as _CanonRegistry } from '../../typechain-types';
 
 const { ethers } = hre;
 

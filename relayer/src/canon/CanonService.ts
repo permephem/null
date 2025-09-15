@@ -26,9 +26,9 @@ export class CanonService {
     enterpriseHash: string,
     enterpriseId: string,
     warrantId: string,
-    controllerDidHash: string,
-    subjectTag: string,
-    assurance: number
+    _controllerDidHash: string,
+    _subjectTag: string,
+    _assurance: number
   ): Promise<string> {
     try {
       logger.info('Anchoring warrant to canon registry', { warrantId, enterpriseId });
@@ -80,9 +80,9 @@ export class CanonService {
     enterpriseHash: string,
     enterpriseId: string,
     attestationId: string,
-    controllerDidHash: string,
-    subjectTag: string,
-    assurance: number
+    _controllerDidHash: string,
+    _subjectTag: string,
+    _assurance: number
   ): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
     try {
       logger.info('Anchoring attestation to canon registry', { attestationId });
