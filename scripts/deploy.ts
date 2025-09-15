@@ -19,15 +19,19 @@ async function main() {
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
   console.log('📝 Deploying contracts with account:', deployer.address);
-  console.log('💰 Account balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'ETH');
+  console.log(
+    '💰 Account balance:',
+    ethers.formatEther(await ethers.provider.getBalance(deployer.address)),
+    'ETH'
+  );
 
   // Deploy CanonRegistry
   console.log('\n📋 Deploying CanonRegistry...');
   const CanonRegistry = await ethers.getContractFactory('CanonRegistry');
   const canonRegistry = await CanonRegistry.deploy(
     deployer.address, // foundationTreasury
-    deployer.address, // implementerTreasury  
-    deployer.address  // admin
+    deployer.address, // implementerTreasury
+    deployer.address // admin
   );
   await canonRegistry.waitForDeployment();
   const canonRegistryAddress = await canonRegistry.getAddress();
@@ -54,7 +58,7 @@ async function main() {
   // Output deployment summary
   console.log('\n🎉 Deployment Summary:');
   console.log('=====================================');
-  console.log('Network:', await ethers.provider.getNetwork().then(n => n.name));
+  console.log('Network:', await ethers.provider.getNetwork().then((n) => n.name));
   console.log('Chain ID:', (await ethers.provider.getNetwork()).chainId);
   console.log('Deployer:', deployer.address);
   console.log('CanonRegistry:', canonRegistryAddress);
@@ -76,7 +80,7 @@ async function main() {
   };
 
   const deploymentsDir = path.join(__dirname, '..', 'deployments');
-  
+
   if (!fs.existsSync(deploymentsDir)) {
     fs.mkdirSync(deploymentsDir, { recursive: true });
   }
@@ -87,7 +91,8 @@ async function main() {
   console.log(`📄 Deployment info saved to: ${deploymentFile}`);
 
   // Verify contracts if on a supported network
-  if (network.chainId === 84532n || network.chainId === 8453n) { // Base Sepolia or Base Mainnet
+  if (network.chainId === 84532n || network.chainId === 8453n) {
+    // Base Sepolia or Base Mainnet
     console.log('\n🔍 Verifying contracts on block explorer...');
     try {
       await hre.run('verify:verify', {

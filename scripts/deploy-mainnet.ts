@@ -21,13 +21,19 @@ async function main() {
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
   console.log('📝 Deploying contracts with account:', deployer.address);
-  console.log('💰 Account balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'ETH');
+  console.log(
+    '💰 Account balance:',
+    ethers.formatEther(await ethers.provider.getBalance(deployer.address)),
+    'ETH'
+  );
 
   // Check if we have enough ETH
   const balance = await ethers.provider.getBalance(deployer.address);
   const minBalance = ethers.parseEther('0.1'); // Minimum 0.1 ETH
   if (balance < minBalance) {
-    throw new Error(`Insufficient balance. Need at least ${ethers.formatEther(minBalance)} ETH, have ${ethers.formatEther(balance)} ETH`);
+    throw new Error(
+      `Insufficient balance. Need at least ${ethers.formatEther(minBalance)} ETH, have ${ethers.formatEther(balance)} ETH`
+    );
   }
 
   // Deploy CanonRegistry
@@ -35,8 +41,8 @@ async function main() {
   const CanonRegistry = await ethers.getContractFactory('CanonRegistry');
   const canonRegistry = await CanonRegistry.deploy(
     deployer.address, // foundationTreasury
-    deployer.address, // implementerTreasury  
-    deployer.address  // admin
+    deployer.address, // implementerTreasury
+    deployer.address // admin
   );
   await canonRegistry.waitForDeployment();
   const canonRegistryAddress = await canonRegistry.getAddress();
@@ -63,7 +69,7 @@ async function main() {
   // Output deployment summary
   console.log('\n🎉 MAINNET Deployment Summary:');
   console.log('=====================================');
-  console.log('Network:', await ethers.provider.getNetwork().then(n => n.name));
+  console.log('Network:', await ethers.provider.getNetwork().then((n) => n.name));
   console.log('Chain ID:', (await ethers.provider.getNetwork()).chainId);
   console.log('Deployer:', deployer.address);
   console.log('CanonRegistry:', canonRegistryAddress);
@@ -89,7 +95,7 @@ async function main() {
   };
 
   const deploymentsDir = path.join(__dirname, '..', 'deployments');
-  
+
   if (!fs.existsSync(deploymentsDir)) {
     fs.mkdirSync(deploymentsDir, { recursive: true });
   }
