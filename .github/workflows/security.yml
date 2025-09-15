@@ -34,7 +34,7 @@ jobs:
         run: npm audit --json > audit-results.json
 
       - name: Upload audit results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: audit-results
           path: audit-results.json
@@ -64,7 +64,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload Slither results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: slither-results
           path: slither-results.json
@@ -187,7 +187,7 @@ jobs:
     if: always()
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Generate security report
         run: |
@@ -219,7 +219,7 @@ jobs:
           echo "✅ TruffleHog scan completed" >> security-report.md
 
       - name: Upload security report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-report
           path: security-report.md

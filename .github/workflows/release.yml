@@ -51,7 +51,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -95,14 +95,12 @@ jobs:
             LICENSE
 
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
-          asset_name: null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
-          asset_content_type: application/gzip
+          tag_name: ${{ github.ref }}
+          files: ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
 
   deploy-mainnet:
     name: Deploy to Mainnet
@@ -191,7 +189,7 @@ jobs:
           npm run security:audit
 
       - name: Upload security scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-scan-results
           path: audit-results.json
