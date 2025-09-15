@@ -102,7 +102,7 @@ async function main() {
   console.log(`📄 Deployment info saved to: ${deploymentFile}`);
 
   // Verify contracts if on a supported network
-  if (network.chainId === 84532n || network.chainId === 8453n) {
+  if (network.chainId === BigInt(84532) || network.chainId === BigInt(8453)) {
     // Base Sepolia or Base Mainnet
     console.log('\n🔍 Verifying contracts on block explorer...');
     try {
