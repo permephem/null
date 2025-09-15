@@ -35,12 +35,17 @@ export class RelayerService {
    * @returns Processing result
    */
   async processWarrant(warrant: NullWarrant): Promise<ProcessingResult> {
+    const startTime = Date.now();
     try {
       logger.info('Processing warrant:', { warrantId: warrant.warrant_id });
 
       // Validate warrant
       const validation = await this.validateWarrant(warrant);
       if (!validation.valid) {
+        logger.warn('Warrant validation failed', { 
+          warrantId: warrant.warrant_id, 
+          error: validation.error 
+        });
         return {
           success: false,
           error: validation.error || 'Validation failed',
@@ -48,7 +53,7 @@ export class RelayerService {
         };
       }
 
-      // Generate privacy-preserving subject tag
+      // Generate privacy-preserving subject tag using HMAC-Blake3
       const subjectTag = CryptoService.generateSubjectTag(
         warrant.subject.subject_handle,
         warrant.enterprise_id,
@@ -58,20 +63,49 @@ export class RelayerService {
       // Compute warrant digest
       const warrantDigest = this.computeWarrantDigest(warrant);
 
-      // Anchor warrant to Canon Registry
-      const anchorTxHash = await this.canonService.anchorWarrant(
-        warrantDigest,
-        warrantDigest, // subjectHandleHash placeholder
-        warrantDigest, // enterpriseHash placeholder
-        warrant.enterprise_id,
-        warrant.warrant_id,
-        warrantDigest, // controllerDidHash placeholder
-        subjectTag,
-        this.determineAssuranceLevel(warrant)
-      );
+      // Anchor warrant to Canon Registry with retry logic
+      let anchorTxHash: string;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          anchorTxHash = await this.canonService.anchorWarrant(
+            warrantDigest,
+            warrantDigest, // subjectHandleHash placeholder
+            warrantDigest, // enterpriseHash placeholder
+            warrant.enterprise_id,
+            warrant.warrant_id,
+            warrantDigest, // controllerDidHash placeholder
+            subjectTag,
+            this.determineAssuranceLevel(warrant)
+          );
+          break;
+        } catch (error) {
+          retryCount++;
+          logger.warn(`Failed to anchor warrant (attempt ${retryCount}/${maxRetries})`, {
+            warrantId: warrant.warrant_id,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+          
+          if (retryCount >= maxRetries) {
+            throw new Error(`Failed to anchor warrant after ${maxRetries} attempts: ${error}`);
+          }
+          
+          // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        }
+      }
 
-      // Send warrant to enterprise endpoint
+      // Send warrant to enterprise endpoint with timeout
       const enterpriseResult = await this.sendWarrantToEnterprise(warrant);
+
+      const processingTime = Date.now() - startTime;
+      logger.info('Warrant processed successfully', {
+        warrantId: warrant.warrant_id,
+        processingTime,
+        anchorTxHash
+      });
 
       return {
         success: true,
@@ -80,10 +114,17 @@ export class RelayerService {
           subjectTag,
           anchorTxHash,
           enterpriseResponse: enterpriseResult,
+          processingTime,
         },
       };
     } catch (error) {
-      logger.error('Error processing warrant:', error);
+      const processingTime = Date.now() - startTime;
+      logger.error('Error processing warrant:', {
+        warrantId: warrant.warrant_id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        processingTime
+      });
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -174,16 +215,25 @@ export class RelayerService {
         return schemaValidation;
       }
 
-      // Signature verification
-      const signatureValid = CryptoService.verifySignature(
-        JSON.stringify(warrant),
-        warrant.signature?.sig || '',
-        warrant.signature?.kid || ''
-      );
-      if (!signatureValid) {
+      // Signature verification using real crypto
+      if (warrant.signature?.sig && warrant.signature?.kid) {
+        const canonicalData = CryptoService.canonicalizeJSON(warrant);
+        const signatureValid = await CryptoService.verifySignature(
+          canonicalData,
+          warrant.signature.sig,
+          warrant.signature.kid,
+          warrant.signature.alg || 'EdDSA'
+        );
+        if (!signatureValid) {
+          return {
+            valid: false,
+            error: 'Invalid signature',
+          };
+        }
+      } else {
         return {
           valid: false,
-          error: 'Invalid signature',
+          error: 'Missing signature or key ID',
         };
       }
 
@@ -228,16 +278,25 @@ export class RelayerService {
         return schemaValidation;
       }
 
-      // Signature verification
-      const signatureValid = CryptoService.verifySignature(
-        JSON.stringify(attestation),
-        attestation.signature?.sig || '',
-        attestation.signature?.kid || ''
-      );
-      if (!signatureValid) {
+      // Signature verification using real crypto
+      if (attestation.signature?.sig && attestation.signature?.kid) {
+        const canonicalData = CryptoService.canonicalizeJSON(attestation);
+        const signatureValid = await CryptoService.verifySignature(
+          canonicalData,
+          attestation.signature.sig,
+          attestation.signature.kid,
+          attestation.signature.alg || 'EdDSA'
+        );
+        if (!signatureValid) {
+          return {
+            valid: false,
+            error: 'Invalid signature',
+          };
+        }
+      } else {
         return {
           valid: false,
-          error: 'Invalid signature',
+          error: 'Missing signature or key ID',
         };
       }
 

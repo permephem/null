@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { MaskSBT, MaskSBT__factory } from '../../../typechain-types/index.js';
 import logger from '../utils/logger.js';
 
 export interface SBTServiceConfig {
@@ -10,20 +11,12 @@ export interface SBTServiceConfig {
 export class SBTService {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
-  private contract: ethers.Contract;
+  private contract: MaskSBT;
 
   constructor(config: SBTServiceConfig) {
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
     this.wallet = new ethers.Wallet(config.privateKey, this.provider);
-
-    // Placeholder contract ABI - would be imported from compiled contracts
-    const contractABI = [
-      'function safeMint(address to, bytes32 receiptHash) external',
-      'function setSbtMintingEnabled(bool _enabled) external',
-      'function sbtMintingEnabled() external view returns (bool)',
-    ];
-
-    this.contract = new ethers.Contract(config.contractAddress, contractABI, this.wallet);
+    this.contract = MaskSBT__factory.connect(config.contractAddress, this.wallet);
   }
 
   async mintReceipt(to: string, receiptHash: string): Promise<string> {
@@ -34,7 +27,7 @@ export class SBTService {
         throw new Error('Contract not initialized');
       }
 
-      const tx = await (this.contract as any).safeMint(to, receiptHash);
+      const tx = await this.contract.safeMint(to, receiptHash);
       const receipt = await tx.wait();
 
       logger.info('SBT receipt minted successfully', {
@@ -57,7 +50,7 @@ export class SBTService {
         return false;
       }
 
-      return await (this.contract as any).sbtMintingEnabled();
+      return await this.contract.sbtMintingEnabled();
     } catch (error) {
       logger.error('Failed to check SBT minting status', { error });
       return false;
@@ -72,7 +65,7 @@ export class SBTService {
         throw new Error('Contract not initialized');
       }
 
-      const tx = await (this.contract as any).setSbtMintingEnabled(enabled);
+      const tx = await this.contract.setSbtMintingEnabled(enabled);
       const receipt = await tx.wait();
 
       logger.info('SBT minting status updated', {

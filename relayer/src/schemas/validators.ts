@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CryptoService } from '../crypto/crypto.js';
 
 // Null Warrant Schema
 export const NullWarrantSchema = z.object({
@@ -14,10 +15,13 @@ export const NullWarrantSchema = z.object({
   return_channels: z.array(z.string()),
   nonce: z.string(),
   signature: z.object({
-    type: z.string(),
-    created: z.string(),
-    verificationMethod: z.string(),
-    proofValue: z.string(),
+    alg: z.enum(['EdDSA', 'ES256', 'secp256k1']),
+    kid: z.string(),
+    sig: z.string(),
+    type: z.string().optional(),
+    created: z.string().optional(),
+    verificationMethod: z.string().optional(),
+    proofValue: z.string().optional(),
   }),
   aud: z.string(),
   jti: z.string(),
@@ -40,10 +44,13 @@ export const DeletionAttestationSchema = z.object({
   completed_at: z.string(),
   evidence_hash: z.string(),
   signature: z.object({
-    type: z.string(),
-    created: z.string(),
-    verificationMethod: z.string(),
-    proofValue: z.string(),
+    alg: z.enum(['EdDSA', 'ES256', 'secp256k1']),
+    kid: z.string(),
+    sig: z.string(),
+    type: z.string().optional(),
+    created: z.string().optional(),
+    verificationMethod: z.string().optional(),
+    proofValue: z.string().optional(),
   }),
   aud: z.string(),
   ref: z.string(),
@@ -67,10 +74,13 @@ export const MaskReceiptSchema = z.object({
   completed_at: z.string(),
   evidence_hash: z.string(),
   signature: z.object({
-    type: z.string(),
-    created: z.string(),
-    verificationMethod: z.string(),
-    proofValue: z.string(),
+    alg: z.enum(['EdDSA', 'ES256', 'secp256k1']),
+    kid: z.string(),
+    sig: z.string(),
+    type: z.string().optional(),
+    created: z.string().optional(),
+    verificationMethod: z.string().optional(),
+    proofValue: z.string().optional(),
   }),
   version: z.string(),
   controller_did_hash: z.string(),
@@ -108,5 +118,85 @@ export function validateAttestation(attestation: any): { valid: boolean; error?:
     return { valid: true };
   } catch (error) {
     return { valid: false, error: error instanceof Error ? error.message : 'Validation error' };
+  }
+}
+
+// Enhanced validation functions with cryptographic verification
+export async function validateWarrantWithCrypto(warrant: any): Promise<{ valid: boolean; error?: string }> {
+  try {
+    // Basic schema validation
+    const schemaValidation = validateWarrant(warrant);
+    if (!schemaValidation.valid) {
+      return schemaValidation;
+    }
+
+    // Cryptographic validation
+    if (warrant.signature?.sig && warrant.signature?.kid) {
+      const canonicalData = CryptoService.canonicalizeJSON(warrant);
+      const signatureValid = await CryptoService.verifySignature(
+        canonicalData,
+        warrant.signature.sig,
+        warrant.signature.kid,
+        warrant.signature.alg || 'EdDSA'
+      );
+      if (!signatureValid) {
+        return { valid: false, error: 'Invalid signature' };
+      }
+    } else {
+      return { valid: false, error: 'Missing signature or key ID' };
+    }
+
+    // Validate timestamps
+    const now = Math.floor(Date.now() / 1000);
+    if (warrant.nbf && warrant.nbf > now) {
+      return { valid: false, error: 'Warrant not yet valid (nbf)' };
+    }
+    if (warrant.exp && warrant.exp < now) {
+      return { valid: false, error: 'Warrant has expired' };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : 'Validation error' };
+  }
+}
+
+export async function validateAttestationWithCrypto(attestation: any): Promise<{ valid: boolean; error?: string }> {
+  try {
+    // Basic schema validation
+    const schemaValidation = validateAttestation(attestation);
+    if (!schemaValidation.valid) {
+      return schemaValidation;
+    }
+
+    // Cryptographic validation
+    if (attestation.signature?.sig && attestation.signature?.kid) {
+      const canonicalData = CryptoService.canonicalizeJSON(attestation);
+      const signatureValid = await CryptoService.verifySignature(
+        canonicalData,
+        attestation.signature.sig,
+        attestation.signature.kid,
+        attestation.signature.alg || 'EdDSA'
+      );
+      if (!signatureValid) {
+        return { valid: false, error: 'Invalid signature' };
+      }
+    } else {
+      return { valid: false, error: 'Missing signature or key ID' };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : 'Validation error' };
+  }
+}
+
+// HMAC-Blake3 validation for subject tags
+export function validateSubjectTag(subjectTag: string, controllerKey: string, subjectDID: string, context: string): boolean {
+  try {
+    const expectedTag = CryptoService.generateSubjectTag(controllerKey, subjectDID, context);
+    return subjectTag === expectedTag;
+  } catch (error) {
+    return false;
   }
 }

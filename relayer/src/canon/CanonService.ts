@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { CanonRegistry, CanonRegistry__factory } from '../../../typechain-types/index.js';
 import logger from '../utils/logger.js';
 
 export interface CanonServiceConfig {
@@ -10,18 +11,12 @@ export interface CanonServiceConfig {
 export class CanonService {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
-  private contract: ethers.Contract;
+  private contract: CanonRegistry;
 
   constructor(config: CanonServiceConfig) {
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
     this.wallet = new ethers.Wallet(config.privateKey, this.provider);
-
-    // Placeholder contract ABI - would be imported from compiled contracts
-    const contractABI = [
-      'function anchorWarrant(bytes32 warrantHash, bytes32 subjectHandleHash, bytes32 enterpriseHash, string enterpriseId, string warrantId, bytes32 controllerDidHash, bytes32 subjectTag, uint8 assurance) external',
-    ];
-
-    this.contract = new ethers.Contract(config.contractAddress, contractABI, this.wallet);
+    this.contract = CanonRegistry__factory.connect(config.contractAddress, this.wallet);
   }
 
   async anchorWarrant(
@@ -41,7 +36,7 @@ export class CanonService {
         throw new Error('Contract not initialized');
       }
 
-      const tx = await (this.contract as any).anchorWarrant(
+      const tx = await this.contract.anchorWarrant(
         warrantHash,
         subjectHandleHash,
         enterpriseHash,
@@ -66,33 +61,76 @@ export class CanonService {
     }
   }
 
-  async getLastAnchorBlock(_hash: string): Promise<number> {
-    // Placeholder implementation
-    return 0;
+  async getLastAnchorBlock(hash: string): Promise<number> {
+    try {
+      logger.info('Getting last anchor block for hash', { hash });
+      const blockNumber = await this.contract.lastAnchorBlock(hash);
+      return Number(blockNumber);
+    } catch (error) {
+      logger.error('Failed to get last anchor block', { hash, error });
+      throw error;
+    }
   }
 
   async anchorAttestation(
-    data: any
+    attestationHash: string,
+    warrantHash: string,
+    enterpriseHash: string,
+    enterpriseId: string,
+    attestationId: string,
+    controllerDidHash: string,
+    subjectTag: string,
+    assurance: number
   ): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
     try {
-      logger.info('Anchoring attestation to canon registry', { attestationId: data.attestationId });
-      // Placeholder implementation
-      return { success: true, blockNumber: 12345 };
+      logger.info('Anchoring attestation to canon registry', { attestationId });
+      
+      const tx = await this.contract.anchorAttestation(
+        attestationHash,
+        warrantHash,
+        enterpriseHash,
+        enterpriseId,
+        attestationId,
+        controllerDidHash,
+        subjectTag,
+        assurance
+      );
+
+      const receipt = await tx.wait();
+      logger.info('Attestation anchored successfully', {
+        attestationId,
+        txHash: receipt.hash,
+        blockNumber: receipt.blockNumber,
+      });
+
+      return { success: true, blockNumber: receipt.blockNumber };
     } catch (error) {
-      logger.error('Failed to anchor attestation', { error });
+      logger.error('Failed to anchor attestation', { attestationId, error });
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
   async isAnchored(hash: string): Promise<boolean> {
-    // Placeholder implementation - would check if hash exists in registry
-    logger.info('Checking if hash is anchored', { hash });
-    return false;
+    try {
+      logger.info('Checking if hash is anchored', { hash });
+      const blockNumber = await this.contract.lastAnchorBlock(hash);
+      return Number(blockNumber) > 0;
+    } catch (error) {
+      logger.error('Failed to check if hash is anchored', { hash, error });
+      return false;
+    }
   }
 
   async warrantExists(warrantId: string): Promise<boolean> {
-    // Placeholder implementation - would check if warrant exists in registry
-    logger.info('Checking if warrant exists', { warrantId });
-    return true;
+    try {
+      logger.info('Checking if warrant exists', { warrantId });
+      // For now, we'll check if the warrant hash has been anchored
+      // In a real implementation, we might have a separate mapping for warrant IDs
+      const warrantHash = ethers.keccak256(ethers.toUtf8Bytes(warrantId));
+      return await this.isAnchored(warrantHash);
+    } catch (error) {
+      logger.error('Failed to check if warrant exists', { warrantId, error });
+      return false;
+    }
   }
 }
