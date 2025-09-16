@@ -1171,7 +1171,7 @@ interface LongTermFeatures {
 
 **Status: READY FOR ICO LAUNCH** 🚀
 
-The Null Protocol MVP represents **exceptional technical quality** that exceeds the standards of 99% of successful ICOs. The implementation is **production-ready** and addresses a **genuine market need** with **novel technical innovation**.
+The Null Protocol MVP represents **technical quality** that exceeds the standards of most successful ICOs. The implementation is **production-ready** and addresses a **genuine market need** with **novel technical innovation**.
 
 **Key Advantages:**
 

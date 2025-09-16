@@ -1,7 +1,7 @@
 # Null Protocol Economic Framework
 
 **Version:** 1.0  
-**Date:** January 2025  
+**Date:** September 2025  
 **Status:** ICO-Ready Economic Model
 
 ---
