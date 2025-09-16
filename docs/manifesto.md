@@ -143,7 +143,7 @@ Welcome to the age of witnessed endings.
 ---
 
 **Null Protocol Foundation**  
-*Making absence visible, deletion verifiable, endings beautiful*
+*Null - a placeholder for absence*
 
 **Learn More:**
 - Technical Whitepaper: [docs/technical-whitepaper.md](./technical-whitepaper.md)
