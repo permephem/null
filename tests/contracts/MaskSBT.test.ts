@@ -8,33 +8,44 @@ import type { MaskSBT } from '../../typechain-types';
 const { ethers } = hre;
 
 async function deployFixture() {
-  const [owner, minter, user, rando] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  const [owner, minter, user, rando] = signers;
   const Factory = await ethers.getContractFactory('MaskSBT');
   const c = (await Factory.deploy(
     'Null Protocol Mask Receipts',
     'MASK',
-    owner.address
+    owner!.address
   )) as unknown as MaskSBT;
   await c.waitForDeployment();
 
   const MINTER_ROLE = await c.MINTER_ROLE();
   const DEFAULT_ADMIN_ROLE = await c.DEFAULT_ADMIN_ROLE();
 
-  await c.grantRole(MINTER_ROLE, minter.address);
+  await c.grantRole(MINTER_ROLE, minter!.address);
 
   const toHash = (s: string) => ethers.keccak256(ethers.toUtf8Bytes(s));
 
   const mintTo = async (to: string, label = 'test-receipt') => {
     const h = toHash(label);
-    const tx = await c.connect(minter).mintReceipt(to, h);
+    const tx = await c.connect(minter!).mintReceipt(to, h);
     const rc = await tx.wait();
     // Find Transfer(tokenId) robustly
-    const log = rc!.logs.find((l: any) => l.fragment?.name === 'Transfer');
+    const log = rc!.logs.find((l: any) => l.fragment?.name === 'Transfer') as any;
     const tokenId = log?.args?.tokenId ?? 1n;
     return { tokenId: Number(tokenId), receiptHash: h };
   };
 
-  return { c, owner, minter, user, rando, MINTER_ROLE, DEFAULT_ADMIN_ROLE, toHash, mintTo };
+  return {
+    c,
+    owner: owner!,
+    minter: minter!,
+    user: user!,
+    rando: rando!,
+    MINTER_ROLE,
+    DEFAULT_ADMIN_ROLE,
+    toHash,
+    mintTo,
+  };
 }
 
 describe('MaskSBT', function () {
@@ -129,7 +140,9 @@ describe('MaskSBT', function () {
 
       // safeTransferFrom (no data)
       await expect(
-        c.connect(user).safeTransferFrom(user.address, owner.address, tokenId)
+        c
+          .connect(user)
+          ['safeTransferFrom(address,address,uint256)'](user.address, owner.address, tokenId)
       ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // safeTransferFrom (with data)

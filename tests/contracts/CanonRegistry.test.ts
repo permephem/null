@@ -7,13 +7,14 @@ import type { CanonRegistry } from '../../typechain-types';
 const { ethers } = hre;
 
 async function deployFixture() {
-  const [owner, relayer, user, foundation, implementer] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  const [owner, relayer, user, foundation, implementer] = signers;
 
   const Factory = await ethers.getContractFactory('CanonRegistry');
   const c = (await Factory.deploy(
-    foundation.address,
-    implementer.address,
-    owner.address
+    foundation!.address,
+    implementer!.address,
+    owner!.address
   )) as unknown as CanonRegistry;
   await c.waitForDeployment();
 
@@ -21,17 +22,17 @@ async function deployFixture() {
   const DEFAULT_ADMIN_ROLE = await c.DEFAULT_ADMIN_ROLE();
   const TREASURY_ROLE = await c.TREASURY_ROLE();
 
-  await c.grantRole(RELAYER_ROLE, relayer.address);
+  await c.grantRole(RELAYER_ROLE, relayer!.address);
 
   const toHash = (s: string) => ethers.keccak256(ethers.toUtf8Bytes(s));
 
   return {
     c,
-    owner,
-    relayer,
-    _user: user,
-    foundation,
-    implementer,
+    owner: owner!,
+    relayer: relayer!,
+    _user: user!,
+    foundation: foundation!,
+    implementer: implementer!,
     _RELAYER_ROLE: RELAYER_ROLE,
     DEFAULT_ADMIN_ROLE,
     TREASURY_ROLE,
@@ -61,19 +62,20 @@ describe('CanonRegistry', function () {
     });
 
     it('rejects zero addresses in constructor', async function () {
-      const [owner, foundation, implementer] = await ethers.getSigners();
+      const signers = await ethers.getSigners();
+      const [owner, foundation, implementer] = signers;
       const Factory = await ethers.getContractFactory('CanonRegistry');
 
       await expect(
-        Factory.deploy(ethers.ZeroAddress, implementer.address, owner.address)
+        Factory.deploy(ethers.ZeroAddress, implementer!.address, owner!.address)
       ).to.be.revertedWithCustomError(Factory, 'ZeroAddress');
 
       await expect(
-        Factory.deploy(foundation.address, ethers.ZeroAddress, owner.address)
+        Factory.deploy(foundation!.address, ethers.ZeroAddress, owner!.address)
       ).to.be.revertedWithCustomError(Factory, 'ZeroAddress');
 
       await expect(
-        Factory.deploy(foundation.address, implementer.address, ethers.ZeroAddress)
+        Factory.deploy(foundation!.address, implementer!.address, ethers.ZeroAddress)
       ).to.be.revertedWithCustomError(Factory, 'ZeroAddress');
     });
   });

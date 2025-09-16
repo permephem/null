@@ -156,7 +156,9 @@ describe('RelayerService', () => {
 
     it('should handle anchoring failures with retry logic', async () => {
       // Mock the CanonService to fail with network error
-      (mockCanonService.anchorWarrant as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (mockCanonService.anchorWarrant as jest.Mock).mockImplementation(() =>
+        Promise.reject(new Error('Network error'))
+      );
 
       const mockWarrant = {
         type: 'NullWarrant@v0.2' as const,
@@ -228,7 +230,7 @@ describe('RelayerService', () => {
         signature: {
           sig: 'valid-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA' as const,
+          alg: 'ed25519' as const,
         },
         aud: 'test-controller',
         jti: 'test-jti',
@@ -270,7 +272,7 @@ describe('RelayerService', () => {
         signature: {
           sig: 'invalid-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA' as const,
+          alg: 'ed25519' as const,
         },
         aud: 'test-controller',
         jti: 'test-jti',
@@ -302,7 +304,9 @@ describe('RelayerService', () => {
   describe('error handling', () => {
     it('should handle network timeouts gracefully', async () => {
       // Mock the CanonService to timeout
-      (mockCanonService.anchorWarrant as jest.Mock).mockRejectedValue(new Error('Request timeout'));
+      (mockCanonService.anchorWarrant as jest.Mock).mockImplementation(() =>
+        Promise.reject(new Error('Request timeout'))
+      );
 
       const mockWarrant = {
         type: 'NullWarrant@v0.2' as const,
@@ -325,7 +329,7 @@ describe('RelayerService', () => {
         signature: {
           sig: 'test-signature',
           kid: 'test-key-id',
-          alg: 'EdDSA' as const,
+          alg: 'ed25519' as const,
         },
         aud: 'test-controller',
         jti: 'test-jti',
