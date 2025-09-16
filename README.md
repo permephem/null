@@ -181,11 +181,16 @@ npm run test:coverage
 
 ## 📚 Documentation
 
-- **[Technical Whitepaper](docs/whitepaper.md)** - Complete protocol specification
-- **[Technical Considerations](docs/technical-considerations.md)** - Implementation details and ICO analysis
-- **[Manifesto](docs/manifesto.txt)** - Protocol philosophy and vision
-- **[API Documentation](docs/api/)** - REST API reference
-- **[Integration Examples](docs/examples/)** - Usage examples and tutorials
+**Complete documentation is available in the [docs/](./docs/) directory:**
+
+- **[📋 Documentation Index](./docs/README.md)** - Start here for navigation
+- **[🎯 Manifesto](./docs/manifesto.md)** - Vision and philosophy 
+- **[📘 Technical Whitepaper](./docs/technical-whitepaper.md)** - Complete technical specification
+- **[🔧 Technical Considerations](./docs/technical-considerations.md)** - ICO readiness assessment
+- **[💰 Economic Framework](./docs/economic-framework.md)** - Token economics and business model
+- **[🔌 API Documentation](./docs/api/)** - Integration guides
+- **[💡 Examples](./docs/examples/)** - Code samples and tutorials
+- **[🔒 Security](./docs/security/)** - Security guidelines and audits
 
 ## 🏛️ Architecture
 
