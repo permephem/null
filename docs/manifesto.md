@@ -20,6 +20,8 @@ The absence of a body does not prove death. What society accepts is the death ce
 
 So too in the digital sphere. Deletion today carries meaning in law and practice — regulators accept it as compliance. But it lacks witness, transparency, and cultural recognition. Without proof that can be seen and shared, endings dissolve into silence.
 
+Even now, deletion requests do not mean erasure, they simply mean transfer my data to a suppression list. Public record should not mean public property!
+
 ## The Solution: Witnessing Absence
 
 Null Protocol makes deletion visible, verifiable, and ceremonial.
