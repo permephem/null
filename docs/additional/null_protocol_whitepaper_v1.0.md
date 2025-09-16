@@ -144,14 +144,17 @@ Each emits an event and updates internal mappings for last anchor, fee stats, an
 The protocol defines three assurance tiers:
 
 ### High Assurance
+
 - JWS signatures, DID-based key resolution.
 - Mutually authenticated TLS.
 - Optional KMS-backed key storage.
 
 ### Medium Assurance
+
 - JWT and mutual TLS without DID resolution.
 
 ### Low Assurance
+
 - DKIM and HTTPS.
 
 Contracts rely on audited OpenZeppelin libraries. Relayer aims to handle uncaught exceptions, unhandled rejections, and implement retry logic to maintain availability.
@@ -190,18 +193,22 @@ The repository provides a reference implementation:
 ## 14. Roadmap
 
 ### Production Cryptography
+
 - Replace stubs with verified implementations (Ed25519, Secp256k1, Blake3 libs).
 - Integrate DID resolution and mTLS enforcement.
 
 ### Contract Hardening
+
 - Add failure modes, gas optimizations, and event indexing improvements.
 - Formal verification for high-assurance deployments.
 
 ### Monitoring & Alerts
+
 - Publish metrics for anchoring events, failure rates, gas costs.
 - Detection of resurfacing or non-compliance.
 
 ### Developer Experience
+
 - CLI/SDK for warrant generation and verification.
 - Dashboard for tracking deletion proofs.
 

@@ -1,9 +1,10 @@
 # Null Protocol Technical Whitepaper v1.0
+
 ## Verifiable Digital Closure: Technical Architecture & Implementation
 
 **Version:** 1.0  
 **Date:** January 2025  
-**Authors:** Null Foundation Technical Team  
+**Authors:** Null Foundation Technical Team
 
 ---
 
@@ -61,6 +62,7 @@ The Null Protocol implements a three-tier architecture:
 ### 1.2 Component Responsibilities
 
 **Null Engine (Relayer)**
+
 - Mediates between users, enterprises, and blockchain
 - Computes cryptographic hashes using Blake3 and Keccak256
 - Anchors warrants, attestations, and receipts to Canon Registry
@@ -68,18 +70,21 @@ The Null Protocol implements a three-tier architecture:
 - Provides callback API for enterprise attestations
 
 **Canon Registry (Smart Contract)**
+
 - Append-only ledger of closure events
 - Records warrant hashes, attestation hashes, and receipt hashes
 - Emits events for external monitoring and verification
 - Maintains block number anchors for temporal proof
 
 **Mask SBT (Smart Contract)**
+
 - Non-transferable soulbound tokens representing deletion receipts
 - Links token IDs to receipt hashes for verification
 - Enforces non-transferability through ERC721 override
 - Access-controlled minting via MINTER_ROLE
 
 **Enterprise Integration**
+
 - Exposes `/null/closure` endpoint for warrant processing
 - Implements deletion routines (API calls, SQL scripts, key destruction)
 - Signs attestations confirming deletion completion
@@ -97,24 +102,20 @@ To prevent correlation attacks and brute-force attempts, subject tags use HMAC-b
 interface PrivacyPreservingTag {
   // HMAC-based tag generation
   tag: "HMAC-BLAKE3(controllerKey, 'NULL_TAG' || DID || context)";
-  
+
   // VOPRF for negative-registry checks
-  voprf: "OPRF path for negative-registry check";
-  
+  voprf: 'OPRF path for negative-registry check';
+
   benefits: [
-    "Engine never learns controllerKey",
-    "Registry cannot learn subject identity", 
-    "Prevents offline guessing attacks",
-    "Unlinkable across controllers"
+    'Engine never learns controllerKey',
+    'Registry cannot learn subject identity',
+    'Prevents offline guessing attacks',
+    'Unlinkable across controllers',
   ];
 }
 
 // Implementation
-function generateSubjectTag(
-  controllerKey: string,
-  subjectDID: string,
-  context: string
-): string {
+function generateSubjectTag(controllerKey: string, subjectDID: string, context: string): string {
   const message = `NULL_TAG${subjectDID}${context}`;
   return hmacBlake3(controllerKey, message);
 }
@@ -125,12 +126,14 @@ function generateSubjectTag(
 The protocol employs dual hashing for different purposes:
 
 **Blake3 (Primary)**
+
 - Used for content addressing and canonicalization
 - Provides 256-bit output with high performance
 - Collision-resistant and cryptographically secure
 - Implementation: `blake3` npm package
 
 **Keccak256 (Secondary)**
+
 - Used for Ethereum compatibility and gas optimization
 - 256-bit output compatible with EVM operations
 - Standard hash function for blockchain anchoring
@@ -143,9 +146,16 @@ JSON objects are canonicalized using a minimal JCS-like approach:
 ```typescript
 function canonicalize(obj: any): string {
   const order = (x: any): any =>
-    Array.isArray(x) ? x.map(order) :
-    x && typeof x === "object" ? 
-      Object.keys(x).sort().reduce((o,k)=>{o[k]=order(x[k]);return o;},{}) : x;
+    Array.isArray(x)
+      ? x.map(order)
+      : x && typeof x === 'object'
+        ? Object.keys(x)
+            .sort()
+            .reduce((o, k) => {
+              o[k] = order(x[k]);
+              return o;
+            }, {})
+        : x;
   return JSON.stringify(order(obj));
 }
 ```
@@ -157,10 +167,11 @@ This ensures deterministic hashing across different JSON serialization implement
 The protocol supports multiple signature algorithms:
 
 - **Ed25519**: High-performance elliptic curve signatures
-- **Secp256k1**: Bitcoin/Ethereum compatible signatures  
+- **Secp256k1**: Bitcoin/Ethereum compatible signatures
 - **P256**: NIST P-256 curve for enterprise compatibility
 
 Signature format:
+
 ```json
 {
   "alg": "ed25519|secp256k1|p256",
@@ -184,40 +195,63 @@ A Null Warrant is a cryptographically signed deletion command with security cont
   "title": "NullWarrant@v0.2",
   "type": "object",
   "required": [
-    "type","warrant_id","enterprise_id","subject","scope",
-    "jurisdiction","legal_basis","issued_at","expires_at",
-    "return_channels","nonce","signature","aud","jti","nbf","exp",
-    "audience_bindings","version","evidence_requested","sla_seconds"
+    "type",
+    "warrant_id",
+    "enterprise_id",
+    "subject",
+    "scope",
+    "jurisdiction",
+    "legal_basis",
+    "issued_at",
+    "expires_at",
+    "return_channels",
+    "nonce",
+    "signature",
+    "aud",
+    "jti",
+    "nbf",
+    "exp",
+    "audience_bindings",
+    "version",
+    "evidence_requested",
+    "sla_seconds"
   ],
   "properties": {
     "type": { "const": "NullWarrant@v0.1" },
-    "warrant_id": { 
-      "type": "string", 
-      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$" 
+    "warrant_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
     },
     "enterprise_id": { "type": "string" },
     "subject": {
       "type": "object",
-      "required": ["subject_handle","anchors"],
+      "required": ["subject_handle", "anchors"],
       "properties": {
-        "subject_handle": { 
-          "type": "string", 
-          "pattern": "^0x[0-9a-fA-F]{16,}$" 
+        "subject_handle": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{16,}$"
         },
         "anchors": {
           "type": "array",
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["namespace","hash"],
+            "required": ["namespace", "hash"],
             "properties": {
-              "namespace": { 
-                "type": "string", 
-                "enum": ["email","phone","name+dob+zip","account_id","gov_id_redacted","custom"] 
+              "namespace": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "phone",
+                  "name+dob+zip",
+                  "account_id",
+                  "gov_id_redacted",
+                  "custom"
+                ]
               },
-              "hash": { 
-                "type": "string", 
-                "pattern": "^0x[0-9a-fA-F]{16,}$" 
+              "hash": {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{16,}$"
               },
               "hint": { "type": "string", "maxLength": 64 }
             }
@@ -225,73 +259,83 @@ A Null Warrant is a cryptographically signed deletion command with security cont
         }
       }
     },
-    "scope": { 
-      "type": "array", 
-      "minItems": 1, 
-      "items": { 
-        "type": "string", 
-        "enum": ["delete_all","suppress_resale","marketing","analytics","credit_header","background_screening","data_broker_profile","location","inference"] 
-      } 
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "delete_all",
+          "suppress_resale",
+          "marketing",
+          "analytics",
+          "credit_header",
+          "background_screening",
+          "data_broker_profile",
+          "location",
+          "inference"
+        ]
+      }
     },
-    "jurisdiction": { 
-      "type": "string", 
-      "enum": ["GDPR","CCPA/CPRA","VCDPA","CPA","PIPEDA","LGPD","DPDP-India","Other"] 
+    "jurisdiction": {
+      "type": "string",
+      "enum": ["GDPR", "CCPA/CPRA", "VCDPA", "CPA", "PIPEDA", "LGPD", "DPDP-India", "Other"]
     },
     "legal_basis": { "type": "string", "maxLength": 160 },
     "issued_at": { "type": "string", "format": "date-time" },
     "expires_at": { "type": "string", "format": "date-time" },
-    "sla": { 
-      "type": "object", 
-      "properties": { 
-        "respond_within_days": {"type": "integer","minimum": 1,"maximum": 45}, 
-        "complete_within_days": {"type": "integer","minimum": 1,"maximum": 90} 
-      } 
+    "sla": {
+      "type": "object",
+      "properties": {
+        "respond_within_days": { "type": "integer", "minimum": 1, "maximum": 45 },
+        "complete_within_days": { "type": "integer", "minimum": 1, "maximum": 90 }
+      }
     },
-    "return_channels": { 
-      "type": "object", 
-      "required": ["email","callback_url"], 
-      "properties": { 
-        "email": { "type": "string", "format": "email" }, 
-        "callback_url": { "type": "string", "format": "uri" }, 
-        "subject_receipt_wallet": { "type": "string" } 
-      } 
+    "return_channels": {
+      "type": "object",
+      "required": ["email", "callback_url"],
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "callback_url": { "type": "string", "format": "uri" },
+        "subject_receipt_wallet": { "type": "string" }
+      }
     },
     "nonce": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" },
-    "policy": { 
-      "type": "object", 
-      "properties": { 
-        "include_backup_sets": {"type": "boolean","default": true}, 
-        "include_processors": {"type": "boolean","default": true}, 
-        "suppress_reharvest": {"type": "boolean","default": true}, 
-        "evidence_required": {"type": "boolean","default": true} 
-      } 
+    "policy": {
+      "type": "object",
+      "properties": {
+        "include_backup_sets": { "type": "boolean", "default": true },
+        "include_processors": { "type": "boolean", "default": true },
+        "suppress_reharvest": { "type": "boolean", "default": true },
+        "evidence_required": { "type": "boolean", "default": true }
+      }
     },
-    "signature": { 
-      "type": "object", 
-      "required": ["alg","kid","sig"], 
-      "properties": { 
-        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
-        "kid": {"type": "string"}, 
-        "sig": {"type": "string","contentEncoding": "base64"} 
-      } 
+    "signature": {
+      "type": "object",
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["ed25519", "secp256k1", "p256"] },
+        "kid": { "type": "string" },
+        "sig": { "type": "string", "contentEncoding": "base64" }
+      }
     },
     "aud": { "type": "string", "description": "Controller DID/host" },
     "jti": { "type": "string", "description": "Unique identifier (prevents replay)" },
     "nbf": { "type": "number", "description": "Not before timestamp" },
     "exp": { "type": "number", "description": "Expiry timestamp" },
-    "audience_bindings": { 
-      "type": "array", 
+    "audience_bindings": {
+      "type": "array",
       "items": { "type": "string" },
-      "description": "Acceptable domains" 
+      "description": "Acceptable domains"
     },
     "version": { "type": "string", "description": "Schema version" },
-    "evidence_requested": { 
-      "type": "array", 
-      "items": { 
+    "evidence_requested": {
+      "type": "array",
+      "items": {
         "type": "string",
-        "enum": ["TEE_QUOTE","API_LOG","KEY_DESTROY","DKIM_ATTESTATION"]
+        "enum": ["TEE_QUOTE", "API_LOG", "KEY_DESTROY", "DKIM_ATTESTATION"]
       },
-      "description": "Structured evidence types" 
+      "description": "Structured evidence types"
     },
     "sla_seconds": { "type": "number", "description": "Service level agreement in seconds" }
   }
@@ -309,9 +353,20 @@ Enterprise attestations confirm deletion completion with security controls:
   "title": "DeletionAttestation@v0.2",
   "type": "object",
   "required": [
-    "type","attestation_id","warrant_id","enterprise_id",
-    "subject_handle","status","completed_at","evidence_hash","signature",
-    "aud","ref","processing_window","accepted_claims","controller_policy_digest"
+    "type",
+    "attestation_id",
+    "warrant_id",
+    "enterprise_id",
+    "subject_handle",
+    "status",
+    "completed_at",
+    "evidence_hash",
+    "signature",
+    "aud",
+    "ref",
+    "processing_window",
+    "accepted_claims",
+    "controller_policy_digest"
   ],
   "properties": {
     "type": { "const": "DeletionAttestation@v0.1" },
@@ -319,31 +374,31 @@ Enterprise attestations confirm deletion completion with security controls:
     "warrant_id": { "type": "string" },
     "enterprise_id": { "type": "string" },
     "subject_handle": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" },
-    "status": { "type": "string", "enum": ["deleted","suppressed","not_found","rejected"] },
+    "status": { "type": "string", "enum": ["deleted", "suppressed", "not_found", "rejected"] },
     "completed_at": { "type": "string", "format": "date-time" },
     "evidence_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" },
     "retention_policy": { "type": "string", "maxLength": 200 },
-    "signature": { 
-      "type": "object", 
-      "required": ["alg","kid","sig"], 
-      "properties": { 
-        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
-        "kid": {"type": "string"}, 
-        "sig": {"type": "string","contentEncoding": "base64"} 
-      } 
+    "signature": {
+      "type": "object",
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["ed25519", "secp256k1", "p256"] },
+        "kid": { "type": "string" },
+        "sig": { "type": "string", "contentEncoding": "base64" }
+      }
     },
     "aud": { "type": "string", "description": "Engine DID" },
     "ref": { "type": "string", "description": "Warrant jti reference" },
     "processing_window": { "type": "number", "description": "Processing time window" },
-    "accepted_claims": { 
-      "type": "array", 
+    "accepted_claims": {
+      "type": "array",
       "items": { "type": "string" },
-      "description": "Accepted jurisdiction claims" 
+      "description": "Accepted jurisdiction claims"
     },
-    "denial_reason": { 
+    "denial_reason": {
       "type": "string",
-      "enum": ["not_found","legal_obligation","technical_constraint","policy_violation"],
-      "description": "Controlled enum for denial reasons" 
+      "enum": ["not_found", "legal_obligation", "technical_constraint", "policy_violation"],
+      "description": "Controlled enum for denial reasons"
     },
     "controller_policy_digest": { "type": "string", "description": "Policy hash" },
     "evidence": {
@@ -400,9 +455,16 @@ Soulbound receipts provide immutable proof of closure:
   "title": "MaskReceipt@v0.1",
   "type": "object",
   "required": [
-    "type","receipt_id","warrant_hash","attestation_hash",
-    "enterprise_id","subject_wallet","result","canon_tx",
-    "issued_at","signature"
+    "type",
+    "receipt_id",
+    "warrant_hash",
+    "attestation_hash",
+    "enterprise_id",
+    "subject_wallet",
+    "result",
+    "canon_tx",
+    "issued_at",
+    "signature"
   ],
   "properties": {
     "type": { "const": "MaskReceipt@v0.1" },
@@ -411,24 +473,27 @@ Soulbound receipts provide immutable proof of closure:
     "attestation_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" },
     "enterprise_id": { "type": "string" },
     "subject_wallet": { "type": "string" },
-    "result": { "type": "string", "enum": ["confirmed_deleted","confirmed_suppressed","unverified","rejected"] },
-    "canon_tx": { 
-      "type": "object", 
-      "required": ["network","tx_hash"], 
-      "properties": { 
-        "network": {"type": "string"}, 
-        "tx_hash": {"type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" } 
-      } 
+    "result": {
+      "type": "string",
+      "enum": ["confirmed_deleted", "confirmed_suppressed", "unverified", "rejected"]
+    },
+    "canon_tx": {
+      "type": "object",
+      "required": ["network", "tx_hash"],
+      "properties": {
+        "network": { "type": "string" },
+        "tx_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16,}$" }
+      }
     },
     "issued_at": { "type": "string", "format": "date-time" },
-    "signature": { 
-      "type": "object", 
-      "required": ["alg","kid","sig"], 
-      "properties": { 
-        "alg": {"type": "string","enum": ["ed25519","secp256k1","p256"] }, 
-        "kid": {"type": "string"}, 
-        "sig": {"type": "string","contentEncoding": "base64"} 
-      } 
+    "signature": {
+      "type": "object",
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["ed25519", "secp256k1", "p256"] },
+        "kid": { "type": "string" },
+        "sig": { "type": "string", "contentEncoding": "base64" }
+      }
     }
   }
 }
@@ -580,6 +645,7 @@ contract CanonRegistry is ICanonRegistry {
 ```
 
 **Key Features:**
+
 - Gas-optimized event emission with indexed parameters
 - Block number anchoring for temporal proof
 - No access controls (public anchoring for MVP)
@@ -620,6 +686,7 @@ contract MaskSBT is ERC721, AccessControl {
 ```
 
 **Key Features:**
+
 - Non-transferable through ERC721 override
 - Access-controlled minting via MINTER_ROLE
 - Links token IDs to receipt hashes
@@ -653,26 +720,33 @@ relayer/
 ### 5.2 Cryptographic Utilities
 
 ```typescript
-import { blake3 } from "blake3";
-import { createHash } from "crypto";
+import { blake3 } from 'blake3';
+import { createHash } from 'crypto';
 
 export function canonicalize(obj: any): string {
   const order = (x: any): any =>
-    Array.isArray(x) ? x.map(order) :
-    x && typeof x === "object" ? 
-      Object.keys(x).sort().reduce((o,k)=>{o[k]=order(x[k]);return o;},{}) : x;
+    Array.isArray(x)
+      ? x.map(order)
+      : x && typeof x === 'object'
+        ? Object.keys(x)
+            .sort()
+            .reduce((o, k) => {
+              o[k] = order(x[k]);
+              return o;
+            }, {})
+        : x;
   return JSON.stringify(order(obj));
 }
 
 export function blake3Hex(data: Buffer | string): string {
-  const out = blake3(typeof data === "string" ? Buffer.from(data) : data);
-  return "0x" + Buffer.from(out).toString("hex");
+  const out = blake3(typeof data === 'string' ? Buffer.from(data) : data);
+  return '0x' + Buffer.from(out).toString('hex');
 }
 
 export function keccakHex(data: Buffer | string): `0x${string}` {
-  const hash = createHash("keccak256" as any);
-  hash.update(typeof data === "string" ? Buffer.from(data) : data);
-  return ("0x" + hash.digest("hex")) as `0x${string}`;
+  const hash = createHash('keccak256' as any);
+  hash.update(typeof data === 'string' ? Buffer.from(data) : data);
+  return ('0x' + hash.digest('hex')) as `0x${string}`;
 }
 ```
 
@@ -681,15 +755,15 @@ export function keccakHex(data: Buffer | string): `0x${string}` {
 The relayer provides an HTTP callback endpoint for enterprise attestations:
 
 ```typescript
-import http from "http";
-import { getCanon } from "./canon";
-import { blake3Hex, keccakHex, canonicalize } from "./crypto";
+import http from 'http';
+import { getCanon } from './canon';
+import { blake3Hex, keccakHex, canonicalize } from './crypto';
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === "POST" && req.url?.startsWith("/attest/")) {
+  if (req.method === 'POST' && req.url?.startsWith('/attest/')) {
     const chunks: Buffer[] = [];
     for await (const ch of req) chunks.push(ch as Buffer);
-    const body = Buffer.concat(chunks).toString("utf8");
+    const body = Buffer.concat(chunks).toString('utf8');
     const att = JSON.parse(body);
 
     // TODO: signature verification of enterprise attestation
@@ -699,21 +773,22 @@ const server = http.createServer(async (req, res) => {
 
     const { canon: registry } = await getCanon();
     await registry.anchorAttestation(
-      k, 
-      att.warrant_keccak || k, 
-      att.enterprise_keccak || k, 
-      att.enterprise_id, 
+      k,
+      att.warrant_keccak || k,
+      att.enterprise_keccak || k,
+      att.enterprise_id,
       att.attestation_id
     );
 
-    res.writeHead(200, { "content-type": "application/json" });
+    res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ ok: true, blake3: b3 }));
     return;
   }
-  res.writeHead(404); res.end();
+  res.writeHead(404);
+  res.end();
 });
 
-server.listen(8787, () => console.log("Null relayer callbacks listening on :8787"));
+server.listen(8787, () => console.log('Null relayer callbacks listening on :8787'));
 ```
 
 ---
@@ -736,6 +811,7 @@ SpruceID provides a comprehensive DID infrastructure including:
 #### 6.1.2 DID Integration Points
 
 **User Identity Management**
+
 ```typescript
 // DID-based subject handle generation
 import { DIDKit } from '@spruceid/didkit-wasm-nodejs';
@@ -747,32 +823,30 @@ interface DIDSubject {
   verification_methods: VerificationMethod[];
 }
 
-async function createDIDSubject(
-  userDID: string,
-  anchors: Anchor[]
-): Promise<DIDSubject> {
+async function createDIDSubject(userDID: string, anchors: Anchor[]): Promise<DIDSubject> {
   // Resolve DID document
   const didDocument = await DIDKit.resolveDID(userDID);
-  
+
   // Generate subject handle from DID + anchors
   const subjectData = {
     did: userDID,
     anchors: anchors,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
-  
+
   const subjectHandle = blake3Hex(canonicalize(subjectData));
-  
+
   return {
     did: userDID,
     subject_handle: subjectHandle,
     anchors: anchors,
-    verification_methods: didDocument.verificationMethod || []
+    verification_methods: didDocument.verificationMethod || [],
   };
 }
 ```
 
 **Enterprise DID Authentication**
+
 ```typescript
 // Enterprise DID-based warrant signing
 interface EnterpriseDID {
@@ -790,29 +864,29 @@ async function signWarrantWithDID(
   const payload = {
     iss: enterpriseDID.did,
     sub: warrant.subject.subject_handle,
-    aud: "null.foundation",
+    aud: 'null.foundation',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(new Date(warrant.expires_at).getTime() / 1000),
-    warrant: warrant
+    warrant: warrant,
   };
-  
+
   // Sign with DID verification method
   const jwt = await DIDKit.issueCredential(
     JSON.stringify(payload),
     JSON.stringify({
       verificationMethod: enterpriseDID.verification_method,
-      proofPurpose: "assertionMethod"
+      proofPurpose: 'assertionMethod',
     }),
     privateKey
   );
-  
+
   return {
     ...warrant,
     signature: {
-      alg: "did:key",
+      alg: 'did:key',
       kid: enterpriseDID.verification_method,
-      sig: jwt
-    }
+      sig: jwt,
+    },
   };
 }
 ```
@@ -820,10 +894,11 @@ async function signWarrantWithDID(
 #### 6.1.3 Verifiable Credentials Integration
 
 **Deletion Attestation as VC**
+
 ```typescript
 // Convert deletion attestation to verifiable credential
 interface DeletionCredential {
-  "@context": string[];
+  '@context': string[];
   type: string[];
   issuer: {
     id: string;
@@ -854,35 +929,35 @@ async function createDeletionCredential(
   enterpriseDID: string
 ): Promise<DeletionCredential> {
   const credential = {
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://null.foundation/credentials/v1"
+    '@context': [
+      'https://www.w3.org/2018/credentials/v1',
+      'https://null.foundation/credentials/v1',
     ],
-    type: ["VerifiableCredential", "DeletionAttestation"],
+    type: ['VerifiableCredential', 'DeletionAttestation'],
     issuer: {
       id: enterpriseDID,
-      name: attestation.enterprise_id
+      name: attestation.enterprise_id,
     },
     credentialSubject: {
       id: attestation.subject_handle,
       deletionStatus: attestation.status,
       enterpriseId: attestation.enterprise_id,
       completedAt: attestation.completed_at,
-      evidenceHash: attestation.evidence_hash
+      evidenceHash: attestation.evidence_hash,
     },
     credentialStatus: {
       id: `https://canon.null.foundation/status/${attestation.attestation_id}`,
-      type: "NullCredentialStatus"
+      type: 'NullCredentialStatus',
     },
     proof: {
-      type: "Ed25519Signature2020",
+      type: 'Ed25519Signature2020',
       created: new Date().toISOString(),
       verificationMethod: `${enterpriseDID}#key-1`,
-      proofPurpose: "assertionMethod",
-      jws: "" // Will be populated by signing
-    }
+      proofPurpose: 'assertionMethod',
+      jws: '', // Will be populated by signing
+    },
   };
-  
+
   return credential;
 }
 ```
@@ -890,6 +965,7 @@ async function createDeletionCredential(
 #### 6.1.4 DID-based Receipt Claiming
 
 **Soulbound Receipt with DID Binding**
+
 ```typescript
 // Mint SBT to DID controller
 async function mintReceiptToDID(
@@ -900,21 +976,18 @@ async function mintReceiptToDID(
   // Resolve DID to get controller address
   const didDocument = await DIDKit.resolveDID(subjectDID);
   const controllerAddress = didDocument.controller || didDocument.id;
-  
+
   // Verify DID ownership
-  const ownershipProof = await verifyDIDOwnership(
-    subjectDID,
-    controllerAddress
-  );
-  
+  const ownershipProof = await verifyDIDOwnership(subjectDID, controllerAddress);
+
   if (!ownershipProof) {
-    throw new Error("DID ownership verification failed");
+    throw new Error('DID ownership verification failed');
   }
-  
+
   // Mint SBT to controller address
   const { sbt } = await getSBT();
   const tx = await sbt.mint(controllerAddress, receiptHash);
-  
+
   return tx;
 }
 ```
@@ -930,9 +1003,18 @@ async function mintReceiptToDID(
   "title": "NullWarrant@v0.2",
   "type": "object",
   "required": [
-    "type","warrant_id","enterprise_id","subject","scope",
-    "jurisdiction","legal_basis","issued_at","expires_at",
-    "return_channels","nonce","signature"
+    "type",
+    "warrant_id",
+    "enterprise_id",
+    "subject",
+    "scope",
+    "jurisdiction",
+    "legal_basis",
+    "issued_at",
+    "expires_at",
+    "return_channels",
+    "nonce",
+    "signature"
   ],
   "properties": {
     "type": { "const": "NullWarrant@v0.2" },
@@ -940,7 +1022,7 @@ async function mintReceiptToDID(
     "enterprise_id": { "type": "string" },
     "subject": {
       "type": "object",
-      "required": ["subject_handle","anchors"],
+      "required": ["subject_handle", "anchors"],
       "properties": {
         "subject_handle": { "type": "string" },
         "subject_did": { "type": "string", "format": "uri" },
@@ -948,7 +1030,7 @@ async function mintReceiptToDID(
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["namespace","hash"],
+            "required": ["namespace", "hash"],
             "properties": {
               "namespace": { "type": "string" },
               "hash": { "type": "string" },
@@ -976,7 +1058,7 @@ async function mintReceiptToDID(
     "nonce": { "type": "string" },
     "signature": {
       "type": "object",
-      "required": ["alg","kid","sig"],
+      "required": ["alg", "kid", "sig"],
       "properties": {
         "alg": { "type": "string" },
         "kid": { "type": "string" },
@@ -1017,25 +1099,25 @@ async function registerEnterpriseDID(
   enterpriseData: EnterpriseRegistration
 ): Promise<EnterpriseDID> {
   // Create enterprise DID
-  const did = await DIDKit.keyToDID("key", enterpriseData.publicKey);
-  
+  const did = await DIDKit.keyToDID('key', enterpriseData.publicKey);
+
   // Create DID document
   const didDocument = {
-    "@context": ["https://www.w3.org/ns/did/v1"],
+    '@context': ['https://www.w3.org/ns/did/v1'],
     id: did,
     verificationMethod: enterpriseData.verification_methods,
     service: enterpriseData.service_endpoints,
     capabilityInvocation: [`${did}#key-1`],
-    capabilityDelegation: [`${did}#key-1`]
+    capabilityDelegation: [`${did}#key-1`],
   };
-  
+
   // Register with Null Foundation registry
   await registerWithNullFoundation(did, didDocument);
-  
+
   return {
     did: did,
     verification_method: `${did}#key-1`,
-    service_endpoints: enterpriseData.service_endpoints
+    service_endpoints: enterpriseData.service_endpoints,
   };
 }
 ```
@@ -1049,20 +1131,20 @@ async function verifyEnterpriseCompliance(
   requiredCertifications: string[]
 ): Promise<boolean> {
   const didDocument = await DIDKit.resolveDID(enterpriseDID);
-  
+
   // Check for compliance credentials
   const complianceCredentials = await getComplianceCredentials(enterpriseDID);
-  
+
   for (const certification of requiredCertifications) {
-    const hasCertification = complianceCredentials.some(
-      cred => cred.type.includes(certification)
+    const hasCertification = complianceCredentials.some((cred) =>
+      cred.type.includes(certification)
     );
-    
+
     if (!hasCertification) {
       return false;
     }
   }
-  
+
   return true;
 }
 ```
@@ -1080,27 +1162,27 @@ interface DIDResolver {
 
 const resolvers: DIDResolver[] = [
   {
-    method: "key",
-    resolve: (did: string) => DIDKit.resolveDID(did)
+    method: 'key',
+    resolve: (did: string) => DIDKit.resolveDID(did),
   },
   {
-    method: "web",
-    resolve: (did: string) => resolveWebDID(did)
+    method: 'web',
+    resolve: (did: string) => resolveWebDID(did),
   },
   {
-    method: "ens",
-    resolve: (did: string) => resolveENSDID(did)
-  }
+    method: 'ens',
+    resolve: (did: string) => resolveENSDID(did),
+  },
 ];
 
 async function resolveDID(did: string): Promise<DIDDocument> {
-  const method = did.split(":")[1];
-  const resolver = resolvers.find(r => r.method === method);
-  
+  const method = did.split(':')[1];
+  const resolver = resolvers.find((r) => r.method === method);
+
   if (!resolver) {
     throw new Error(`Unsupported DID method: ${method}`);
   }
-  
+
   return await resolver.resolve(did);
 }
 ```
@@ -1126,16 +1208,17 @@ async function createSelectiveDisclosure(
     JSON.stringify(credential),
     JSON.stringify({
       revealed_attributes: revealedAttributes,
-      proofPurpose: "authentication"
+      proofPurpose: 'authentication',
     }),
     privateKey
   );
-  
+
   return {
     revealed_attributes: revealedAttributes,
-    hidden_attributes: Object.keys(credential.credentialSubject)
-      .filter(attr => !revealedAttributes.includes(attr)),
-    proof: presentation
+    hidden_attributes: Object.keys(credential.credentialSubject).filter(
+      (attr) => !revealedAttributes.includes(attr)
+    ),
+    proof: presentation,
   };
 }
 ```
@@ -1159,13 +1242,13 @@ async function createIdentityProof(
   const proof = await generateZKProof({
     subject_did: subjectDID,
     required_attributes: requiredAttributes,
-    secret_attributes: await getSubjectAttributes(subjectDID)
+    secret_attributes: await getSubjectAttributes(subjectDID),
   });
-  
+
   return {
     proof: proof.proof,
     public_inputs: proof.public_inputs,
-    verification_key: proof.verification_key
+    verification_key: proof.verification_key,
   };
 }
 ```
@@ -1175,11 +1258,13 @@ async function createIdentityProof(
 #### 6.6.1 Enhanced Security & Trust
 
 **Cryptographic Identity Verification**
+
 - DIDs provide cryptographically verifiable identity without central authorities
 - Multi-signature support for enterprise compliance requirements
 - Tamper-proof identity documents with blockchain anchoring
 
 **Decentralized Key Management**
+
 - Users control their own private keys through DID controllers
 - No single point of failure for identity management
 - Cross-platform identity portability
@@ -1187,11 +1272,13 @@ async function createIdentityProof(
 #### 6.6.2 Privacy & User Control
 
 **Selective Disclosure**
+
 - Users can prove specific attributes without revealing full identity
 - Zero-knowledge proofs for privacy-preserving authentication
 - Granular consent management for data deletion requests
 
 **Identity Portability**
+
 - DIDs work across different platforms and services
 - No vendor lock-in for identity providers
 - Seamless integration with existing identity systems
@@ -1199,11 +1286,13 @@ async function createIdentityProof(
 #### 6.6.3 Enterprise Benefits
 
 **Compliance & Auditability**
+
 - Verifiable credentials for regulatory compliance
 - Immutable audit trails of identity verification
 - Automated compliance checking through credential verification
 
 **Reduced Integration Complexity**
+
 - Standardized DID resolution across different systems
 - Unified authentication flow for multiple services
 - Simplified onboarding for new enterprise partners
@@ -1211,62 +1300,65 @@ async function createIdentityProof(
 #### 6.6.4 Use Cases
 
 **Healthcare Data Deletion**
+
 ```typescript
 // HIPAA-compliant deletion with DID-based identity
 const healthcareWarrant = {
   subject: {
-    subject_did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    subject_did: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK',
     anchors: [
       {
-        namespace: "medical_record_id",
-        hash: "0x...",
-        credential_id: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#cred-1"
-      }
-    ]
+        namespace: 'medical_record_id',
+        hash: '0x...',
+        credential_id: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#cred-1',
+      },
+    ],
   },
-  scope: ["delete_all", "suppress_resale"],
-  jurisdiction: "HIPAA",
-  legal_basis: "45 CFR §164.526 - Right to Request Amendment"
+  scope: ['delete_all', 'suppress_resale'],
+  jurisdiction: 'HIPAA',
+  legal_basis: '45 CFR §164.526 - Right to Request Amendment',
 };
 ```
 
 **Financial Services Compliance**
+
 ```typescript
 // GDPR/CCPA deletion with verified financial identity
 const financialWarrant = {
   subject: {
-    subject_did: "did:web:bank.example.com:user:12345",
+    subject_did: 'did:web:bank.example.com:user:12345',
     anchors: [
       {
-        namespace: "account_id",
-        hash: "0x...",
-        credential_id: "did:web:bank.example.com:user:12345#account-cred"
-      }
-    ]
+        namespace: 'account_id',
+        hash: '0x...',
+        credential_id: 'did:web:bank.example.com:user:12345#account-cred',
+      },
+    ],
   },
-  scope: ["delete_all", "suppress_resale", "data_broker_profile"],
-  jurisdiction: "GDPR",
-  legal_basis: "Article 17 - Right to Erasure"
+  scope: ['delete_all', 'suppress_resale', 'data_broker_profile'],
+  jurisdiction: 'GDPR',
+  legal_basis: 'Article 17 - Right to Erasure',
 };
 ```
 
 **Cross-Border Data Deletion**
+
 ```typescript
 // International deletion with multiple jurisdiction support
 const internationalWarrant = {
   subject: {
-    subject_did: "did:ens:user.eth",
+    subject_did: 'did:ens:user.eth',
     anchors: [
       {
-        namespace: "email",
-        hash: "0x...",
-        credential_id: "did:ens:user.eth#email-cred"
-      }
-    ]
+        namespace: 'email',
+        hash: '0x...',
+        credential_id: 'did:ens:user.eth#email-cred',
+      },
+    ],
   },
-  scope: ["delete_all"],
-  jurisdiction: "GDPR,CCPA/CPRA,LGPD",
-  legal_basis: "Multi-jurisdictional data protection rights"
+  scope: ['delete_all'],
+  jurisdiction: 'GDPR,CCPA/CPRA,LGPD',
+  legal_basis: 'Multi-jurisdictional data protection rights',
 };
 ```
 
@@ -1279,11 +1371,13 @@ Zero-Knowledge Proofs enable the Null Protocol to prove deletion occurred withou
 #### 7.1.1 ZKP Components
 
 **Proof Systems**
+
 - **Groth16**: Succinct non-interactive arguments for deletion proofs
 - **PLONK**: Universal SNARK for complex deletion circuits
 - **STARK**: Scalable transparent arguments for large-scale proofs
 
 **Circuit Design**
+
 ```typescript
 // ZKP circuit for deletion verification
 interface DeletionCircuit {
@@ -1329,7 +1423,7 @@ async function generateDeletionProof(
 ): Promise<DeletionProof> {
   // Build Poseidon hash function
   const poseidon = await buildPoseidon();
-  
+
   // Prepare circuit inputs
   const inputs = {
     warrant_hash: warrant.warrant_hash,
@@ -1338,20 +1432,20 @@ async function generateDeletionProof(
     deletion_timestamp: new Date(attestation.completed_at).getTime(),
     deleted_data_hash: deletionEvidence.data_hash,
     deletion_proof: deletionEvidence.proof_hash,
-    enterprise_private_key: process.env.ENTERPRISE_PRIVATE_KEY
+    enterprise_private_key: process.env.ENTERPRISE_PRIVATE_KEY,
   };
-  
+
   // Generate proof
   const { proof, publicSignals } = await groth16.fullProve(
     inputs,
-    "circuits/deletion_verification.wasm",
-    "circuits/deletion_verification.zkey"
+    'circuits/deletion_verification.wasm',
+    'circuits/deletion_verification.zkey'
   );
-  
+
   return {
     proof,
     publicSignals,
-    verification_key: "circuits/deletion_verification.vkey.json"
+    verification_key: 'circuits/deletion_verification.vkey.json',
   };
 }
 ```
@@ -1364,16 +1458,10 @@ async function verifyDeletionProof(
   proof: DeletionProof,
   expectedPublicSignals: string[]
 ): Promise<boolean> {
-  const verification_key = JSON.parse(
-    fs.readFileSync(proof.verification_key, 'utf8')
-  );
-  
-  const isValid = await groth16.verify(
-    verification_key,
-    expectedPublicSignals,
-    proof.proof
-  );
-  
+  const verification_key = JSON.parse(fs.readFileSync(proof.verification_key, 'utf8'));
+
+  const isValid = await groth16.verify(verification_key, expectedPublicSignals, proof.proof);
+
   return isValid;
 }
 ```
@@ -1399,22 +1487,22 @@ async function generateBatchDeletionProof(
   const batchData = {
     deletion_count: deletions.length,
     total_data_size: deletions.reduce((sum, d) => sum + d.data_size, 0),
-    individual_hashes: deletions.map(d => d.evidence_hash)
+    individual_hashes: deletions.map((d) => d.evidence_hash),
   };
-  
+
   // Generate batch proof
   const batchProof = await generateDeletionProof(
     batchData,
     deletions[0].warrant, // Use first warrant as template
     { data_hash: batchData.individual_hashes.join('') }
   );
-  
+
   return {
     batch_id: generateId(),
     deletion_count: deletions.length,
     total_data_size: batchData.total_data_size,
     proof: batchProof,
-    individual_hashes: batchData.individual_hashes
+    individual_hashes: batchData.individual_hashes,
   };
 }
 ```
@@ -1436,19 +1524,19 @@ async function createDeletionQuery(
 ): Promise<DeletionQuery> {
   // Hash subject handle for privacy
   const subjectHandleHash = blake3Hex(subjectHandle);
-  
+
   // Generate ZK proof of query authorization
   const queryProof = await generateZKProof({
     subject_handle: subjectHandle,
     enterprise_id: enterpriseId,
-    query_timestamp: Date.now()
+    query_timestamp: Date.now(),
   });
-  
+
   return {
     subject_handle_hash: subjectHandleHash,
     enterprise_id: enterpriseId,
     query_timestamp: Date.now(),
-    proof: queryProof
+    proof: queryProof,
   };
 }
 ```
@@ -1467,25 +1555,25 @@ template DeletionVerification() {
   signal input attestation_hash[2];
   signal input enterprise_id[2];
   signal input deletion_timestamp;
-  
+
   // Private inputs
   signal private input deleted_data_hash[2];
   signal private input deletion_proof[2];
   signal private input enterprise_private_key[2];
-  
+
   // Outputs
   signal output deletion_verified;
-  
+
   // Poseidon hash function
   component poseidon = Poseidon(2);
-  
+
   // Verify deletion proof
   component deletion_check = DeletionCheck();
-  
+
   // Hash verification
   poseidon.inputs[0] <== deleted_data_hash[0];
   poseidon.inputs[1] <== deleted_data_hash[1];
-  
+
   // Deletion verification logic
   deletion_check.warrant_hash[0] <== warrant_hash[0];
   deletion_check.warrant_hash[1] <== warrant_hash[1];
@@ -1495,7 +1583,7 @@ template DeletionVerification() {
   deletion_check.deleted_data_hash[1] <== deleted_data_hash[1];
   deletion_check.deletion_proof[0] <== deletion_proof[0];
   deletion_check.deletion_proof[1] <== deletion_proof[1];
-  
+
   deletion_verified <== deletion_check.out;
 }
 
@@ -1511,16 +1599,19 @@ Trusted Execution Environments provide hardware-backed attestations that deletio
 #### 8.1.1 TEE Providers
 
 **Intel SGX (Software Guard Extensions)**
+
 - Enclave-based secure execution
 - Remote attestation capabilities
 - Memory encryption and integrity protection
 
 **AMD SEV (Secure Encrypted Virtualization)**
+
 - VM-level memory encryption
 - Attestation for virtualized environments
 - Hardware-based key management
 
 **ARM TrustZone**
+
 - Secure world execution
 - Trusted boot and attestation
 - Mobile and IoT device support
@@ -1551,25 +1642,22 @@ async function generateTEEAttestation(
 ): Promise<TEEDeletionProof> {
   // Execute deletion in TEE enclave
   const enclave = await createEnclave('deletion_enclave.signed.so');
-  
+
   // Run deletion routine
-  const deletionResult = await enclave.executeDeletion(
-    deletionRoutine,
-    inputData
-  );
-  
+  const deletionResult = await enclave.executeDeletion(deletionRoutine, inputData);
+
   // Generate attestation report
   const attestation = await enclave.generateAttestation({
     deletion_result: deletionResult,
     execution_timestamp: Date.now(),
-    data_hashes: deletionResult.hashes
+    data_hashes: deletionResult.hashes,
   });
-  
+
   return {
     deletion_attestation: attestation,
     deletion_log: deletionResult.log,
     data_hashes: deletionResult.hashes,
-    execution_timestamp: Date.now()
+    execution_timestamp: Date.now(),
   };
 }
 ```
@@ -1587,7 +1675,7 @@ async function generateTEEAttestation(
 class DeletionEnclave {
 private:
     sgx_enclave_id_t eid;
-    
+
 public:
     sgx_status_t executeDeletion(
         const char* deletion_routine,
@@ -1597,7 +1685,7 @@ public:
         size_t hash_size
     ) {
         sgx_status_t status;
-        
+
         // Execute deletion routine
         status = ecall_execute_deletion(
             eid,
@@ -1607,23 +1695,23 @@ public:
             output_hash,
             hash_size
         );
-        
+
         return status;
     }
-    
+
     sgx_status_t generateAttestation(
         const char* deletion_result,
         sgx_report_t* report
     ) {
         sgx_status_t status;
-        
+
         // Generate attestation report
         status = ecall_generate_report(
             eid,
             deletion_result,
             report
         );
-        
+
         return status;
     }
 };
@@ -1642,7 +1730,7 @@ extern "C" {
         // Return deletion proof
         return SGX_SUCCESS;
     }
-    
+
     sgx_status_t ecall_generate_report(
         const char* result,
         sgx_report_t* report
@@ -1672,21 +1760,21 @@ async function verifyTEEAttestation(
         attestation.quote,
         expectedMeasurement
       );
-      
+
     case 'sev':
       return await verifySEVAttestation(
         attestation.attestation_report,
         attestation.signature,
         expectedMeasurement
       );
-      
+
     case 'trustzone':
       return await verifyTrustZoneAttestation(
         attestation.attestation_report,
         attestation.signature,
         expectedMeasurement
       );
-      
+
     default:
       throw new Error(`Unsupported TEE type: ${attestation.tee_type}`);
   }
@@ -1711,11 +1799,8 @@ async function generateHybridProof(
   inputData: any
 ): Promise<HybridDeletionProof> {
   // Step 1: Execute deletion in TEE
-  const teeProof = await generateTEEAttestation(
-    deletionRoutine,
-    inputData
-  );
-  
+  const teeProof = await generateTEEAttestation(deletionRoutine, inputData);
+
   // Step 2: Generate ZK proof of TEE execution
   const zkProof = await generateDeletionProof(
     warrant,
@@ -1726,26 +1811,26 @@ async function generateHybridProof(
       subject_handle: warrant.subject.subject_handle,
       status: 'deleted',
       completed_at: new Date().toISOString(),
-      evidence_hash: teeProof.data_hashes[0]
+      evidence_hash: teeProof.data_hashes[0],
     },
     {
       data_hash: teeProof.data_hashes.join(''),
-      proof_hash: teeProof.deletion_attestation.measurement
+      proof_hash: teeProof.deletion_attestation.measurement,
     }
   );
-  
+
   // Step 3: Combine proofs
   const combinedVerification = blake3Hex(
     canonicalize({
       tee_measurement: teeProof.deletion_attestation.measurement,
-      zk_public_signals: zkProof.publicSignals
+      zk_public_signals: zkProof.publicSignals,
     })
   );
-  
+
   return {
     tee_attestation: teeProof.deletion_attestation,
     zk_proof: zkProof,
-    combined_verification: combinedVerification
+    combined_verification: combinedVerification,
   };
 }
 ```
@@ -1759,33 +1844,30 @@ async function verifyHybridProof(
   expectedMeasurement: string
 ): Promise<boolean> {
   // Verify TEE attestation
-  const teeValid = await verifyTEEAttestation(
-    hybridProof.tee_attestation,
-    expectedMeasurement
-  );
-  
+  const teeValid = await verifyTEEAttestation(hybridProof.tee_attestation, expectedMeasurement);
+
   if (!teeValid) {
     return false;
   }
-  
+
   // Verify ZK proof
   const zkValid = await verifyDeletionProof(
     hybridProof.zk_proof,
     hybridProof.zk_proof.publicSignals
   );
-  
+
   if (!zkValid) {
     return false;
   }
-  
+
   // Verify combined proof consistency
   const expectedCombined = blake3Hex(
     canonicalize({
       tee_measurement: hybridProof.tee_attestation.measurement,
-      zk_public_signals: hybridProof.zk_proof.publicSignals
+      zk_public_signals: hybridProof.zk_proof.publicSignals,
     })
   );
-  
+
   return expectedCombined === hybridProof.combined_verification;
 }
 ```
@@ -1803,23 +1885,20 @@ interface SecureDeletionConfig {
   branch_prediction_disable: boolean;
 }
 
-async function secureDeletionInTEE(
-  data: Buffer,
-  config: SecureDeletionConfig
-): Promise<string> {
+async function secureDeletionInTEE(data: Buffer, config: SecureDeletionConfig): Promise<string> {
   const enclave = await createSecureEnclave();
-  
+
   // Configure side-channel protection
   await enclave.configureSecurity({
     constant_time: config.constant_time,
     memory_scrubbing: config.memory_scrubbing,
     cache_flushing: config.cache_flushing,
-    branch_prediction_disable: config.branch_prediction_disable
+    branch_prediction_disable: config.branch_prediction_disable,
   });
-  
+
   // Execute secure deletion
   const result = await enclave.secureDelete(data);
-  
+
   return result.proof_hash;
 }
 ```
@@ -1835,22 +1914,18 @@ interface TEEIntegrityCheck {
   status: 'valid' | 'compromised' | 'unknown';
 }
 
-async function checkTEEIntegrity(
-  attestation: TEEAttestation
-): Promise<TEEIntegrityCheck> {
+async function checkTEEIntegrity(attestation: TEEAttestation): Promise<TEEIntegrityCheck> {
   // Get expected measurement from trusted source
-  const expectedMeasurement = await getExpectedMeasurement(
-    attestation.tee_type
-  );
-  
+  const expectedMeasurement = await getExpectedMeasurement(attestation.tee_type);
+
   // Compare measurements
   const isValid = attestation.measurement === expectedMeasurement;
-  
+
   return {
     measurement: attestation.measurement,
     expected_measurement: expectedMeasurement,
     timestamp: Date.now(),
-    status: isValid ? 'valid' : 'compromised'
+    status: isValid ? 'valid' : 'compromised',
   };
 }
 ```
@@ -1864,16 +1939,19 @@ Crypto-shredding provides cryptographic deletion by destroying encryption keys, 
 #### 9.1.1 Core Concepts
 
 **Key Destruction**
+
 - Destroy encryption keys to render encrypted data permanently inaccessible
 - Cryptographic proof of key destruction
 - No need to physically delete encrypted data
 
 **Hierarchical Key Management**
+
 - Master keys for data classification
 - Derived keys for individual records
 - Selective key destruction for granular deletion
 
 **Proof of Destruction**
+
 - Cryptographic commitment to key destruction
 - Verifiable evidence of key elimination
 - Audit trail of destruction events
@@ -1939,10 +2017,7 @@ class CryptoShreddingManager {
     }
 
     // Generate destruction proof
-    const destructionProof = await this.generateDestructionProof(
-      key,
-      destructionMethod
-    );
+    const destructionProof = await this.generateDestructionProof(key, destructionMethod);
 
     // Mark key as destroyed
     key.destroyed_at = Date.now();
@@ -1961,28 +2036,22 @@ class CryptoShreddingManager {
     method: string
   ): Promise<CryptoShreddingProof> {
     const destructionTimestamp = Date.now();
-    
+
     // Create destruction commitment
     const destructionData = {
       key_id: key.key_id,
       destruction_timestamp: destructionTimestamp,
       destruction_method: method,
-      key_material_hash: blake3Hex(key.key_material)
+      key_material_hash: blake3Hex(key.key_material),
     };
 
     const proofHash = blake3Hex(canonicalize(destructionData));
-    
+
     // Generate witness (proof of destruction)
-    const witness = await this.generateDestructionWitness(
-      key,
-      destructionData
-    );
+    const witness = await this.generateDestructionWitness(key, destructionData);
 
     // Sign destruction proof
-    const signature = await this.signDestructionProof(
-      proofHash,
-      key.key_id
-    );
+    const signature = await this.signDestructionProof(proofHash, key.key_id);
 
     return {
       key_id: key.key_id,
@@ -1990,7 +2059,7 @@ class CryptoShreddingManager {
       destruction_method: method,
       proof_hash: proofHash,
       witness: witness,
-      signature: signature
+      signature: signature,
     };
   }
 }
@@ -2015,38 +2084,36 @@ async function hierarchicalCryptoShred(
   preserveRecords: string[]
 ): Promise<HierarchicalDestruction> {
   const keyManager = new CryptoShreddingManager();
-  
+
   // Get all derived keys for this master key
   const allDerivedKeys = await keyManager.getDerivedKeys(masterKeyId);
-  
+
   // Identify keys to destroy
-  const keysToDestroy = allDerivedKeys.filter(key => 
-    targetRecords.some(record => key.derivation_path.includes(record))
+  const keysToDestroy = allDerivedKeys.filter((key) =>
+    targetRecords.some((record) => key.derivation_path.includes(record))
   );
-  
+
   // Identify keys to preserve
-  const keysToPreserve = allDerivedKeys.filter(key => 
-    preserveRecords.some(record => key.derivation_path.includes(record))
+  const keysToPreserve = allDerivedKeys.filter((key) =>
+    preserveRecords.some((record) => key.derivation_path.includes(record))
   );
-  
+
   // Destroy target keys
   const destructionProofs = await Promise.all(
-    keysToDestroy.map(key => 
-      keyManager.cryptoShred(key.key_id, 'secure_erase')
-    )
+    keysToDestroy.map((key) => keyManager.cryptoShred(key.key_id, 'secure_erase'))
   );
-  
+
   // Generate master destruction proof
   const masterDestructionProof = await keyManager.generateMasterDestructionProof(
     masterKeyId,
     destructionProofs
   );
-  
+
   return {
     master_key_id: masterKeyId,
-    destroyed_derived_keys: keysToDestroy.map(k => k.key_id),
-    preserved_derived_keys: keysToPreserve.map(k => k.key_id),
-    destruction_proof: masterDestructionProof
+    destroyed_derived_keys: keysToDestroy.map((k) => k.key_id),
+    preserved_derived_keys: keysToPreserve.map((k) => k.key_id),
+    destruction_proof: masterDestructionProof,
   };
 }
 ```
@@ -2071,15 +2138,11 @@ class ThresholdCryptoShredding {
     totalShares: number
   ): Promise<string[]> {
     // Use Shamir's Secret Sharing
-    const shares = await this.shamirSplit(
-      key.key_material,
-      threshold,
-      totalShares
-    );
-    
+    const shares = await this.shamirSplit(key.key_material, threshold, totalShares);
+
     return shares;
   }
-  
+
   // Destroy shares to make reconstruction impossible
   async destroyShares(
     keyId: string,
@@ -2088,11 +2151,10 @@ class ThresholdCryptoShredding {
   ): Promise<ThresholdDestruction> {
     const remainingShares = await this.getRemainingShares(keyId);
     const destroyedShares = sharesToDestroy;
-    
+
     // Check if reconstruction is still possible
-    const reconstructionPossible = 
-      remainingShares.length >= threshold;
-    
+    const reconstructionPossible = remainingShares.length >= threshold;
+
     // Generate destruction proof
     const destructionProof = await this.generateThresholdDestructionProof(
       keyId,
@@ -2100,13 +2162,13 @@ class ThresholdCryptoShredding {
       remainingShares,
       threshold
     );
-    
+
     return {
       threshold: threshold,
       total_shares: remainingShares.length + destroyedShares.length,
       destroyed_shares: destroyedShares,
       reconstruction_impossible: !reconstructionPossible,
-      destruction_proof: destructionProof
+      destruction_proof: destructionProof,
     };
   }
 }
@@ -2143,31 +2205,31 @@ async function generateZKKeyDestructionProof(
     destruction_timestamp: destructionProof.destruction_timestamp,
     destruction_method: destructionProof.destruction_method,
     data_classification: await getDataClassification(keyId),
-    
+
     // Private inputs
     key_material_hash: blake3Hex(await getKeyMaterial(keyId)),
-    destruction_witness: destructionProof.witness
+    destruction_witness: destructionProof.witness,
   };
-  
+
   // Generate ZK proof
   const { proof, publicSignals } = await groth16.fullProve(
     inputs,
-    "circuits/key_destruction_verification.wasm",
-    "circuits/key_destruction_verification.zkey"
+    'circuits/key_destruction_verification.wasm',
+    'circuits/key_destruction_verification.zkey'
   );
-  
+
   return {
     proof,
     public_inputs: {
       key_id: keyId,
       destruction_timestamp: destructionProof.destruction_timestamp,
       destruction_method: destructionProof.destruction_method,
-      data_classification: inputs.data_classification
+      data_classification: inputs.data_classification,
     },
     private_inputs: {
       key_material_hash: inputs.key_material_hash,
-      destruction_witness: inputs.destruction_witness
-    }
+      destruction_witness: inputs.destruction_witness,
+    },
   };
 }
 ```
@@ -2185,7 +2247,7 @@ async function generateZKKeyDestructionProof(
 class SecureKeyDestructionEnclave {
 private:
     sgx_enclave_id_t eid;
-    
+
 public:
     sgx_status_t destroyKey(
         const char* key_id,
@@ -2195,7 +2257,7 @@ public:
         size_t proof_size
     ) {
         sgx_status_t status;
-        
+
         // Securely destroy key material
         status = ecall_destroy_key(
             eid,
@@ -2205,17 +2267,17 @@ public:
             destruction_proof,
             proof_size
         );
-        
+
         return status;
     }
-    
+
     sgx_status_t generateDestructionAttestation(
         const char* key_id,
         const char* destruction_proof,
         sgx_report_t* report
     ) {
         sgx_status_t status;
-        
+
         // Generate attestation report for key destruction
         status = ecall_generate_destruction_report(
             eid,
@@ -2223,7 +2285,7 @@ public:
             destruction_proof,
             report
         );
-        
+
         return status;
     }
 };
@@ -2239,17 +2301,17 @@ extern "C" {
     ) {
         // Securely overwrite key material
         memset((void*)key_material, 0, key_size);
-        
+
         // Generate destruction proof
         sgx_sha256_hash_t hash;
         sgx_sha256_msg((const uint8_t*)key_id, strlen(key_id), &hash);
-        
+
         // Copy proof to output
         memcpy(destruction_proof, &hash, sizeof(hash));
-        
+
         return SGX_SUCCESS;
     }
-    
+
     sgx_status_t ecall_generate_destruction_report(
         const char* key_id,
         const char* destruction_proof,
@@ -2278,19 +2340,19 @@ async function generateTEECryptoShreddingProof(
 ): Promise<TEECryptoShreddingProof> {
   // Step 1: Destroy key in TEE
   const enclave = await createSecureEnclave('key_destruction_enclave.signed.so');
-  
+
   const destructionResult = await enclave.destroyKey(
     keyId,
     keyMaterial.toString('hex'),
     keyMaterial.length
   );
-  
+
   // Step 2: Generate TEE attestation
   const teeAttestation = await enclave.generateDestructionAttestation(
     keyId,
     destructionResult.proof
   );
-  
+
   // Step 3: Create crypto-shredding proof
   const keyDestructionProof: CryptoShreddingProof = {
     key_id: keyId,
@@ -2298,21 +2360,21 @@ async function generateTEECryptoShreddingProof(
     destruction_method: 'secure_erase',
     proof_hash: destructionResult.proof,
     witness: destructionResult.witness,
-    signature: destructionResult.signature
+    signature: destructionResult.signature,
   };
-  
+
   // Step 4: Combine proofs
   const combinedVerification = blake3Hex(
     canonicalize({
       tee_measurement: teeAttestation.measurement,
-      key_destruction_proof: keyDestructionProof.proof_hash
+      key_destruction_proof: keyDestructionProof.proof_hash,
     })
   );
-  
+
   return {
     tee_attestation: teeAttestation,
     key_destruction_proof: keyDestructionProof,
-    combined_verification: combinedVerification
+    combined_verification: combinedVerification,
   };
 }
 ```
@@ -2336,25 +2398,22 @@ async function cryptoShredDatabaseRecords(
 ): Promise<DatabaseCryptoShredding> {
   const keyManager = new CryptoShreddingManager();
   const destructionProofs: CryptoShreddingProof[] = [];
-  
+
   for (const recordId of recordIds) {
     // Get encryption key for record
     const encryptionKey = await getRecordEncryptionKey(tableName, recordId);
-    
+
     // Crypto-shred the key
-    const destructionProof = await keyManager.cryptoShred(
-      encryptionKey.key_id,
-      'secure_erase'
-    );
-    
+    const destructionProof = await keyManager.cryptoShred(encryptionKey.key_id, 'secure_erase');
+
     destructionProofs.push(destructionProof);
   }
-  
+
   return {
     table_name: tableName,
     record_ids: recordIds,
-    encryption_keys: recordIds.map(id => getRecordEncryptionKey(tableName, id).key_id),
-    destruction_proofs: destructionProofs
+    encryption_keys: recordIds.map((id) => getRecordEncryptionKey(tableName, id).key_id),
+    destruction_proofs: destructionProofs,
   };
 }
 ```
@@ -2369,29 +2428,24 @@ interface FileSystemCryptoShredding {
   destruction_proofs: CryptoShreddingProof[];
 }
 
-async function cryptoShredFiles(
-  filePaths: string[]
-): Promise<FileSystemCryptoShredding> {
+async function cryptoShredFiles(filePaths: string[]): Promise<FileSystemCryptoShredding> {
   const keyManager = new CryptoShreddingManager();
   const destructionProofs: CryptoShreddingProof[] = [];
-  
+
   for (const filePath of filePaths) {
     // Get file encryption key
     const fileKey = await getFileEncryptionKey(filePath);
-    
+
     // Crypto-shred the key
-    const destructionProof = await keyManager.cryptoShred(
-      fileKey.key_id,
-      'secure_erase'
-    );
-    
+    const destructionProof = await keyManager.cryptoShred(fileKey.key_id, 'secure_erase');
+
     destructionProofs.push(destructionProof);
   }
-  
+
   return {
     file_paths: filePaths,
-    encryption_keys: filePaths.map(path => getFileEncryptionKey(path).key_id),
-    destruction_proofs: destructionProofs
+    encryption_keys: filePaths.map((path) => getFileEncryptionKey(path).key_id),
+    destruction_proofs: destructionProofs,
   };
 }
 ```
@@ -2415,7 +2469,7 @@ async function cryptoShredCloudObjects(
 ): Promise<CloudStorageCryptoShredding> {
   const keyManager = new CryptoShreddingManager();
   const destructionProofs: CryptoShreddingProof[] = [];
-  
+
   for (const objectKey of objectKeys) {
     // Get object encryption key
     const objectKey_encryption = await getObjectEncryptionKey(
@@ -2423,24 +2477,24 @@ async function cryptoShredCloudObjects(
       bucketName,
       objectKey
     );
-    
+
     // Crypto-shred the key
     const destructionProof = await keyManager.cryptoShred(
       objectKey_encryption.key_id,
       'secure_erase'
     );
-    
+
     destructionProofs.push(destructionProof);
   }
-  
+
   return {
     storage_provider: storageProvider,
     bucket_name: bucketName,
     object_keys: objectKeys,
-    encryption_keys: objectKeys.map(key => 
-      getObjectEncryptionKey(storageProvider, bucketName, key).key_id
+    encryption_keys: objectKeys.map(
+      (key) => getObjectEncryptionKey(storageProvider, bucketName, key).key_id
     ),
-    destruction_proofs: destructionProofs
+    destruction_proofs: destructionProofs,
   };
 }
 ```
@@ -2454,16 +2508,19 @@ Arweave provides permanent, decentralized data storage that complements the Null
 #### 10.1.1 Core Arweave Components
 
 **Permaweb**
+
 - Permanent web storage for deletion proofs and audit data
 - Content-addressed storage with cryptographic verification
 - Global accessibility with no single point of failure
 
 **Blockweave**
+
 - Blockchain-based storage network
 - Proof of Access consensus mechanism
 - Economic incentives for data permanence
 
 **SmartWeave**
+
 - Smart contract platform for decentralized applications
 - Lazy evaluation for efficient contract execution
 - Integration with storage layer
@@ -2471,6 +2528,7 @@ Arweave provides permanent, decentralized data storage that complements the Null
 #### 10.1.2 Arweave Integration Points
 
 **Deletion Proof Storage**
+
 ```typescript
 // Store deletion proofs on Arweave
 interface ArweaveDeletionProof {
@@ -2492,27 +2550,30 @@ async function storeDeletionProofOnArweave(
     receipt_hash: deletionProof.receipt_hash,
     deletion_evidence: deletionProof.evidence,
     timestamp: Date.now(),
-    protocol_version: "null-protocol-v1.0"
+    protocol_version: 'null-protocol-v1.0',
   };
 
   // Upload to Arweave
   const arweave = new Arweave({
     host: 'arweave.net',
     port: 443,
-    protocol: 'https'
+    protocol: 'https',
   });
 
   const wallet = await arweave.wallets.generate();
-  const transaction = await arweave.createTransaction({
-    data: JSON.stringify(arweaveData)
-  }, wallet);
+  const transaction = await arweave.createTransaction(
+    {
+      data: JSON.stringify(arweaveData),
+    },
+    wallet
+  );
 
   await arweave.transactions.sign(transaction, wallet);
   const response = await arweave.transactions.post(transaction);
 
   return {
     ...arweaveData,
-    arweave_tx_id: transaction.id
+    arweave_tx_id: transaction.id,
   };
 }
 ```
@@ -2554,7 +2615,7 @@ function registerDeletion(state, input, caller) {
     arweave_tx_id,
     registered_by: caller,
     timestamp: Date.now(),
-    status: 'registered'
+    status: 'registered',
   };
 
   // Update state
@@ -2565,7 +2626,7 @@ function registerDeletion(state, input, caller) {
   state.stats = state.stats || {
     total_deletions: 0,
     by_enterprise: {},
-    by_timestamp: {}
+    by_timestamp: {},
   };
   state.stats.total_deletions++;
 
@@ -2580,13 +2641,13 @@ function verifyDeletion(state, input, caller) {
   }
 
   const deletion = state.deletions[warrant_hash];
-  
+
   return {
     result: {
       verified: true,
       deletion_record: deletion,
-      arweave_tx_id: deletion.arweave_tx_id
-    }
+      arweave_tx_id: deletion.arweave_tx_id,
+    },
   };
 }
 ```
@@ -2610,7 +2671,7 @@ async function verifyArweaveData(txId: string): Promise<ArweaveVerification> {
   const arweave = new Arweave({
     host: 'arweave.net',
     port: 443,
-    protocol: 'https'
+    protocol: 'https',
   });
 
   // Get transaction data
@@ -2627,7 +2688,7 @@ async function verifyArweaveData(txId: string): Promise<ArweaveVerification> {
     block_height: transaction.block_height,
     timestamp: transaction.timestamp,
     verified: verified,
-    data: JSON.parse(data)
+    data: JSON.parse(data),
   };
 }
 ```
@@ -2657,13 +2718,13 @@ async function verifyCrossChainDeletion(
   // Verify on Ethereum
   const { canon } = await getCanon();
   const canonBlock = await canon.lastAnchorBlock(warrantHash);
-  
+
   // Verify on Arweave
   const arweaveVerification = await verifyArweaveData(arweaveTxId);
-  
+
   // Cross-chain verification
-  const crossChainVerified = 
-    canonBlock > 0 && 
+  const crossChainVerified =
+    canonBlock > 0 &&
     arweaveVerification.verified &&
     arweaveVerification.data.warrant_hash === warrantHash;
 
@@ -2671,10 +2732,10 @@ async function verifyCrossChainDeletion(
     ethereum_verification: {
       canon_registry_block: canonBlock,
       mask_sbt_token_id: 0, // Would need to look up SBT token ID
-      verified: canonBlock > 0
+      verified: canonBlock > 0,
     },
     arweave_verification: arweaveVerification,
-    cross_chain_verified: crossChainVerified
+    cross_chain_verified: crossChainVerified,
   };
 }
 ```
@@ -2686,6 +2747,7 @@ async function verifyCrossChainDeletion(
 The Canon Registry functions as a **negative registry** - a public, queryable database of deletion events that data brokers must check before ingesting data from public sources to ensure they don't re-acquire data from users who have opted out.
 
 **Core Concept**
+
 - **Opt-Out Registry**: Public registry of all deletion/opt-out events
 - **Pre-Ingestion Check**: Data brokers must query before acquiring new data
 - **Compliance Enforcement**: Prevents re-ingestion of deleted data
@@ -2725,9 +2787,7 @@ class NegativeRegistryService {
   private canonRegistry: Contract;
   private arweaveClient: Arweave;
 
-  async queryOptOutStatus(
-    query: NegativeRegistryQuery
-  ): Promise<NegativeRegistryResponse> {
+  async queryOptOutStatus(query: NegativeRegistryQuery): Promise<NegativeRegistryResponse> {
     switch (query.query_type) {
       case 'subject_handle':
         return await this.queryBySubjectHandle(query.query_value);
@@ -2745,38 +2805,38 @@ class NegativeRegistryService {
   private async queryBySubjectHandle(subjectHandle: string): Promise<NegativeRegistryResponse> {
     // Query Canon Registry for opt-out events
     const subjectHandleHash = blake3Hex(subjectHandle);
-    
+
     // Get all warrant events for this subject
     const warrantFilter = this.canonRegistry.filters.WarrantAnchored(
       null, // any warrant hash
       subjectHandleHash, // specific subject handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
-    
+
     // Get all receipt events for this subject
     const receiptFilter = this.canonRegistry.filters.ReceiptAnchored(
       null, // any receipt hash
       null, // any warrant hash
       null, // any attestation hash
-      null  // any subject wallet
+      null // any subject wallet
     );
 
     const receiptEvents = await this.canonRegistry.queryFilter(receiptFilter);
 
     // Process events to determine opt-out status
     const optOutEvents = await this.processOptOutEvents(warrantEvents, receiptEvents);
-    
+
     return {
       is_opted_out: optOutEvents.length > 0,
       opt_out_events: optOutEvents,
-      last_opt_out_timestamp: optOutEvents.length > 0 ? 
-        Math.max(...optOutEvents.map(e => e.timestamp)) : undefined,
+      last_opt_out_timestamp:
+        optOutEvents.length > 0 ? Math.max(...optOutEvents.map((e) => e.timestamp)) : undefined,
       opt_out_scope: this.aggregateOptOutScope(optOutEvents),
-      verification_proofs: optOutEvents.map(e => e.warrant_hash)
+      verification_proofs: optOutEvents.map((e) => e.warrant_hash),
     };
   }
 
@@ -2784,9 +2844,9 @@ class NegativeRegistryService {
     // Query for opt-out events by email hash
     // This would require indexing email hashes to subject handles
     const subjectHandles = await this.getSubjectHandlesByEmailHash(emailHash);
-    
+
     const responses = await Promise.all(
-      subjectHandles.map(handle => this.queryBySubjectHandle(handle))
+      subjectHandles.map((handle) => this.queryBySubjectHandle(handle))
     );
 
     // Aggregate responses
@@ -2796,16 +2856,16 @@ class NegativeRegistryService {
   private async queryByPhoneHash(phoneHash: string): Promise<NegativeRegistryResponse> {
     // Similar to email hash query
     const subjectHandles = await this.getSubjectHandlesByPhoneHash(phoneHash);
-    
+
     const responses = await Promise.all(
-      subjectHandles.map(handle => this.queryBySubjectHandle(handle))
+      subjectHandles.map((handle) => this.queryBySubjectHandle(handle))
     );
 
     return this.aggregateResponses(responses);
   }
 
   private async queryByEnterpriseScope(
-    scope: string, 
+    scope: string,
     enterpriseId?: string
   ): Promise<NegativeRegistryResponse> {
     // Query for opt-out events within specific scope
@@ -2814,21 +2874,19 @@ class NegativeRegistryService {
       null, // any subject handle hash
       null, // any enterprise hash
       enterpriseId || null, // specific enterprise ID if provided
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const scopeEvents = await this.canonRegistry.queryFilter(scopeFilter);
-    
+
     // Filter events by scope
-    const scopedEvents = scopeEvents.filter(event => 
-      this.eventMatchesScope(event, scope)
-    );
+    const scopedEvents = scopeEvents.filter((event) => this.eventMatchesScope(event, scope));
 
     return {
       is_opted_out: scopedEvents.length > 0,
       opt_out_events: await this.processOptOutEvents(scopedEvents, []),
       opt_out_scope: [scope],
-      verification_proofs: scopedEvents.map(e => e.args.warrantHash)
+      verification_proofs: scopedEvents.map((e) => e.args.warrantHash),
     };
   }
 }
@@ -2856,94 +2914,91 @@ class DataBrokerComplianceService {
       this.checkEmailOptOut(subjectIdentifiers.email),
       this.checkPhoneOptOut(subjectIdentifiers.phone),
       this.checkSubjectHandleOptOut(subjectIdentifiers.subjectHandle),
-      this.checkScopeOptOut(dataSource, subjectIdentifiers.scope)
+      this.checkScopeOptOut(dataSource, subjectIdentifiers.scope),
     ]);
 
-    const hasOptOut = complianceChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = complianceChecks.some((check) => check.is_opted_out);
+
     return {
       can_ingest: !hasOptOut,
       compliance_checks: complianceChecks,
       risk_level: this.calculateRiskLevel(complianceChecks),
-      recommended_action: this.getRecommendedAction(complianceChecks)
+      recommended_action: this.getRecommendedAction(complianceChecks),
     };
   }
 
   private async checkEmailOptOut(email: string): Promise<ComplianceCheck> {
     if (!email) return { is_opted_out: false, check_type: 'email' };
-    
+
     const emailHash = blake3Hex(email);
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'email_hash',
       query_value: emailHash,
-      enterprise_id: this.enterpriseId
+      enterprise_id: this.enterpriseId,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'email',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
   private async checkPhoneOptOut(phone: string): Promise<ComplianceCheck> {
     if (!phone) return { is_opted_out: false, check_type: 'phone' };
-    
+
     const phoneHash = blake3Hex(phone);
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'phone_hash',
       query_value: phoneHash,
-      enterprise_id: this.enterpriseId
+      enterprise_id: this.enterpriseId,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'phone',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
   private async checkSubjectHandleOptOut(subjectHandle: string): Promise<ComplianceCheck> {
     if (!subjectHandle) return { is_opted_out: false, check_type: 'subject_handle' };
-    
+
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'subject_handle',
       query_value: subjectHandle,
-      enterprise_id: this.enterpriseId
+      enterprise_id: this.enterpriseId,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'subject_handle',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
-  private async checkScopeOptOut(
-    dataSource: string, 
-    scope: string[]
-  ): Promise<ComplianceCheck> {
+  private async checkScopeOptOut(dataSource: string, scope: string[]): Promise<ComplianceCheck> {
     const scopeChecks = await Promise.all(
-      scope.map(s => this.negativeRegistry.queryOptOutStatus({
-        query_type: 'enterprise_scope',
-        query_value: s,
-        enterprise_id: this.enterpriseId,
-        data_source: dataSource
-      }))
+      scope.map((s) =>
+        this.negativeRegistry.queryOptOutStatus({
+          query_type: 'enterprise_scope',
+          query_value: s,
+          enterprise_id: this.enterpriseId,
+          data_source: dataSource,
+        })
+      )
     );
 
-    const hasOptOut = scopeChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = scopeChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
       check_type: 'scope',
-      opt_out_events: scopeChecks.flatMap(check => check.opt_out_events),
-      last_opt_out: Math.max(...scopeChecks.map(check => 
-        check.last_opt_out_timestamp || 0
-      ))
+      opt_out_events: scopeChecks.flatMap((check) => check.opt_out_events),
+      last_opt_out: Math.max(...scopeChecks.map((check) => check.last_opt_out_timestamp || 0)),
     };
   }
 }
@@ -2976,19 +3031,19 @@ class BatchComplianceService {
     for (let i = 0; i < dataRecords.length; i += batchSize) {
       const batch = dataRecords.slice(i, i + batchSize);
       const batchResults = await Promise.all(
-        batch.map(record => this.checkRecordCompliance(record, enterpriseId))
+        batch.map((record) => this.checkRecordCompliance(record, enterpriseId))
       );
       complianceResults.push(...batchResults);
     }
 
-    const optedOutRecords = complianceResults.filter(r => !r.can_ingest);
-    
+    const optedOutRecords = complianceResults.filter((r) => !r.can_ingest);
+
     return {
       batch_id: batchId,
       total_records: dataRecords.length,
       opted_out_records: optedOutRecords.length,
       compliance_rate: (dataRecords.length - optedOutRecords.length) / dataRecords.length,
-      detailed_results: complianceResults
+      detailed_results: complianceResults,
     };
   }
 
@@ -2997,7 +3052,7 @@ class BatchComplianceService {
     enterpriseId: string
   ): Promise<ComplianceCheckResult> {
     const complianceService = new DataBrokerComplianceService(enterpriseId);
-    
+
     const result = await complianceService.canIngestData(
       record.data_source,
       record.subject_identifiers
@@ -3008,7 +3063,7 @@ class BatchComplianceService {
       can_ingest: result.can_ingest,
       risk_level: result.risk_level,
       compliance_checks: result.compliance_checks,
-      recommended_action: result.recommended_action
+      recommended_action: result.recommended_action,
     };
   }
 }
@@ -3042,7 +3097,7 @@ class RealTimeComplianceMonitor {
 
   private async handleNewOptOut(event: any) {
     const { warrantHash, subjectHandleHash, enterpriseId } = event.args;
-    
+
     // Check if this affects our enterprise
     if (enterpriseId === this.enterpriseId) {
       // Notify compliance systems
@@ -3050,14 +3105,14 @@ class RealTimeComplianceMonitor {
         type: 'new_opt_out',
         warrant_hash: warrantHash,
         subject_handle_hash: subjectHandleHash,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
 
   private async handleOptOutCompletion(event: any) {
     const { receiptHash, warrantHash, subjectWallet } = event.args;
-    
+
     // Check if this completes an opt-out that affects us
     const warrantEvent = await this.getWarrantEvent(warrantHash);
     if (warrantEvent && warrantEvent.enterpriseId === this.enterpriseId) {
@@ -3067,7 +3122,7 @@ class RealTimeComplianceMonitor {
         receipt_hash: receiptHash,
         warrant_hash: warrantHash,
         subject_wallet: subjectWallet,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
@@ -3102,6 +3157,7 @@ class RealTimeComplianceMonitor {
 Subject handles serve as **universal identifiers** that allow users to be recognized across different enterprises while maintaining privacy. They are generated deterministically from user-controlled data and can be verified by any enterprise without revealing the underlying identity.
 
 **Core Principles**
+
 - **Deterministic Generation**: Same input always produces same handle
 - **Privacy-Preserving**: Handle doesn't reveal underlying identity
 - **Cross-Enterprise**: Works across all enterprises in the protocol
@@ -3145,39 +3201,24 @@ class SubjectHandleGenerator {
     );
 
     // Step 2: Create deterministic salt
-    const salt = this.generateDeterministicSalt(
-      normalizedIdentifier,
-      userWallet,
-      input.salt
-    );
+    const salt = this.generateDeterministicSalt(normalizedIdentifier, userWallet, input.salt);
 
     // Step 3: Generate handle
-    const handle = await this.createHandle(
-      normalizedIdentifier,
-      salt,
-      input.enterprise_context
-    );
+    const handle = await this.createHandle(normalizedIdentifier, salt, input.enterprise_context);
 
     // Step 4: Create verification proof
-    const verificationProof = await this.createVerificationProof(
-      handle,
-      userWallet,
-      input
-    );
+    const verificationProof = await this.createVerificationProof(handle, userWallet, input);
 
     return {
       handle,
       handle_hash: blake3Hex(handle),
       generation_method: this.detectGenerationMethod(input.primary_identifier),
       timestamp: Date.now(),
-      verification_proof: verificationProof
+      verification_proof: verificationProof,
     };
   }
 
-  private normalizeIdentifier(
-    identifier: string,
-    enterpriseContext?: string
-  ): string {
+  private normalizeIdentifier(identifier: string, enterpriseContext?: string): string {
     // Normalize email addresses
     if (this.isEmail(identifier)) {
       return identifier.toLowerCase().trim();
@@ -3208,10 +3249,10 @@ class SubjectHandleGenerator {
   ): string {
     // Create deterministic salt from user wallet and optional user salt
     const baseSalt = blake3Hex(userWallet + (userSalt || ''));
-    
+
     // Add identifier-specific component
     const identifierComponent = blake3Hex(normalizedIdentifier).substring(0, 8);
-    
+
     return blake3Hex(baseSalt + identifierComponent);
   }
 
@@ -3225,7 +3266,7 @@ class SubjectHandleGenerator {
       this.HANDLE_PREFIX,
       normalizedIdentifier,
       salt,
-      enterpriseContext || 'global'
+      enterpriseContext || 'global',
     ];
 
     // Generate hash
@@ -3242,16 +3283,16 @@ class SubjectHandleGenerator {
     // Use base58 encoding for human-readable handles
     // Remove confusing characters (0, O, I, l)
     const base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    
+
     // Convert hex to base58
     let result = '';
     let num = BigInt('0x' + hash);
-    
+
     while (num > 0n) {
       result = base58Alphabet[Number(num % 58n)] + result;
       num = num / 58n;
     }
-    
+
     return result;
   }
 
@@ -3265,15 +3306,15 @@ class SubjectHandleGenerator {
       handle,
       user_wallet: userWallet,
       generation_method: this.detectGenerationMethod(input.primary_identifier),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Sign with user's wallet
     const signature = await this.signWithWallet(userWallet, proofData);
-    
+
     return JSON.stringify({
       proof_data: proofData,
-      signature
+      signature,
     });
   }
 
@@ -3299,13 +3340,13 @@ class SubjectHandleGenerator {
   private normalizePhoneNumber(phone: string): string {
     // Convert to E.164 format
     const cleaned = phone.replace(/\D/g, '');
-    
+
     if (cleaned.startsWith('1') && cleaned.length === 11) {
       return '+' + cleaned;
     } else if (cleaned.length === 10) {
       return '+1' + cleaned;
     }
-    
+
     return '+' + cleaned;
   }
 }
@@ -3345,9 +3386,7 @@ class CrossEnterpriseVerificationService {
   /**
    * Verify subject handle across enterprises
    */
-  async verifySubjectHandle(
-    request: VerificationRequest
-  ): Promise<VerificationResponse> {
+  async verifySubjectHandle(request: VerificationRequest): Promise<VerificationResponse> {
     // Step 1: Verify handle format and structure
     const handleValidation = await this.validateHandleFormat(request.subject_handle);
     if (!handleValidation.is_valid) {
@@ -3356,7 +3395,7 @@ class CrossEnterpriseVerificationService {
         handle_ownership: false,
         cross_enterprise_consistency: false,
         verification_evidence: [],
-        risk_score: 1.0
+        risk_score: 1.0,
       };
     }
 
@@ -3367,9 +3406,7 @@ class CrossEnterpriseVerificationService {
     );
 
     // Step 3: Check cross-enterprise consistency
-    const consistencyCheck = await this.checkCrossEnterpriseConsistency(
-      request.subject_handle
-    );
+    const consistencyCheck = await this.checkCrossEnterpriseConsistency(request.subject_handle);
 
     // Step 4: Gather verification evidence
     const verificationEvidence = await this.gatherVerificationEvidence(
@@ -3390,7 +3427,7 @@ class CrossEnterpriseVerificationService {
       handle_ownership: ownershipVerification.is_owned,
       cross_enterprise_consistency: consistencyCheck.is_consistent,
       verification_evidence: verificationEvidence,
-      risk_score: riskScore
+      risk_score: riskScore,
     };
   }
 
@@ -3406,7 +3443,8 @@ class CrossEnterpriseVerificationService {
 
     // Check if handle contains only valid characters
     const validChars = /^[1-9A-HJ-NP-Za-km-z]+$/;
-    if (!validChars.test(handle.substring(5))) { // Remove 'null:' prefix
+    if (!validChars.test(handle.substring(5))) {
+      // Remove 'null:' prefix
       return { is_valid: false, reason: 'invalid_characters' };
     }
 
@@ -3426,14 +3464,14 @@ class CrossEnterpriseVerificationService {
       handleHash, // specific handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
 
     // Check if handle has been used by this enterprise
-    const enterpriseUsage = warrantEvents.filter(event => 
-      event.args.enterpriseId === enterpriseId
+    const enterpriseUsage = warrantEvents.filter(
+      (event) => event.args.enterpriseId === enterpriseId
     );
 
     return {
@@ -3441,13 +3479,12 @@ class CrossEnterpriseVerificationService {
       usage_count: warrantEvents.length,
       enterprise_usage_count: enterpriseUsage.length,
       first_usage: warrantEvents.length > 0 ? warrantEvents[0].blockNumber : null,
-      last_usage: warrantEvents.length > 0 ? warrantEvents[warrantEvents.length - 1].blockNumber : null
+      last_usage:
+        warrantEvents.length > 0 ? warrantEvents[warrantEvents.length - 1].blockNumber : null,
     };
   }
 
-  private async checkCrossEnterpriseConsistency(
-    handle: string
-  ): Promise<ConsistencyCheck> {
+  private async checkCrossEnterpriseConsistency(handle: string): Promise<ConsistencyCheck> {
     const handleHash = blake3Hex(handle);
 
     // Get all warrant events for this handle
@@ -3456,7 +3493,7 @@ class CrossEnterpriseVerificationService {
       handleHash, // specific handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
@@ -3480,7 +3517,7 @@ class CrossEnterpriseVerificationService {
       enterprise_count: enterprises.length,
       total_usage_count: warrantEvents.length,
       enterprise_usage: Object.fromEntries(enterpriseGroups),
-      consistency_score: this.calculateConsistencyScore(enterpriseGroups)
+      consistency_score: this.calculateConsistencyScore(enterpriseGroups),
     };
   }
 
@@ -3497,7 +3534,7 @@ class CrossEnterpriseVerificationService {
       handleHash, // specific handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
@@ -3507,7 +3544,7 @@ class CrossEnterpriseVerificationService {
       null, // any receipt hash
       null, // any warrant hash
       null, // any attestation hash
-      null  // any subject wallet
+      null // any subject wallet
     );
 
     const receiptEvents = await this.canonRegistry.queryFilter(receiptFilter);
@@ -3519,7 +3556,7 @@ class CrossEnterpriseVerificationService {
         verification_timestamp: event.blockNumber,
         verification_method: 'warrant_anchored',
         evidence_hash: event.args.warrantHash,
-        confidence_score: 0.9
+        confidence_score: 0.9,
       });
     }
 
@@ -3530,7 +3567,7 @@ class CrossEnterpriseVerificationService {
         verification_timestamp: event.blockNumber,
         verification_method: 'receipt_anchored',
         evidence_hash: event.args.receiptHash,
-        confidence_score: 0.95
+        confidence_score: 0.95,
       });
     }
 
@@ -3594,11 +3631,14 @@ class EnterpriseHandleManager {
     userSalt?: string
   ): Promise<SubjectHandleRegistration> {
     // Generate subject handle
-    const subjectHandle = await this.handleGenerator.generateSubjectHandle({
-      primary_identifier: primaryIdentifier,
-      salt: userSalt,
-      enterprise_context: this.enterpriseId
-    }, userWallet);
+    const subjectHandle = await this.handleGenerator.generateSubjectHandle(
+      {
+        primary_identifier: primaryIdentifier,
+        salt: userSalt,
+        enterprise_context: this.enterpriseId,
+      },
+      userWallet
+    );
 
     // Verify handle uniqueness within enterprise
     const uniquenessCheck = await this.checkHandleUniqueness(
@@ -3632,14 +3672,11 @@ class EnterpriseHandleManager {
       subject_handle: subjectHandle,
       enterprise_id: sourceEnterpriseId,
       verification_context: this.enterpriseId,
-      requested_attributes: ['ownership', 'consistency', 'evidence']
+      requested_attributes: ['ownership', 'consistency', 'evidence'],
     });
 
     // Check if handle conflicts with existing handles
-    const conflictCheck = await this.checkHandleConflicts(
-      subjectHandle,
-      this.enterpriseId
-    );
+    const conflictCheck = await this.checkHandleConflicts(subjectHandle, this.enterpriseId);
 
     return {
       is_verified: verification.is_valid,
@@ -3648,7 +3685,7 @@ class EnterpriseHandleManager {
       risk_score: verification.risk_score,
       has_conflicts: conflictCheck.has_conflicts,
       conflict_details: conflictCheck.conflicts,
-      verification_evidence: verification.verification_evidence
+      verification_evidence: verification.verification_evidence,
     };
   }
 
@@ -3664,13 +3701,13 @@ class EnterpriseHandleManager {
     switch (conflictResolution.strategy) {
       case 'reject':
         return await this.rejectConflictingHandle(subjectHandle, conflicts);
-      
+
       case 'merge':
         return await this.mergeConflictingHandles(subjectHandle, conflicts);
-      
+
       case 'isolate':
         return await this.isolateConflictingHandle(subjectHandle, conflicts);
-      
+
       default:
         throw new Error(`Unknown conflict resolution strategy: ${conflictResolution.strategy}`);
     }
@@ -3688,7 +3725,7 @@ class EnterpriseHandleManager {
       handleHash, // specific handle hash
       null, // any enterprise hash
       enterpriseId, // specific enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const existingEvents = await this.canonRegistry.queryFilter(warrantFilter);
@@ -3696,14 +3733,11 @@ class EnterpriseHandleManager {
     return {
       is_unique: existingEvents.length === 0,
       existing_usage_count: existingEvents.length,
-      first_usage: existingEvents.length > 0 ? existingEvents[0].blockNumber : null
+      first_usage: existingEvents.length > 0 ? existingEvents[0].blockNumber : null,
     };
   }
 
-  private async checkHandleConflicts(
-    handle: string,
-    enterpriseId: string
-  ): Promise<ConflictCheck> {
+  private async checkHandleConflicts(handle: string, enterpriseId: string): Promise<ConflictCheck> {
     const handleHash = blake3Hex(handle);
 
     // Check for conflicts with existing handles
@@ -3712,22 +3746,20 @@ class EnterpriseHandleManager {
       handleHash, // specific handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const allEvents = await this.canonRegistry.queryFilter(warrantFilter);
-    const enterpriseEvents = allEvents.filter(event => 
-      event.args.enterpriseId === enterpriseId
-    );
+    const enterpriseEvents = allEvents.filter((event) => event.args.enterpriseId === enterpriseId);
 
     return {
       has_conflicts: enterpriseEvents.length > 0,
-      conflicts: enterpriseEvents.map(event => ({
+      conflicts: enterpriseEvents.map((event) => ({
         enterprise_id: event.args.enterpriseId,
         warrant_hash: event.args.warrantHash,
         block_number: event.blockNumber,
-        conflict_type: 'duplicate_handle'
-      }))
+        conflict_type: 'duplicate_handle',
+      })),
     };
   }
 }
@@ -3775,13 +3807,13 @@ class DataBrokerSubjectIdentifier {
   ): Promise<SubjectIdentificationResult> {
     // Step 1: Extract subject handle from deletion request
     const subjectHandle = deletionRequest.subject_handle;
-    
+
     // Step 2: Query Canon Registry for this subject's identifier hashes
     const subjectIdentifiers = await this.getSubjectIdentifiersFromCanon(subjectHandle);
-    
+
     // Step 3: Search internal database for matching records
     const matchingRecords = await this.searchInternalDatabase(subjectIdentifiers);
-    
+
     // Step 4: Create mapping between subject handle and internal records
     const subjectMapping = await this.createSubjectMapping(
       subjectHandle,
@@ -3794,13 +3826,11 @@ class DataBrokerSubjectIdentifier {
       internal_subject_id: subjectMapping.internal_subject_id,
       matching_records: matchingRecords,
       identifier_hashes: subjectIdentifiers,
-      confidence_score: this.calculateConfidenceScore(matchingRecords, subjectIdentifiers)
+      confidence_score: this.calculateConfidenceScore(matchingRecords, subjectIdentifiers),
     };
   }
 
-  private async getSubjectIdentifiersFromCanon(
-    subjectHandle: string
-  ): Promise<SubjectIdentifiers> {
+  private async getSubjectIdentifiersFromCanon(subjectHandle: string): Promise<SubjectIdentifiers> {
     const handleHash = blake3Hex(subjectHandle);
 
     // Query Canon Registry for all warrants with this subject handle
@@ -3809,17 +3839,17 @@ class DataBrokerSubjectIdentifier {
       handleHash, // specific subject handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
-    
+
     // Extract identifier hashes from warrant data
     const identifierHashes: SubjectIdentifiers = {};
-    
+
     for (const event of warrantEvents) {
       const warrantData = await this.getWarrantData(event.args.warrantHash);
-      
+
       if (warrantData.identifier_hashes) {
         Object.assign(identifierHashes, warrantData.identifier_hashes);
       }
@@ -3869,43 +3899,58 @@ class DataBrokerSubjectIdentifier {
 
   private async searchByEmailHash(emailHash: string): Promise<InternalRecord[]> {
     // Search internal database for records with matching email hash
-    return await this.database.query(`
+    return await this.database.query(
+      `
       SELECT * FROM internal_records 
       WHERE email_hash = ? 
       AND deletion_status != 'deleted'
-    `, [emailHash]);
+    `,
+      [emailHash]
+    );
   }
 
   private async searchByPhoneHash(phoneHash: string): Promise<InternalRecord[]> {
-    return await this.database.query(`
+    return await this.database.query(
+      `
       SELECT * FROM internal_records 
       WHERE phone_hash = ? 
       AND deletion_status != 'deleted'
-    `, [phoneHash]);
+    `,
+      [phoneHash]
+    );
   }
 
   private async searchByNameHash(nameHash: string): Promise<InternalRecord[]> {
-    return await this.database.query(`
+    return await this.database.query(
+      `
       SELECT * FROM internal_records 
       WHERE name_hash = ? 
       AND deletion_status != 'deleted'
-    `, [nameHash]);
+    `,
+      [nameHash]
+    );
   }
 
   private async searchBySSNHash(ssnHash: string): Promise<InternalRecord[]> {
-    return await this.database.query(`
+    return await this.database.query(
+      `
       SELECT * FROM internal_records 
       WHERE ssn_hash = ? 
       AND deletion_status != 'deleted'
-    `, [ssnHash]);
+    `,
+      [ssnHash]
+    );
   }
 
   private async searchByAddressHash(addressHash: string): Promise<InternalRecord[]> {
-    return await this.database.query(`
+    return await this.database.query(
+      `
       SELECT * FROM internal_records 
       WHERE address_hash = ? 
       AND deletion_status != 'deleted'
-    `, [addressHash]);
+    `,
+      [addressHash]
+    );
   }
 }
 ```
@@ -3926,28 +3971,28 @@ class DataBrokerIngestionCompliance {
   ): Promise<IngestionComplianceResult> {
     // Step 1: Extract identifiers from scraped data
     const extractedIdentifiers = await this.extractIdentifiers(scrapedData);
-    
+
     // Step 2: Hash the identifiers
     const identifierHashes = await this.hashIdentifiers(extractedIdentifiers);
-    
+
     // Step 3: Check negative registry for each identifier hash
     const complianceChecks = await Promise.all([
       this.checkEmailOptOut(identifierHashes.email_hash),
       this.checkPhoneOptOut(identifierHashes.phone_hash),
       this.checkNameOptOut(identifierHashes.name_hash),
       this.checkSSNOptOut(identifierHashes.social_security_hash),
-      this.checkAddressOptOut(identifierHashes.address_hash)
+      this.checkAddressOptOut(identifierHashes.address_hash),
     ]);
 
     // Step 4: Determine if data can be ingested
-    const hasOptOut = complianceChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = complianceChecks.some((check) => check.is_opted_out);
+
     return {
       can_ingest: !hasOptOut,
       compliance_checks: complianceChecks,
       risk_level: this.calculateRiskLevel(complianceChecks),
       recommended_action: this.getRecommendedAction(complianceChecks),
-      scraped_data_id: scrapedData.id
+      scraped_data_id: scrapedData.id,
     };
   }
 
@@ -3958,14 +4003,14 @@ class DataBrokerIngestionCompliance {
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const emails = scrapedData.content.match(emailRegex) || [];
     if (emails.length > 0) {
-      identifiers.emails = emails.map(email => email.toLowerCase().trim());
+      identifiers.emails = emails.map((email) => email.toLowerCase().trim());
     }
 
     // Extract phone numbers
     const phoneRegex = /(\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/g;
     const phones = scrapedData.content.match(phoneRegex) || [];
     if (phones.length > 0) {
-      identifiers.phones = phones.map(phone => this.normalizePhone(phone));
+      identifiers.phones = phones.map((phone) => this.normalizePhone(phone));
     }
 
     // Extract names (using NLP or pattern matching)
@@ -3987,19 +4032,19 @@ class DataBrokerIngestionCompliance {
     const hashes: IdentifierHashes = {};
 
     if (identifiers.emails) {
-      hashes.email_hashes = identifiers.emails.map(email => blake3Hex(email));
+      hashes.email_hashes = identifiers.emails.map((email) => blake3Hex(email));
     }
 
     if (identifiers.phones) {
-      hashes.phone_hashes = identifiers.phones.map(phone => blake3Hex(phone));
+      hashes.phone_hashes = identifiers.phones.map((phone) => blake3Hex(phone));
     }
 
     if (identifiers.names) {
-      hashes.name_hashes = identifiers.names.map(name => blake3Hex(name.toLowerCase()));
+      hashes.name_hashes = identifiers.names.map((name) => blake3Hex(name.toLowerCase()));
     }
 
     if (identifiers.addresses) {
-      hashes.address_hashes = identifiers.addresses.map(address => 
+      hashes.address_hashes = identifiers.addresses.map((address) =>
         blake3Hex(address.toLowerCase().replace(/\s+/g, ''))
       );
     }
@@ -4012,14 +4057,14 @@ class DataBrokerIngestionCompliance {
 
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'email_hash',
-      query_value: emailHash
+      query_value: emailHash,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'email',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
@@ -4028,14 +4073,14 @@ class DataBrokerIngestionCompliance {
 
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'phone_hash',
-      query_value: phoneHash
+      query_value: phoneHash,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'phone',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
@@ -4044,14 +4089,14 @@ class DataBrokerIngestionCompliance {
 
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'name_hash',
-      query_value: nameHash
+      query_value: nameHash,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'name',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
@@ -4060,14 +4105,14 @@ class DataBrokerIngestionCompliance {
 
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'ssn_hash',
-      query_value: ssnHash
+      query_value: ssnHash,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'ssn',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 
@@ -4076,14 +4121,14 @@ class DataBrokerIngestionCompliance {
 
     const response = await this.negativeRegistry.queryOptOutStatus({
       query_type: 'address_hash',
-      query_value: addressHash
+      query_value: addressHash,
     });
 
     return {
       is_opted_out: response.is_opted_out,
       check_type: 'address',
       opt_out_events: response.opt_out_events,
-      last_opt_out: response.last_opt_out_timestamp
+      last_opt_out: response.last_opt_out_timestamp,
     };
   }
 }
@@ -4132,7 +4177,7 @@ class EnhancedNegativeRegistryService {
       opt_out_scope: optOutScope,
       timestamp: Date.now(),
       block_number: await this.getCurrentBlockNumber(),
-      status: 'active'
+      status: 'active',
     };
 
     // Store in Canon Registry
@@ -4162,11 +4207,11 @@ class EnhancedNegativeRegistryService {
       null, // any subject handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
-    
+
     // Filter events that contain the identifier hash
     const matchingEvents = [];
     for (const event of warrantEvents) {
@@ -4182,10 +4227,12 @@ class EnhancedNegativeRegistryService {
     return {
       is_opted_out: matchingEvents.length > 0,
       opt_out_events: await this.processOptOutEvents(matchingEvents, []),
-      last_opt_out_timestamp: matchingEvents.length > 0 ? 
-        Math.max(...matchingEvents.map(e => e.blockNumber)) : undefined,
+      last_opt_out_timestamp:
+        matchingEvents.length > 0
+          ? Math.max(...matchingEvents.map((e) => e.blockNumber))
+          : undefined,
       opt_out_scope: this.aggregateOptOutScope(matchingEvents),
-      verification_proofs: matchingEvents.map(e => e.args.warrantHash)
+      verification_proofs: matchingEvents.map((e) => e.args.warrantHash),
     };
   }
 }
@@ -4207,9 +4254,8 @@ class DataBrokerWorkflow {
     deletionRequest: DeletionRequest
   ): Promise<DeletionProcessingResult> {
     // Step 1: Identify subject in internal database
-    const subjectIdentification = await this.subjectIdentifier.identifySubjectFromDeletionRequest(
-      deletionRequest
-    );
+    const subjectIdentification =
+      await this.subjectIdentifier.identifySubjectFromDeletionRequest(deletionRequest);
 
     if (subjectIdentification.confidence_score < 0.8) {
       throw new Error('Cannot confidently identify subject for deletion');
@@ -4237,17 +4283,14 @@ class DataBrokerWorkflow {
     );
 
     // Step 5: Mint Mask NFT
-    const maskNFT = await this.mintMaskNFT(
-      deletionRequest.subject_handle,
-      attestation
-    );
+    const maskNFT = await this.mintMaskNFT(deletionRequest.subject_handle, attestation);
 
     return {
       subject_identified: true,
       internal_records_deleted: deletionResult.records_deleted,
       attestation_created: true,
       opt_out_stored: true,
-      mask_nft_minted: maskNFT.token_id
+      mask_nft_minted: maskNFT.token_id,
     };
   }
 
@@ -4263,9 +4306,7 @@ class DataBrokerWorkflow {
   /**
    * Process scraped data with compliance checking
    */
-  async processScrapedData(
-    scrapedData: ScrapedDataRecord
-  ): Promise<ScrapedDataProcessingResult> {
+  async processScrapedData(scrapedData: ScrapedDataRecord): Promise<ScrapedDataProcessingResult> {
     // Check compliance before processing
     const compliance = await this.checkScrapedDataCompliance(scrapedData);
 
@@ -4273,7 +4314,7 @@ class DataBrokerWorkflow {
       return {
         processed: false,
         reason: 'compliance_violation',
-        compliance_details: compliance
+        compliance_details: compliance,
       };
     }
 
@@ -4283,7 +4324,7 @@ class DataBrokerWorkflow {
     return {
       processed: true,
       records_created: processingResult.records_created,
-      compliance_details: compliance
+      compliance_details: compliance,
     };
   }
 }
@@ -4328,13 +4369,13 @@ class PrivacyPreservingHasher {
   ): string {
     // Normalize identifier
     const normalizedIdentifier = this.normalizeIdentifier(identifier, identifierType);
-    
+
     // Create salt-specific hash
     const saltSpecificHash = blake3Hex(normalizedIdentifier + userSalt);
-    
+
     // Add identifier type to prevent cross-type collisions
     const typeSpecificHash = blake3Hex(identifierType + saltSpecificHash);
-    
+
     return typeSpecificHash;
   }
 
@@ -4443,7 +4484,7 @@ class UserSaltManager {
 
     for (const identifier of identifiers) {
       let salt: string;
-      
+
       switch (saltMethod) {
         case 'master':
           salt = masterSalt;
@@ -4455,7 +4496,7 @@ class UserSaltManager {
           salt = this.deriveIdentifierSalt(masterSalt, 'identifier', identifier);
           break;
       }
-      
+
       identifierSalts.set(identifier, salt);
     }
 
@@ -4463,7 +4504,7 @@ class UserSaltManager {
       user_wallet: userWallet,
       master_salt: masterSalt,
       identifier_salts: identifierSalts,
-      salt_derivation_method: saltMethod
+      salt_derivation_method: saltMethod,
     };
   }
 }
@@ -4512,7 +4553,7 @@ class PrivacyPreservingNegativeRegistry {
       opt_out_scope: optOutScope,
       timestamp: Date.now(),
       block_number: await this.getCurrentBlockNumber(),
-      status: 'active'
+      status: 'active',
     };
 
     // Store in Canon Registry
@@ -4542,11 +4583,11 @@ class PrivacyPreservingNegativeRegistry {
       null, // any subject handle hash
       null, // any enterprise hash
       null, // any enterprise ID
-      null  // any warrant ID
+      null // any warrant ID
     );
 
     const warrantEvents = await this.canonRegistry.queryFilter(warrantFilter);
-    
+
     // Filter events that contain the privacy-preserving hash
     const matchingEvents = [];
     for (const event of warrantEvents) {
@@ -4562,10 +4603,12 @@ class PrivacyPreservingNegativeRegistry {
     return {
       is_opted_out: matchingEvents.length > 0,
       opt_out_events: await this.processOptOutEvents(matchingEvents, []),
-      last_opt_out_timestamp: matchingEvents.length > 0 ? 
-        Math.max(...matchingEvents.map(e => e.blockNumber)) : undefined,
+      last_opt_out_timestamp:
+        matchingEvents.length > 0
+          ? Math.max(...matchingEvents.map((e) => e.blockNumber))
+          : undefined,
       opt_out_scope: this.aggregateOptOutScope(matchingEvents),
-      verification_proofs: matchingEvents.map(e => e.args.warrantHash)
+      verification_proofs: matchingEvents.map((e) => e.args.warrantHash),
     };
   }
 }
@@ -4588,32 +4631,32 @@ class PrivacyPreservingDataBrokerCompliance {
   ): Promise<PrivacyPreservingComplianceResult> {
     // Step 1: Extract identifiers from scraped data
     const extractedIdentifiers = await this.extractIdentifiers(scrapedData);
-    
+
     // Step 2: Generate privacy-preserving hashes using user's salts
     const privacyPreservingHashes = await this.generatePrivacyPreservingHashes(
       extractedIdentifiers,
       userSaltProfile
     );
-    
+
     // Step 3: Check negative registry for each privacy-preserving hash
     const complianceChecks = await Promise.all([
       this.checkEmailOptOut(privacyPreservingHashes.email_hashes),
       this.checkPhoneOptOut(privacyPreservingHashes.phone_hashes),
       this.checkNameOptOut(privacyPreservingHashes.name_hashes),
       this.checkSSNOptOut(privacyPreservingHashes.ssn_hashes),
-      this.checkAddressOptOut(privacyPreservingHashes.address_hashes)
+      this.checkAddressOptOut(privacyPreservingHashes.address_hashes),
     ]);
 
     // Step 4: Determine if data can be ingested
-    const hasOptOut = complianceChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = complianceChecks.some((check) => check.is_opted_out);
+
     return {
       can_ingest: !hasOptOut,
       compliance_checks: complianceChecks,
       risk_level: this.calculateRiskLevel(complianceChecks),
       recommended_action: this.getRecommendedAction(complianceChecks),
       scraped_data_id: scrapedData.id,
-      privacy_preserving: true
+      privacy_preserving: true,
     };
   }
 
@@ -4626,7 +4669,7 @@ class PrivacyPreservingDataBrokerCompliance {
       phone_hashes: [],
       name_hashes: [],
       ssn_hashes: [],
-      address_hashes: []
+      address_hashes: [],
     };
 
     // Generate privacy-preserving hashes for emails
@@ -4681,20 +4724,18 @@ class PrivacyPreservingDataBrokerCompliance {
     if (emailHashes.length === 0) return { is_opted_out: false, check_type: 'email' };
 
     const optOutChecks = await Promise.all(
-      emailHashes.map(hash => 
+      emailHashes.map((hash) =>
         this.negativeRegistry.queryOptOutByPrivacyPreservingHash('email', hash)
       )
     );
 
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
       check_type: 'email',
-      opt_out_events: optOutChecks.flatMap(check => check.opt_out_events),
-      last_opt_out: Math.max(...optOutChecks.map(check => 
-        check.last_opt_out_timestamp || 0
-      ))
+      opt_out_events: optOutChecks.flatMap((check) => check.opt_out_events),
+      last_opt_out: Math.max(...optOutChecks.map((check) => check.last_opt_out_timestamp || 0)),
     };
   }
 
@@ -4738,6 +4779,7 @@ class PrivacyPreservingDataBrokerCompliance {
 #### 10.8.2 The Actual Flow: Direct Email Hash Checking
 
 **The Simple Truth:**
+
 1. **Data broker scrapes**: "John Doe, user@example.com, +1234567890"
 2. **Data broker hashes**: `blake3Hex("user@example.com")` = `"abc123"`
 3. **Data broker checks registry**: "Is hash `abc123` opted out?"
@@ -4754,29 +4796,27 @@ class DataBrokerOptOutChecker {
   /**
    * Check if scraped data contains opted-out identifiers
    */
-  async checkScrapedDataOptOut(
-    scrapedData: ScrapedDataRecord
-  ): Promise<OptOutCheckResult> {
+  async checkScrapedDataOptOut(scrapedData: ScrapedDataRecord): Promise<OptOutCheckResult> {
     // Step 1: Extract identifiers from scraped data
     const identifiers = await this.extractIdentifiers(scrapedData);
-    
+
     // Step 2: Hash each identifier
     const identifierHashes = await this.hashIdentifiers(identifiers);
-    
+
     // Step 3: Check each hash against the negative registry
     const optOutChecks = await Promise.all([
       this.checkEmailOptOut(identifierHashes.emails),
       this.checkPhoneOptOut(identifierHashes.phones),
-      this.checkNameOptOut(identifierHashes.names)
+      this.checkNameOptOut(identifierHashes.names),
     ]);
 
     // Step 4: Determine if any identifier is opted out
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       can_ingest: !hasOptOut,
-      opted_out_identifiers: optOutChecks.filter(check => check.is_opted_out),
-      scraped_data_id: scrapedData.id
+      opted_out_identifiers: optOutChecks.filter((check) => check.is_opted_out),
+      scraped_data_id: scrapedData.id,
     };
   }
 
@@ -4784,18 +4824,18 @@ class DataBrokerOptOutChecker {
     const identifiers: ExtractedIdentifiers = {
       emails: [],
       phones: [],
-      names: []
+      names: [],
     };
 
     // Extract email addresses
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const emails = scrapedData.content.match(emailRegex) || [];
-    identifiers.emails = emails.map(email => email.toLowerCase().trim());
+    identifiers.emails = emails.map((email) => email.toLowerCase().trim());
 
     // Extract phone numbers
     const phoneRegex = /(\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/g;
     const phones = scrapedData.content.match(phoneRegex) || [];
-    identifiers.phones = phones.map(phone => this.normalizePhone(phone));
+    identifiers.phones = phones.map((phone) => this.normalizePhone(phone));
 
     // Extract names (simplified)
     const names = await this.extractNames(scrapedData.content);
@@ -4806,9 +4846,9 @@ class DataBrokerOptOutChecker {
 
   private async hashIdentifiers(identifiers: ExtractedIdentifiers): Promise<IdentifierHashes> {
     return {
-      emails: identifiers.emails.map(email => blake3Hex(email)),
-      phones: identifiers.phones.map(phone => blake3Hex(phone)),
-      names: identifiers.names.map(name => blake3Hex(name.toLowerCase()))
+      emails: identifiers.emails.map((email) => blake3Hex(email)),
+      phones: identifiers.phones.map((phone) => blake3Hex(phone)),
+      names: identifiers.names.map((name) => blake3Hex(name.toLowerCase())),
     };
   }
 
@@ -4819,20 +4859,16 @@ class DataBrokerOptOutChecker {
 
     // Check each email hash against the negative registry
     const optOutChecks = await Promise.all(
-      emailHashes.map(hash => 
-        this.negativeRegistry.queryOptOutByIdentifierHash('email', hash)
-      )
+      emailHashes.map((hash) => this.negativeRegistry.queryOptOutByIdentifierHash('email', hash))
     );
 
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
       identifier_type: 'email',
-      opted_out_hashes: emailHashes.filter((hash, index) => 
-        optOutChecks[index].is_opted_out
-      ),
-      opt_out_events: optOutChecks.flatMap(check => check.opt_out_events)
+      opted_out_hashes: emailHashes.filter((hash, index) => optOutChecks[index].is_opted_out),
+      opt_out_events: optOutChecks.flatMap((check) => check.opt_out_events),
     };
   }
 
@@ -4842,20 +4878,16 @@ class DataBrokerOptOutChecker {
     }
 
     const optOutChecks = await Promise.all(
-      phoneHashes.map(hash => 
-        this.negativeRegistry.queryOptOutByIdentifierHash('phone', hash)
-      )
+      phoneHashes.map((hash) => this.negativeRegistry.queryOptOutByIdentifierHash('phone', hash))
     );
 
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
       identifier_type: 'phone',
-      opted_out_hashes: phoneHashes.filter((hash, index) => 
-        optOutChecks[index].is_opted_out
-      ),
-      opt_out_events: optOutChecks.flatMap(check => check.opt_out_events)
+      opted_out_hashes: phoneHashes.filter((hash, index) => optOutChecks[index].is_opted_out),
+      opt_out_events: optOutChecks.flatMap((check) => check.opt_out_events),
     };
   }
 
@@ -4865,20 +4897,16 @@ class DataBrokerOptOutChecker {
     }
 
     const optOutChecks = await Promise.all(
-      nameHashes.map(hash => 
-        this.negativeRegistry.queryOptOutByIdentifierHash('name', hash)
-      )
+      nameHashes.map((hash) => this.negativeRegistry.queryOptOutByIdentifierHash('name', hash))
     );
 
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
       identifier_type: 'name',
-      opted_out_hashes: nameHashes.filter((hash, index) => 
-        optOutChecks[index].is_opted_out
-      ),
-      opt_out_events: optOutChecks.flatMap(check => check.opt_out_events)
+      opted_out_hashes: nameHashes.filter((hash, index) => optOutChecks[index].is_opted_out),
+      opt_out_events: optOutChecks.flatMap((check) => check.opt_out_events),
     };
   }
 }
@@ -4887,19 +4915,20 @@ class DataBrokerOptOutChecker {
 #### 10.8.4 The Complete Flow
 
 **Step 1: User Opts Out**
+
 ```typescript
 // User provides identifiers for opt-out
 const userIdentifiers = {
-  email: "user@example.com",
-  phone: "+1234567890",
-  name: "John Doe"
+  email: 'user@example.com',
+  phone: '+1234567890',
+  name: 'John Doe',
 };
 
 // System generates standard hashes
 const identifierHashes = {
-  email_hashes: [blake3Hex("user@example.com")], // "abc123"
-  phone_hashes: [blake3Hex("+1234567890")],      // "def456"
-  name_hashes: [blake3Hex("John Doe")]           // "ghi789"
+  email_hashes: [blake3Hex('user@example.com')], // "abc123"
+  phone_hashes: [blake3Hex('+1234567890')], // "def456"
+  name_hashes: [blake3Hex('John Doe')], // "ghi789"
 };
 
 // System stores opt-out event in negative registry
@@ -4913,44 +4942,47 @@ await negativeRegistry.storeOptOutEvent(
 ```
 
 **Step 2: Data Broker Scrapes Data**
+
 ```typescript
 // Data broker scrapes public data
 const scrapedData = {
-  content: "John Doe lives at 123 Main St, contact: user@example.com, phone: +1234567890",
-  source: "social_media",
-  timestamp: Date.now()
+  content: 'John Doe lives at 123 Main St, contact: user@example.com, phone: +1234567890',
+  source: 'social_media',
+  timestamp: Date.now(),
 };
 ```
 
 **Step 3: Data Broker Checks Opt-Out Status**
+
 ```typescript
 // Data broker extracts identifiers
 const identifiers = {
-  emails: ["user@example.com"],
-  phones: ["+1234567890"],
-  names: ["John Doe"]
+  emails: ['user@example.com'],
+  phones: ['+1234567890'],
+  names: ['John Doe'],
 };
 
 // Data broker hashes identifiers
 const hashes = {
-  emails: [blake3Hex("user@example.com")], // "abc123"
-  phones: [blake3Hex("+1234567890")],      // "def456"
-  names: [blake3Hex("John Doe")]           // "ghi789"
+  emails: [blake3Hex('user@example.com')], // "abc123"
+  phones: [blake3Hex('+1234567890')], // "def456"
+  names: [blake3Hex('John Doe')], // "ghi789"
 };
 
 // Data broker checks negative registry
-const emailOptOut = await negativeRegistry.queryOptOutByIdentifierHash('email', "abc123");
-const phoneOptOut = await negativeRegistry.queryOptOutByIdentifierHash('phone', "def456");
-const nameOptOut = await negativeRegistry.queryOptOutByIdentifierHash('name', "ghi789");
+const emailOptOut = await negativeRegistry.queryOptOutByIdentifierHash('email', 'abc123');
+const phoneOptOut = await negativeRegistry.queryOptOutByIdentifierHash('phone', 'def456');
+const nameOptOut = await negativeRegistry.queryOptOutByIdentifierHash('name', 'ghi789');
 
 // All checks return: is_opted_out: true
 ```
 
 **Step 4: Data Broker Skips Ingestion**
+
 ```typescript
 // Data broker determines user has opted out
 if (emailOptOut.is_opted_out || phoneOptOut.is_opted_out || nameOptOut.is_opted_out) {
-  console.log("User has opted out - skipping data ingestion");
+  console.log('User has opted out - skipping data ingestion');
   return { status: 'skipped', reason: 'user_opted_out' };
 }
 ```
@@ -4958,6 +4990,7 @@ if (emailOptOut.is_opted_out || phoneOptOut.is_opted_out || nameOptOut.is_opted_
 #### 10.8.5 The Key Insight
 
 **The Privacy Model:**
+
 - **Standard Hashing**: `blake3Hex("user@example.com")` = `"abc123"`
 - **Data Brokers**: Can generate the same hash: `blake3Hex("user@example.com")` = `"abc123"`
 - **Registry**: Stores the hash: `"abc123"`
@@ -4965,12 +4998,14 @@ if (emailOptOut.is_opted_out || phoneOptOut.is_opted_out || nameOptOut.is_opted_
 - **Privacy**: The registry only stores hashes, never plain text identifiers
 
 **Why This Works:**
+
 1. **Data brokers can check opt-out status** by hashing identifiers and querying the registry
 2. **Registry only stores hashes**, never plain text identifiers
 3. **Privacy is preserved** because original identifiers are never stored in the registry
 4. **Opt-out enforcement** works because data brokers can identify opted-out users
 
 **The Flow is Simple:**
+
 1. User opts out → System stores identifier hashes in registry
 2. Data broker scrapes data → Data broker hashes identifiers
 3. Data broker checks registry → Registry responds with opt-out status
@@ -4983,6 +5018,7 @@ if (emailOptOut.is_opted_out || phoneOptOut.is_opted_out || nameOptOut.is_opted_
 You've identified a critical issue: **Many data brokers only have names and addresses**, and there are multiple people with the same name. How can we ensure that when you opt out, only YOUR data is deleted, not someone else's data who happens to have the same name?
 
 **The Problem:**
+
 - **John Smith** in New York opts out
 - **John Smith** in California gets incorrectly opted out too
 - **False positive**: Wrong person's data is deleted
@@ -5019,25 +5055,23 @@ class IdentityConfirmationService {
     email: 0.1,
     phone: 0.05,
     date_of_birth: 0.03,
-    ssn_last_four: 0.02
+    ssn_last_four: 0.02,
   };
 
   /**
    * Create identity profile with confidence scoring
    */
-  async createIdentityProfile(
-    identifiers: UserIdentifiers
-  ): Promise<IdentityProfile> {
+  async createIdentityProfile(identifiers: UserIdentifiers): Promise<IdentityProfile> {
     // Calculate confidence score based on available identifiers
     const confidenceScore = this.calculateConfidenceScore(identifiers);
-    
+
     // Create identity fingerprint from all available identifiers
     const identityFingerprint = this.createIdentityFingerprint(identifiers);
-    
+
     return {
       primary_identifiers: {
         name: identifiers.name,
-        address: identifiers.address
+        address: identifiers.address,
       },
       secondary_identifiers: {
         email: identifiers.email,
@@ -5045,10 +5079,10 @@ class IdentityConfirmationService {
         date_of_birth: identifiers.date_of_birth,
         ssn_last_four: identifiers.ssn_last_four,
         middle_name: identifiers.middle_name,
-        previous_addresses: identifiers.previous_addresses
+        previous_addresses: identifiers.previous_addresses,
       },
       identity_confidence_score: confidenceScore,
-      identity_fingerprint: identityFingerprint
+      identity_fingerprint: identityFingerprint,
     };
   }
 
@@ -5057,26 +5091,26 @@ class IdentityConfirmationService {
    */
   private calculateConfidenceScore(identifiers: UserIdentifiers): number {
     let score = 0;
-    
+
     // Base score from name + address
     if (identifiers.name && identifiers.address) {
       score += this.IDENTIFIER_WEIGHTS.name + this.IDENTIFIER_WEIGHTS.address;
     }
-    
+
     // Additional identifiers increase confidence
     if (identifiers.email) score += this.IDENTIFIER_WEIGHTS.email;
     if (identifiers.phone) score += this.IDENTIFIER_WEIGHTS.phone;
     if (identifiers.date_of_birth) score += this.IDENTIFIER_WEIGHTS.date_of_birth;
     if (identifiers.ssn_last_four) score += this.IDENTIFIER_WEIGHTS.ssn_last_four;
-    
+
     // Middle name adds specificity
     if (identifiers.middle_name) score += 0.05;
-    
+
     // Previous addresses add historical context
     if (identifiers.previous_addresses && identifiers.previous_addresses.length > 0) {
       score += 0.05;
     }
-    
+
     return Math.min(score, 1.0);
   }
 
@@ -5085,62 +5119,67 @@ class IdentityConfirmationService {
    */
   private createIdentityFingerprint(identifiers: UserIdentifiers): string {
     const fingerprintComponents = [];
-    
+
     // Add normalized identifiers
     if (identifiers.name) {
       fingerprintComponents.push(`name:${this.normalizeName(identifiers.name)}`);
     }
-    
+
     if (identifiers.address) {
       fingerprintComponents.push(`address:${this.normalizeAddress(identifiers.address)}`);
     }
-    
+
     if (identifiers.email) {
       fingerprintComponents.push(`email:${identifiers.email.toLowerCase()}`);
     }
-    
+
     if (identifiers.phone) {
       fingerprintComponents.push(`phone:${this.normalizePhone(identifiers.phone)}`);
     }
-    
+
     if (identifiers.date_of_birth) {
       fingerprintComponents.push(`dob:${identifiers.date_of_birth}`);
     }
-    
+
     if (identifiers.ssn_last_four) {
       fingerprintComponents.push(`ssn4:${identifiers.ssn_last_four}`);
     }
-    
+
     if (identifiers.middle_name) {
       fingerprintComponents.push(`middle:${this.normalizeName(identifiers.middle_name)}`);
     }
-    
+
     if (identifiers.previous_addresses) {
       identifiers.previous_addresses.forEach((addr, index) => {
         fingerprintComponents.push(`prev_addr_${index}:${this.normalizeAddress(addr)}`);
       });
     }
-    
+
     // Sort components for consistent fingerprinting
     fingerprintComponents.sort();
-    
+
     // Create hash of combined components
     return blake3Hex(fingerprintComponents.join('|'));
   }
 
   private normalizeName(name: string): string {
-    return name.toLowerCase()
+    return name
+      .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/[^\w\s]/g, ''); // Remove punctuation
   }
 
   private normalizeAddress(address: string): string {
-    return address.toLowerCase()
+    return address
+      .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/[^\w\s]/g, '') // Remove punctuation
-      .replace(/\b(st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|ln|lane|ct|court|pl|place)\b/g, '');
+      .replace(
+        /\b(st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|ln|lane|ct|court|pl|place)\b/g,
+        ''
+      );
   }
 
   private normalizePhone(phone: string): string {
@@ -5160,29 +5199,27 @@ class DataBrokerIdentityMatcher {
   /**
    * Check if scraped data matches opted-out identity with confidence
    */
-  async checkIdentityMatch(
-    scrapedData: ScrapedDataRecord
-  ): Promise<IdentityMatchResult> {
+  async checkIdentityMatch(scrapedData: ScrapedDataRecord): Promise<IdentityMatchResult> {
     // Extract identifiers from scraped data
     const scrapedIdentifiers = await this.extractIdentifiers(scrapedData);
-    
+
     // Create identity profile for scraped data
     const scrapedProfile = await this.identityService.createIdentityProfile(scrapedIdentifiers);
-    
+
     // Get all opted-out identities from registry
     const optedOutIdentities = await this.getOptedOutIdentities();
-    
+
     // Check for matches with confidence scoring
     const matches = await this.findIdentityMatches(scrapedProfile, optedOutIdentities);
-    
+
     // Determine if data should be skipped
-    const shouldSkip = matches.some(match => match.confidence_score >= 0.6);
-    
+    const shouldSkip = matches.some((match) => match.confidence_score >= 0.6);
+
     return {
       should_skip: shouldSkip,
       matches: matches,
       scraped_profile: scrapedProfile,
-      confidence_threshold: 0.6
+      confidence_threshold: 0.6,
     };
   }
 
@@ -5191,20 +5228,21 @@ class DataBrokerIdentityMatcher {
     optedOutIdentities: IdentityProfile[]
   ): Promise<IdentityMatch[]> {
     const matches: IdentityMatch[] = [];
-    
+
     for (const optedOutProfile of optedOutIdentities) {
       const matchScore = this.calculateMatchScore(scrapedProfile, optedOutProfile);
-      
-      if (matchScore > 0.5) { // Only consider potential matches
+
+      if (matchScore > 0.5) {
+        // Only consider potential matches
         matches.push({
           opted_out_profile: optedOutProfile,
           match_score: matchScore,
           confidence_score: this.calculateConfidenceScore(scrapedProfile, optedOutProfile),
-          matching_identifiers: this.getMatchingIdentifiers(scrapedProfile, optedOutProfile)
+          matching_identifiers: this.getMatchingIdentifiers(scrapedProfile, optedOutProfile),
         });
       }
     }
-    
+
     // Sort by confidence score (highest first)
     return matches.sort((a, b) => b.confidence_score - a.confidence_score);
   }
@@ -5215,81 +5253,108 @@ class DataBrokerIdentityMatcher {
   ): number {
     let score = 0;
     let totalWeight = 0;
-    
+
     // Compare primary identifiers
-    if (this.namesMatch(scrapedProfile.primary_identifiers.name, optedOutProfile.primary_identifiers.name)) {
+    if (
+      this.namesMatch(
+        scrapedProfile.primary_identifiers.name,
+        optedOutProfile.primary_identifiers.name
+      )
+    ) {
       score += this.IDENTIFIER_WEIGHTS.name;
     }
     totalWeight += this.IDENTIFIER_WEIGHTS.name;
-    
-    if (this.addressesMatch(scrapedProfile.primary_identifiers.address, optedOutProfile.primary_identifiers.address)) {
+
+    if (
+      this.addressesMatch(
+        scrapedProfile.primary_identifiers.address,
+        optedOutProfile.primary_identifiers.address
+      )
+    ) {
       score += this.IDENTIFIER_WEIGHTS.address;
     }
     totalWeight += this.IDENTIFIER_WEIGHTS.address;
-    
+
     // Compare secondary identifiers
     if (scrapedProfile.secondary_identifiers.email && optedOutProfile.secondary_identifiers.email) {
-      if (scrapedProfile.secondary_identifiers.email === optedOutProfile.secondary_identifiers.email) {
+      if (
+        scrapedProfile.secondary_identifiers.email === optedOutProfile.secondary_identifiers.email
+      ) {
         score += this.IDENTIFIER_WEIGHTS.email;
       }
       totalWeight += this.IDENTIFIER_WEIGHTS.email;
     }
-    
+
     if (scrapedProfile.secondary_identifiers.phone && optedOutProfile.secondary_identifiers.phone) {
-      if (scrapedProfile.secondary_identifiers.phone === optedOutProfile.secondary_identifiers.phone) {
+      if (
+        scrapedProfile.secondary_identifiers.phone === optedOutProfile.secondary_identifiers.phone
+      ) {
         score += this.IDENTIFIER_WEIGHTS.phone;
       }
       totalWeight += this.IDENTIFIER_WEIGHTS.phone;
     }
-    
-    if (scrapedProfile.secondary_identifiers.date_of_birth && optedOutProfile.secondary_identifiers.date_of_birth) {
-      if (scrapedProfile.secondary_identifiers.date_of_birth === optedOutProfile.secondary_identifiers.date_of_birth) {
+
+    if (
+      scrapedProfile.secondary_identifiers.date_of_birth &&
+      optedOutProfile.secondary_identifiers.date_of_birth
+    ) {
+      if (
+        scrapedProfile.secondary_identifiers.date_of_birth ===
+        optedOutProfile.secondary_identifiers.date_of_birth
+      ) {
         score += this.IDENTIFIER_WEIGHTS.date_of_birth;
       }
       totalWeight += this.IDENTIFIER_WEIGHTS.date_of_birth;
     }
-    
-    if (scrapedProfile.secondary_identifiers.ssn_last_four && optedOutProfile.secondary_identifiers.ssn_last_four) {
-      if (scrapedProfile.secondary_identifiers.ssn_last_four === optedOutProfile.secondary_identifiers.ssn_last_four) {
+
+    if (
+      scrapedProfile.secondary_identifiers.ssn_last_four &&
+      optedOutProfile.secondary_identifiers.ssn_last_four
+    ) {
+      if (
+        scrapedProfile.secondary_identifiers.ssn_last_four ===
+        optedOutProfile.secondary_identifiers.ssn_last_four
+      ) {
         score += this.IDENTIFIER_WEIGHTS.ssn_last_four;
       }
       totalWeight += this.IDENTIFIER_WEIGHTS.ssn_last_four;
     }
-    
+
     return totalWeight > 0 ? score / totalWeight : 0;
   }
 
   private namesMatch(name1: string, name2: string): boolean {
     const normalized1 = this.normalizeName(name1);
     const normalized2 = this.normalizeName(name2);
-    
+
     // Exact match
     if (normalized1 === normalized2) return true;
-    
+
     // Check for common variations
     const parts1 = normalized1.split(' ');
     const parts2 = normalized2.split(' ');
-    
+
     // Check if all parts of one name are in the other
-    return parts1.every(part => parts2.includes(part)) || 
-           parts2.every(part => parts1.includes(part));
+    return (
+      parts1.every((part) => parts2.includes(part)) || parts2.every((part) => parts1.includes(part))
+    );
   }
 
   private addressesMatch(address1: string, address2: string): boolean {
     const normalized1 = this.normalizeAddress(address1);
     const normalized2 = this.normalizeAddress(address2);
-    
+
     // Exact match
     if (normalized1 === normalized2) return true;
-    
+
     // Check for partial matches (same street, different apartment)
     const parts1 = normalized1.split(' ');
     const parts2 = normalized2.split(' ');
-    
+
     // Check if core address components match
     const coreParts1 = parts1.slice(0, -1); // Remove last part (apartment/unit)
     const coreParts2 = parts2.slice(0, -1);
-    
+
     return coreParts1.join(' ') === coreParts2.join(' ');
   }
 
@@ -5299,13 +5364,13 @@ class DataBrokerIdentityMatcher {
   ): number {
     // Base confidence from match score
     const matchScore = this.calculateMatchScore(scrapedProfile, optedOutProfile);
-    
+
     // Boost confidence if both profiles have high identity confidence
-    const identityConfidence = (scrapedProfile.identity_confidence_score + 
-                               optedOutProfile.identity_confidence_score) / 2;
-    
+    const identityConfidence =
+      (scrapedProfile.identity_confidence_score + optedOutProfile.identity_confidence_score) / 2;
+
     // Combine match score with identity confidence
-    return (matchScore * 0.7) + (identityConfidence * 0.3);
+    return matchScore * 0.7 + identityConfidence * 0.3;
   }
 }
 ```
@@ -5326,28 +5391,25 @@ class UserIdentityVerification {
   ): Promise<IdentityVerificationResult> {
     // Create identity profile
     const identityProfile = await this.identityService.createIdentityProfile(userIdentifiers);
-    
+
     // Check if identity meets minimum confidence threshold
     if (identityProfile.identity_confidence_score < 0.6) {
       return {
         verified: false,
         reason: 'insufficient_identifiers',
         required_identifiers: this.getRequiredIdentifiers(userIdentifiers),
-        current_confidence: identityProfile.identity_confidence_score
+        current_confidence: identityProfile.identity_confidence_score,
       };
     }
-    
+
     // Perform verification based on method
-    const verificationResult = await this.performVerification(
-      userIdentifiers,
-      verificationMethod
-    );
-    
+    const verificationResult = await this.performVerification(userIdentifiers, verificationMethod);
+
     return {
       verified: verificationResult.success,
       identity_profile: identityProfile,
       verification_method: verificationMethod,
-      confidence_score: identityProfile.identity_confidence_score
+      confidence_score: identityProfile.identity_confidence_score,
     };
   }
 
@@ -5373,14 +5435,14 @@ class UserIdentityVerification {
     // Send verification email with unique code
     const verificationCode = this.generateVerificationCode();
     await this.sendVerificationEmail(email, verificationCode);
-    
+
     // Wait for user to enter code
     const userCode = await this.waitForUserInput('Enter verification code from email');
-    
+
     return {
       success: userCode === verificationCode,
       method: 'email',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -5388,39 +5450,39 @@ class UserIdentityVerification {
     // Send verification SMS with unique code
     const verificationCode = this.generateVerificationCode();
     await this.sendVerificationSMS(phone, verificationCode);
-    
+
     // Wait for user to enter code
     const userCode = await this.waitForUserInput('Enter verification code from SMS');
-    
+
     return {
       success: userCode === verificationCode,
       method: 'phone',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
   private async verifyDocument(userIdentifiers: UserIdentifiers): Promise<VerificationResult> {
     // Request document upload (driver's license, passport, etc.)
     const document = await this.requestDocumentUpload();
-    
+
     // Extract information from document
     const extractedInfo = await this.extractDocumentInfo(document);
-    
+
     // Compare with provided identifiers
     const matches = this.compareDocumentWithIdentifiers(extractedInfo, userIdentifiers);
-    
+
     return {
       success: matches.confidence_score > 0.8,
       method: 'document',
       timestamp: Date.now(),
-      document_matches: matches
+      document_matches: matches,
     };
   }
 
   private async verifyKnowledge(userIdentifiers: UserIdentifiers): Promise<VerificationResult> {
     // Ask knowledge-based questions
     const questions = await this.generateKnowledgeQuestions(userIdentifiers);
-    
+
     let correctAnswers = 0;
     for (const question of questions) {
       const answer = await this.askQuestion(question);
@@ -5428,14 +5490,14 @@ class UserIdentityVerification {
         correctAnswers++;
       }
     }
-    
+
     const successRate = correctAnswers / questions.length;
-    
+
     return {
       success: successRate >= 0.8,
       method: 'knowledge',
       timestamp: Date.now(),
-      success_rate: successRate
+      success_rate: successRate,
     };
   }
 }
@@ -5444,17 +5506,18 @@ class UserIdentityVerification {
 #### 10.9.5 The Complete Identity-Confirmed Opt-Out Flow
 
 **Step 1: User Provides Multiple Identifiers**
+
 ```typescript
 // User provides comprehensive identity information
 const userIdentifiers = {
-  name: "John Smith",
-  address: "123 Main St, New York, NY 10001",
-  email: "john.smith@example.com",
-  phone: "+1234567890",
-  date_of_birth: "1985-06-15",
-  ssn_last_four: "1234",
-  middle_name: "Michael",
-  previous_addresses: ["456 Oak Ave, Brooklyn, NY 11201"]
+  name: 'John Smith',
+  address: '123 Main St, New York, NY 10001',
+  email: 'john.smith@example.com',
+  phone: '+1234567890',
+  date_of_birth: '1985-06-15',
+  ssn_last_four: '1234',
+  middle_name: 'Michael',
+  previous_addresses: ['456 Oak Ave, Brooklyn, NY 11201'],
 };
 
 // System creates identity profile with confidence score
@@ -5463,6 +5526,7 @@ const identityProfile = await identityService.createIdentityProfile(userIdentifi
 ```
 
 **Step 2: Identity Verification**
+
 ```typescript
 // System verifies user identity
 const verification = await userIdentityVerification.verifyUserIdentity(
@@ -5476,31 +5540,33 @@ const verification = await userIdentityVerification.verifyUserIdentity(
 ```
 
 **Step 3: Opt-Out with Identity Confirmation**
+
 ```typescript
 // System stores opt-out with comprehensive identity profile
 const optOutEvent = {
-  subject_handle: "null:1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P",
+  subject_handle: 'null:1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P',
   identity_profile: identityProfile,
   identifier_hashes: {
-    name_hashes: [blake3Hex("John Smith")],
-    address_hashes: [blake3Hex("123 Main St, New York, NY 10001")],
-    email_hashes: [blake3Hex("john.smith@example.com")],
-    phone_hashes: [blake3Hex("+1234567890")],
-    dob_hashes: [blake3Hex("1985-06-15")],
-    ssn4_hashes: [blake3Hex("1234")]
+    name_hashes: [blake3Hex('John Smith')],
+    address_hashes: [blake3Hex('123 Main St, New York, NY 10001')],
+    email_hashes: [blake3Hex('john.smith@example.com')],
+    phone_hashes: [blake3Hex('+1234567890')],
+    dob_hashes: [blake3Hex('1985-06-15')],
+    ssn4_hashes: [blake3Hex('1234')],
   },
-  identity_fingerprint: "xyz789",
-  verification_method: "email",
-  confidence_score: 0.95
+  identity_fingerprint: 'xyz789',
+  verification_method: 'email',
+  confidence_score: 0.95,
 };
 ```
 
 **Step 4: Data Broker Identity Matching**
+
 ```typescript
 // Data broker scrapes: "John Smith, 123 Main St, New York, NY"
 const scrapedData = {
-  name: "John Smith",
-  address: "123 Main St, New York, NY 10001"
+  name: 'John Smith',
+  address: '123 Main St, New York, NY 10001',
 };
 
 // Data broker creates identity profile
@@ -5521,12 +5587,13 @@ const matches = await identityMatcher.findIdentityMatches(scrapedProfile, optedO
 ```
 
 **Step 5: High-Confidence Match Example**
+
 ```typescript
 // Data broker scrapes: "John Smith, john.smith@example.com, 123 Main St, New York, NY"
 const scrapedData = {
-  name: "John Smith",
-  address: "123 Main St, New York, NY 10001",
-  email: "john.smith@example.com"
+  name: 'John Smith',
+  address: '123 Main St, New York, NY 10001',
+  email: 'john.smith@example.com',
 };
 
 // Data broker creates identity profile
@@ -5590,28 +5657,26 @@ class GovernmentNullProtocolIntegration {
   /**
    * Process public records request with Null Protocol integration
    */
-  async processPublicRecordsRequest(
-    request: PublicRecordsRequest
-  ): Promise<PublicRecordsResponse> {
+  async processPublicRecordsRequest(request: PublicRecordsRequest): Promise<PublicRecordsResponse> {
     // Step 1: Determine access tier and privacy requirements
     const accessConfig = await this.determineAccessConfig(request);
-    
+
     // Step 2: Check Null Protocol compliance
     const nullCompliance = await this.checkNullProtocolCompliance(request, accessConfig);
-    
+
     // Step 3: Process privacy-preserving query
     const privacyResult = await this.processPrivacyPreservingQuery(request, accessConfig);
-    
+
     // Step 4: Generate response with privacy protections
     const response = await this.generatePrivacyProtectedResponse(
       request,
       accessConfig,
       privacyResult
     );
-    
+
     // Step 5: Log access for audit and compliance
     await this.logAccessForAudit(request, response, accessConfig);
-    
+
     return response;
   }
 
@@ -5620,13 +5685,13 @@ class GovernmentNullProtocolIntegration {
   ): Promise<GovernmentDataAccess> {
     const userType = await this.identifyUserType(request.user_id);
     const accessTier = await this.determineAccessTier(request, userType);
-    
+
     return {
       access_tier: accessTier,
       user_type: userType,
       privacy_requirements: await this.getPrivacyRequirements(accessTier, userType),
       null_protocol_integration: await this.getNullProtocolConfig(accessTier, userType),
-      audit_requirements: await this.getAuditRequirements(accessTier, userType)
+      audit_requirements: await this.getAuditRequirements(accessTier, userType),
     };
   }
 
@@ -5645,7 +5710,7 @@ class GovernmentNullProtocolIntegration {
         return {
           compliant: false,
           reason: 'missing_subject_handle',
-          required_action: 'register_subject_handle'
+          required_action: 'register_subject_handle',
         };
       }
     }
@@ -5657,7 +5722,7 @@ class GovernmentNullProtocolIntegration {
         return {
           compliant: false,
           reason: 'user_opted_out',
-          opt_out_details: optOutStatus
+          opt_out_details: optOutStatus,
         };
       }
     }
@@ -5684,22 +5749,22 @@ class GovernmentNullProtocolIntegration {
   ): Promise<PrivacyPreservingResult> {
     // Implement privacy-preserving query techniques
     const query = request.query;
-    
+
     // Hash identifiers for privacy
     const hashedIdentifiers = await this.hashIdentifiersForPrivacy(query.identifiers);
-    
+
     // Execute query with hashed identifiers
     const results = await this.executeHashedQuery(hashedIdentifiers, query.criteria);
-    
+
     // Apply privacy filters
     const filteredResults = await this.applyPrivacyFilters(results, accessConfig);
-    
+
     // Generate privacy-preserving response
     return {
       results: filteredResults,
       privacy_applied: true,
       identifier_hashes: hashedIdentifiers,
-      privacy_level: accessConfig.privacy_requirements.data_minimization ? 'high' : 'medium'
+      privacy_level: accessConfig.privacy_requirements.data_minimization ? 'high' : 'medium',
     };
   }
 
@@ -5715,7 +5780,7 @@ class GovernmentNullProtocolIntegration {
       access_tier: accessConfig.access_tier,
       privacy_level: privacyResult.privacy_level,
       data_retention_limits: accessConfig.privacy_requirements.data_retention_limits,
-      opt_out_mechanism: accessConfig.privacy_requirements.opt_out_mechanism
+      opt_out_mechanism: accessConfig.privacy_requirements.opt_out_mechanism,
     };
 
     // Add Null Protocol specific elements
@@ -5746,103 +5811,113 @@ class GovernmentTieredAccessSystem {
 
   private initializeAccessTiers() {
     this.accessTiers = new Map([
-      ['individual', {
-        rate_limit: 100, // 100 requests per hour
-        cost_per_request: 0.01, // $0.01 per request
-        bulk_discount: 0, // no bulk discount
-        privacy_requirements: {
-          consent_required: false,
-          opt_out_mechanism: 'none',
-          data_retention_limits: 0,
-          purpose_limitation: ['personal_use'],
-          data_minimization: false,
-          null_protocol_compliance: false
+      [
+        'individual',
+        {
+          rate_limit: 100, // 100 requests per hour
+          cost_per_request: 0.01, // $0.01 per request
+          bulk_discount: 0, // no bulk discount
+          privacy_requirements: {
+            consent_required: false,
+            opt_out_mechanism: 'none',
+            data_retention_limits: 0,
+            purpose_limitation: ['personal_use'],
+            data_minimization: false,
+            null_protocol_compliance: false,
+          },
+          null_protocol_integration: {
+            subject_handle_required: false,
+            warrant_system_enabled: false,
+            negative_registry_integration: false,
+            mask_receipt_minting: false,
+            canon_registry_anchoring: false,
+            privacy_preserving_queries: false,
+          },
         },
-        null_protocol_integration: {
-          subject_handle_required: false,
-          warrant_system_enabled: false,
-          negative_registry_integration: false,
-          mask_receipt_minting: false,
-          canon_registry_anchoring: false,
-          privacy_preserving_queries: false
-        }
-      }],
-      ['small_business', {
-        rate_limit: 1000, // 1000 requests per hour
-        cost_per_request: 0.05, // $0.05 per request
-        bulk_discount: 0.1, // 10% bulk discount
-        privacy_requirements: {
-          consent_required: true,
-          opt_out_mechanism: 'basic',
-          data_retention_limits: 365, // 1 year
-          purpose_limitation: ['business_use', 'compliance'],
-          data_minimization: true,
-          null_protocol_compliance: true
+      ],
+      [
+        'small_business',
+        {
+          rate_limit: 1000, // 1000 requests per hour
+          cost_per_request: 0.05, // $0.05 per request
+          bulk_discount: 0.1, // 10% bulk discount
+          privacy_requirements: {
+            consent_required: true,
+            opt_out_mechanism: 'basic',
+            data_retention_limits: 365, // 1 year
+            purpose_limitation: ['business_use', 'compliance'],
+            data_minimization: true,
+            null_protocol_compliance: true,
+          },
+          null_protocol_integration: {
+            subject_handle_required: true,
+            warrant_system_enabled: false,
+            negative_registry_integration: true,
+            mask_receipt_minting: false,
+            canon_registry_anchoring: true,
+            privacy_preserving_queries: true,
+          },
         },
-        null_protocol_integration: {
-          subject_handle_required: true,
-          warrant_system_enabled: false,
-          negative_registry_integration: true,
-          mask_receipt_minting: false,
-          canon_registry_anchoring: true,
-          privacy_preserving_queries: true
-        }
-      }],
-      ['commercial', {
-        rate_limit: 10000, // 10,000 requests per hour
-        cost_per_request: 0.25, // $0.25 per request
-        bulk_discount: 0.2, // 20% bulk discount
-        privacy_requirements: {
-          consent_required: true,
-          opt_out_mechanism: 'advanced',
-          data_retention_limits: 180, // 6 months
-          purpose_limitation: ['commercial_use', 'marketing', 'analytics'],
-          data_minimization: true,
-          null_protocol_compliance: true
+      ],
+      [
+        'commercial',
+        {
+          rate_limit: 10000, // 10,000 requests per hour
+          cost_per_request: 0.25, // $0.25 per request
+          bulk_discount: 0.2, // 20% bulk discount
+          privacy_requirements: {
+            consent_required: true,
+            opt_out_mechanism: 'advanced',
+            data_retention_limits: 180, // 6 months
+            purpose_limitation: ['commercial_use', 'marketing', 'analytics'],
+            data_minimization: true,
+            null_protocol_compliance: true,
+          },
+          null_protocol_integration: {
+            subject_handle_required: true,
+            warrant_system_enabled: true,
+            negative_registry_integration: true,
+            mask_receipt_minting: true,
+            canon_registry_anchoring: true,
+            privacy_preserving_queries: true,
+          },
         },
-        null_protocol_integration: {
-          subject_handle_required: true,
-          warrant_system_enabled: true,
-          negative_registry_integration: true,
-          mask_receipt_minting: true,
-          canon_registry_anchoring: true,
-          privacy_preserving_queries: true
-        }
-      }],
-      ['bulk', {
-        rate_limit: 100000, // 100,000 requests per hour
-        cost_per_request: 1.00, // $1.00 per request
-        bulk_discount: 0.3, // 30% bulk discount
-        privacy_requirements: {
-          consent_required: true,
-          opt_out_mechanism: 'real_time',
-          data_retention_limits: 90, // 3 months
-          purpose_limitation: ['bulk_processing', 'data_aggregation'],
-          data_minimization: true,
-          null_protocol_compliance: true
+      ],
+      [
+        'bulk',
+        {
+          rate_limit: 100000, // 100,000 requests per hour
+          cost_per_request: 1.0, // $1.00 per request
+          bulk_discount: 0.3, // 30% bulk discount
+          privacy_requirements: {
+            consent_required: true,
+            opt_out_mechanism: 'real_time',
+            data_retention_limits: 90, // 3 months
+            purpose_limitation: ['bulk_processing', 'data_aggregation'],
+            data_minimization: true,
+            null_protocol_compliance: true,
+          },
+          null_protocol_integration: {
+            subject_handle_required: true,
+            warrant_system_enabled: true,
+            negative_registry_integration: true,
+            mask_receipt_minting: true,
+            canon_registry_anchoring: true,
+            privacy_preserving_queries: true,
+          },
         },
-        null_protocol_integration: {
-          subject_handle_required: true,
-          warrant_system_enabled: true,
-          negative_registry_integration: true,
-          mask_receipt_minting: true,
-          canon_registry_anchoring: true,
-          privacy_preserving_queries: true
-        }
-      }]
+      ],
     ]);
   }
 
   /**
    * Determine access tier based on user type and request characteristics
    */
-  async determineAccessTier(
-    request: PublicRecordsRequest
-  ): Promise<string> {
+  async determineAccessTier(request: PublicRecordsRequest): Promise<string> {
     const userType = await this.identifyUserType(request.user_id);
     const requestVolume = await this.calculateRequestVolume(request);
     const requestFrequency = await this.calculateRequestFrequency(request.user_id);
-    
+
     // Determine tier based on usage patterns
     if (userType === 'citizen' && requestVolume < 10) {
       return 'individual';
@@ -5881,9 +5956,7 @@ class DataBrokerRegistrationSystem {
   /**
    * Register data broker with Null Protocol compliance requirements
    */
-  async registerDataBroker(
-    brokerInfo: DataBrokerInfo
-  ): Promise<DataBrokerRegistration> {
+  async registerDataBroker(brokerInfo: DataBrokerInfo): Promise<DataBrokerRegistration> {
     // Step 1: Validate broker information
     const validation = await this.validateBrokerInfo(brokerInfo);
     if (!validation.valid) {
@@ -5892,16 +5965,16 @@ class DataBrokerRegistrationSystem {
 
     // Step 2: Generate broker subject handle
     const brokerSubjectHandle = await this.generateBrokerSubjectHandle(brokerInfo);
-    
+
     // Step 3: Create Null Protocol compliance profile
     const complianceProfile = await this.createComplianceProfile(brokerInfo);
-    
+
     // Step 4: Register with Null Protocol
     const nullProtocolRegistration = await this.nullProtocol.registerBroker(
       brokerSubjectHandle,
       complianceProfile
     );
-    
+
     // Step 5: Create government registration
     const registration: DataBrokerRegistration = {
       broker_id: generateId(),
@@ -5921,24 +5994,22 @@ class DataBrokerRegistrationSystem {
         negative_registry_integration: true,
         mask_receipt_minting: true,
         canon_registry_anchoring: true,
-        privacy_preserving_queries: true
+        privacy_preserving_queries: true,
       },
       registration_date: Date.now(),
-      compliance_status: 'active'
+      compliance_status: 'active',
     };
 
     // Step 6: Store registration
     await this.storeRegistration(registration);
-    
+
     return registration;
   }
 
   /**
    * Monitor data broker compliance with Null Protocol
    */
-  async monitorBrokerCompliance(
-    brokerId: string
-  ): Promise<ComplianceReport> {
+  async monitorBrokerCompliance(brokerId: string): Promise<ComplianceReport> {
     const registration = await this.getRegistration(brokerId);
     if (!registration) {
       throw new Error(`Broker not found: ${brokerId}`);
@@ -5950,9 +6021,7 @@ class DataBrokerRegistrationSystem {
     );
 
     // Check government compliance
-    const governmentCompliance = await this.complianceEngine.checkCompliance(
-      registration
-    );
+    const governmentCompliance = await this.complianceEngine.checkCompliance(registration);
 
     // Generate compliance report
     const report: ComplianceReport = {
@@ -5963,12 +6032,12 @@ class DataBrokerRegistrationSystem {
       government_compliance: governmentCompliance,
       overall_compliance: this.calculateOverallCompliance(nullCompliance, governmentCompliance),
       violations: this.identifyViolations(nullCompliance, governmentCompliance),
-      recommendations: this.generateRecommendations(nullCompliance, governmentCompliance)
+      recommendations: this.generateRecommendations(nullCompliance, governmentCompliance),
     };
 
     // Store compliance report
     await this.storeComplianceReport(report);
-    
+
     return report;
   }
 
@@ -5989,7 +6058,7 @@ class DataBrokerRegistrationSystem {
       violation_date: Date.now(),
       violations: violations,
       actions_taken: [],
-      compliance_status: 'under_review'
+      compliance_status: 'under_review',
     };
 
     // Determine appropriate actions based on violation severity
@@ -6014,12 +6083,9 @@ class DataBrokerRegistrationSystem {
 
     // Update registration status
     await this.updateRegistrationStatus(brokerId, response.compliance_status);
-    
+
     // Notify Null Protocol of violations
-    await this.nullProtocol.reportViolations(
-      registration.broker_subject_handle,
-      violations
-    );
+    await this.nullProtocol.reportViolations(registration.broker_subject_handle, violations);
 
     return response;
   }
@@ -6043,19 +6109,19 @@ class PrivacyPreservingQueryProcessor {
   ): Promise<PrivacyPreservingQueryResult> {
     // Step 1: Hash identifiers for privacy
     const hashedIdentifiers = await this.hashIdentifiersForPrivacy(query.identifiers);
-    
+
     // Step 2: Check negative registry for opt-out status
     const optOutStatus = await this.checkOptOutStatus(hashedIdentifiers);
-    
+
     // Step 3: Apply privacy filters
     const filteredQuery = await this.applyPrivacyFilters(query, accessConfig);
-    
+
     // Step 4: Execute query with privacy protections
     const results = await this.executePrivacyProtectedQuery(filteredQuery, hashedIdentifiers);
-    
+
     // Step 5: Apply data minimization
     const minimizedResults = await this.applyDataMinimization(results, accessConfig);
-    
+
     // Step 6: Generate privacy-preserving response
     return {
       results: minimizedResults,
@@ -6063,7 +6129,7 @@ class PrivacyPreservingQueryProcessor {
       identifier_hashes: hashedIdentifiers,
       opt_out_status: optOutStatus,
       privacy_level: accessConfig.privacy_requirements.data_minimization ? 'high' : 'medium',
-      data_retention_limits: accessConfig.privacy_requirements.data_retention_limits
+      data_retention_limits: accessConfig.privacy_requirements.data_retention_limits,
     };
   }
 
@@ -6071,12 +6137,12 @@ class PrivacyPreservingQueryProcessor {
     identifiers: Record<string, string>
   ): Promise<Record<string, string>> {
     const hashedIdentifiers: Record<string, string> = {};
-    
+
     for (const [key, value] of Object.entries(identifiers)) {
       // Use consistent hashing for privacy
       hashedIdentifiers[key] = blake3Hex(value.toLowerCase().trim());
     }
-    
+
     return hashedIdentifiers;
   }
 
@@ -6090,14 +6156,14 @@ class PrivacyPreservingQueryProcessor {
       })
     );
 
-    const hasOptOut = optOutChecks.some(check => check.is_opted_out);
-    
+    const hasOptOut = optOutChecks.some((check) => check.is_opted_out);
+
     return {
       is_opted_out: hasOptOut,
-      opted_out_identifiers: optOutChecks.filter(check => check.is_opted_out),
-      last_opt_out: hasOptOut ? Math.max(...optOutChecks.map(check => 
-        check.last_opt_out_timestamp || 0
-      )) : undefined
+      opted_out_identifiers: optOutChecks.filter((check) => check.is_opted_out),
+      last_opt_out: hasOptOut
+        ? Math.max(...optOutChecks.map((check) => check.last_opt_out_timestamp || 0))
+        : undefined,
     };
   }
 
@@ -6106,18 +6172,18 @@ class PrivacyPreservingQueryProcessor {
     accessConfig: AccessTierConfig
   ): Promise<PublicRecordsQuery> {
     const filteredQuery = { ...query };
-    
+
     // Apply purpose limitation
     if (accessConfig.privacy_requirements.purpose_limitation) {
       filteredQuery.purpose_limitation = accessConfig.privacy_requirements.purpose_limitation;
     }
-    
+
     // Apply data minimization
     if (accessConfig.privacy_requirements.data_minimization) {
       filteredQuery.data_minimization = true;
       filteredQuery.fields_requested = this.minimizeFields(query.fields_requested);
     }
-    
+
     return filteredQuery;
   }
 
@@ -6127,10 +6193,10 @@ class PrivacyPreservingQueryProcessor {
   ): Promise<QueryResult[]> {
     // Execute query using hashed identifiers
     const results = await this.queryEngine.executeQuery(query, hashedIdentifiers);
-    
+
     // Apply additional privacy protections
     const protectedResults = await this.applyAdditionalPrivacyProtections(results);
-    
+
     return protectedResults;
   }
 
@@ -6143,9 +6209,9 @@ class PrivacyPreservingQueryProcessor {
     }
 
     // Remove unnecessary fields
-    return results.map(result => {
+    return results.map((result) => {
       const minimizedResult = { ...result };
-      
+
       // Remove sensitive fields based on access tier
       if (accessConfig.access_tier === 'individual') {
         // Keep all fields for individual access
@@ -6169,7 +6235,7 @@ class PrivacyPreservingQueryProcessor {
         delete minimizedResult.email;
         delete minimizedResult.address;
       }
-      
+
       return minimizedResult;
     });
   }
@@ -6179,6 +6245,7 @@ class PrivacyPreservingQueryProcessor {
 #### 10.10.6 Benefits of Government-Null Protocol Integration
 
 **For Governments:**
+
 1. **Enhanced Privacy Protection** - Comprehensive privacy framework for public records
 2. **Compliance Automation** - Automated compliance monitoring and reporting
 3. **Audit Trail** - Complete audit trail of all data access
@@ -6186,6 +6253,7 @@ class PrivacyPreservingQueryProcessor {
 5. **Regulatory Compliance** - Built-in compliance with privacy regulations
 
 **For Data Brokers:**
+
 1. **Clear Compliance Framework** - Well-defined compliance requirements
 2. **Automated Compliance** - Automated compliance monitoring and reporting
 3. **Cost Transparency** - Clear pricing based on privacy impact
@@ -6193,6 +6261,7 @@ class PrivacyPreservingQueryProcessor {
 5. **Competitive Advantage** - Privacy-compliant data access
 
 **For Individuals:**
+
 1. **Privacy Control** - Ability to opt out of data broker access
 2. **Transparency** - Clear visibility into data usage
 3. **Accountability** - Data brokers held accountable for compliance
@@ -6272,59 +6341,60 @@ class FoundationOperatedRegistry {
   ): Promise<RegistryEntry> {
     // Step 1: Verify implementer credentials
     const implementerVerification = await this.verifyImplementer(request.implementer_id);
-    
+
     // Step 2: Validate deletion evidence
     const evidenceValidation = await this.validateDeletionEvidence(request.deletion_evidence);
-    
+
     // Step 3: Create registry entry
-    const registryEntry = await this.createRegistryEntry(request, implementerVerification, evidenceValidation);
-    
+    const registryEntry = await this.createRegistryEntry(
+      request,
+      implementerVerification,
+      evidenceValidation
+    );
+
     // Step 4: Update compliance metrics
     await this.updateComplianceMetrics(registryEntry);
-    
+
     // Step 5: Publish transparency report
     await this.publishTransparencyReport(registryEntry);
-    
+
     return registryEntry;
   }
 
-  private async verifyImplementer(
-    implementerId: string
-  ): Promise<ImplementerVerification> {
+  private async verifyImplementer(implementerId: string): Promise<ImplementerVerification> {
     // Verify commercial implementer (e.g., Null Engine) credentials
     const implementer = await this.commercialImplementers.getImplementer(implementerId);
-    
+
     if (!implementer) {
       throw new Error(`Unknown implementer: ${implementerId}`);
     }
 
     // Check implementer compliance status
     const complianceStatus = await this.commercialImplementers.checkCompliance(implementerId);
-    
+
     return {
       implementer_id: implementerId,
       implementer_name: implementer.name,
       compliance_status: complianceStatus.status,
       verification_timestamp: Date.now(),
-      authorized: complianceStatus.status === 'active'
+      authorized: complianceStatus.status === 'active',
     };
   }
 
   private async validateDeletionEvidence(
     evidence: DeletionEvidence[]
   ): Promise<EvidenceValidation> {
-    const validations = await Promise.all(
-      evidence.map(e => this.validateSingleEvidence(e))
-    );
+    const validations = await Promise.all(evidence.map((e) => this.validateSingleEvidence(e)));
 
-    const allValid = validations.every(v => v.valid);
-    const validationScore = validations.reduce((sum, v) => sum + v.confidence_score, 0) / validations.length;
-    
+    const allValid = validations.every((v) => v.valid);
+    const validationScore =
+      validations.reduce((sum, v) => sum + v.confidence_score, 0) / validations.length;
+
     return {
       valid: allValid,
       confidence_score: validationScore,
       validated_evidence: validations,
-      validation_timestamp: Date.now()
+      validation_timestamp: Date.now(),
     };
   }
 
@@ -6333,18 +6403,23 @@ class FoundationOperatedRegistry {
   ): Promise<SingleEvidenceValidation> {
     // Validate deletion proof
     const proofValid = await this.validateDeletionProof(evidence.deletion_proof);
-    
+
     // Validate compliance attestation
-    const attestationValid = await this.validateComplianceAttestation(evidence.compliance_attestation);
-    
+    const attestationValid = await this.validateComplianceAttestation(
+      evidence.compliance_attestation
+    );
+
     // Check data broker compliance
     const brokerCompliance = await this.checkDataBrokerCompliance(evidence.data_broker);
-    
+
     return {
       evidence_id: evidence.data_broker,
       valid: proofValid && attestationValid && brokerCompliance.compliant,
-      confidence_score: (proofValid ? 0.4 : 0) + (attestationValid ? 0.4 : 0) + (brokerCompliance.compliant ? 0.2 : 0),
-      validation_timestamp: Date.now()
+      confidence_score:
+        (proofValid ? 0.4 : 0) +
+        (attestationValid ? 0.4 : 0) +
+        (brokerCompliance.compliant ? 0.2 : 0),
+      validation_timestamp: Date.now(),
     };
   }
 
@@ -6358,7 +6433,9 @@ class FoundationOperatedRegistry {
     }
 
     if (!evidenceValidation.valid) {
-      throw new Error(`Invalid deletion evidence: confidence score ${evidenceValidation.confidence_score}`);
+      throw new Error(
+        `Invalid deletion evidence: confidence score ${evidenceValidation.confidence_score}`
+      );
     }
 
     // Create registry entry
@@ -6372,15 +6449,15 @@ class FoundationOperatedRegistry {
       compliance_log: request.compliance_log,
       registry_timestamp: Date.now(),
       status: 'active',
-      adoption_metrics: await this.calculateAdoptionMetrics(request)
+      adoption_metrics: await this.calculateAdoptionMetrics(request),
     };
 
     // Store in registry
     await this.storeRegistryEntry(registryEntry);
-    
+
     // Mint mask receipt
     await this.mintMaskReceipt(registryEntry);
-    
+
     // Anchor to canon registry
     await this.anchorToCanonRegistry(registryEntry);
 
@@ -6393,25 +6470,23 @@ class FoundationOperatedRegistry {
   async monitorReIngestion(): Promise<ReIngestionReport> {
     // Check for users whose data has reappeared in data broker systems
     const reIngestionDetections = await this.reIngestionMonitor.detectReIngestion();
-    
+
     // Generate compliance metrics
     const complianceMetrics = await this.generateComplianceMetrics(reIngestionDetections);
-    
+
     // Publish public disclosure for violations
     await this.publishViolationDisclosure(reIngestionDetections);
-    
+
     return {
       detection_timestamp: Date.now(),
       violations_detected: reIngestionDetections.length,
       re_ingestion_detections: reIngestionDetections,
       compliance_metrics: complianceMetrics,
-      public_disclosures: await this.getPublicDisclosures(reIngestionDetections)
+      public_disclosures: await this.getPublicDisclosures(reIngestionDetections),
     };
   }
 
-  private async publishViolationDisclosure(
-    violations: ReIngestionDetection[]
-  ): Promise<void> {
+  private async publishViolationDisclosure(violations: ReIngestionDetection[]): Promise<void> {
     for (const violation of violations) {
       if (violation.public_disclosure) {
         // Publish violation to transparency report
@@ -6421,7 +6496,7 @@ class FoundationOperatedRegistry {
           severity: violation.violation_severity,
           evidence: violation.evidence,
           detection_timestamp: violation.detection_timestamp,
-          public_message: `Data broker ${violation.data_broker} has re-ingested data for user who previously opted out. Canon registry shows deletion was processed on ${new Date(violation.detection_timestamp).toISOString()}.`
+          public_message: `Data broker ${violation.data_broker} has re-ingested data for user who previously opted out. Canon registry shows deletion was processed on ${new Date(violation.detection_timestamp).toISOString()}.`,
         });
       }
     }
@@ -6444,16 +6519,16 @@ class ReIngestionMonitoringService {
    */
   async detectReIngestion(): Promise<ReIngestionDetection[]> {
     const violations: ReIngestionDetection[] = [];
-    
+
     // Get all users who have opted out
     const optedOutUsers = await this.getOptedOutUsers();
-    
+
     // Check each data broker for re-ingestion
     for (const dataBroker of await this.getDataBrokers()) {
       const brokerViolations = await this.checkDataBrokerForReIngestion(dataBroker, optedOutUsers);
       violations.push(...brokerViolations);
     }
-    
+
     return violations;
   }
 
@@ -6462,11 +6537,11 @@ class ReIngestionMonitoringService {
     optedOutUsers: OptedOutUser[]
   ): Promise<ReIngestionDetection[]> {
     const violations: ReIngestionDetection[] = [];
-    
+
     for (const user of optedOutUsers) {
       // Check if user's data has reappeared in data broker system
       const reIngestionDetected = await this.checkUserReIngestion(dataBroker, user);
-      
+
       if (reIngestionDetected) {
         const violation: ReIngestionDetection = {
           data_broker: dataBroker,
@@ -6475,24 +6550,21 @@ class ReIngestionMonitoringService {
           detection_method: 'canon_registry_check',
           violation_severity: this.calculateViolationSeverity(user, dataBroker),
           evidence: await this.generateViolationEvidence(user, dataBroker),
-          public_disclosure: true // Always disclose re-ingestion violations
+          public_disclosure: true, // Always disclose re-ingestion violations
         };
-        
+
         violations.push(violation);
       }
     }
-    
+
     return violations;
   }
 
-  private async checkUserReIngestion(
-    dataBroker: string,
-    user: OptedOutUser
-  ): Promise<boolean> {
+  private async checkUserReIngestion(dataBroker: string, user: OptedOutUser): Promise<boolean> {
     try {
       // Query data broker API for user data
       const userData = await this.dataBrokerAPIs.queryUserData(dataBroker, user.identifiers);
-      
+
       // If data is found, it's a re-ingestion violation
       return userData !== null && userData.length > 0;
     } catch (error) {
@@ -6509,7 +6581,7 @@ class ReIngestionMonitoringService {
     // Calculate severity based on user impact and data broker history
     const userImpact = this.calculateUserImpact(user);
     const brokerHistory = this.getDataBrokerViolationHistory(dataBroker);
-    
+
     if (userImpact === 'high' && brokerHistory.violation_count > 5) {
       return 'critical';
     } else if (userImpact === 'high' || brokerHistory.violation_count > 3) {
@@ -6521,10 +6593,7 @@ class ReIngestionMonitoringService {
     }
   }
 
-  private async generateViolationEvidence(
-    user: OptedOutUser,
-    dataBroker: string
-  ): Promise<string> {
+  private async generateViolationEvidence(user: OptedOutUser, dataBroker: string): Promise<string> {
     // Generate evidence of re-ingestion violation
     const evidence = {
       user_subject_handle: user.subject_handle,
@@ -6532,9 +6601,9 @@ class ReIngestionMonitoringService {
       deletion_registry_entry: user.registry_entry_id,
       data_broker: dataBroker,
       re_ingestion_timestamp: Date.now(),
-      canonical_proof: await this.generateCanonicalProof(user, dataBroker)
+      canonical_proof: await this.generateCanonicalProof(user, dataBroker),
     };
-    
+
     return JSON.stringify(evidence);
   }
 
@@ -6545,7 +6614,7 @@ class ReIngestionMonitoringService {
     violations: ReIngestionDetection[]
   ): Promise<PublicDisclosure[]> {
     const disclosures: PublicDisclosure[] = [];
-    
+
     for (const violation of violations) {
       const disclosure: PublicDisclosure = {
         disclosure_id: generateId(),
@@ -6556,25 +6625,26 @@ class ReIngestionMonitoringService {
         detection_timestamp: violation.detection_timestamp,
         public_message: this.generatePublicMessage(violation),
         regulatory_notification: true,
-        media_notification: violation.violation_severity === 'critical' || violation.violation_severity === 'high'
+        media_notification:
+          violation.violation_severity === 'critical' || violation.violation_severity === 'high',
       };
-      
+
       // Publish to transparency engine
       await this.transparencyEngine.publishDisclosure(disclosure);
-      
+
       // Notify regulators if high severity
       if (violation.violation_severity === 'high' || violation.violation_severity === 'critical') {
         await this.notifyRegulators(disclosure);
       }
-      
+
       // Notify media if critical
       if (violation.violation_severity === 'critical') {
         await this.notifyMedia(disclosure);
       }
-      
+
       disclosures.push(disclosure);
     }
-    
+
     return disclosures;
   }
 
@@ -6614,12 +6684,12 @@ We will continue to monitor and publicly disclose all re-ingestion violations to
       compliance_rate: 0,
       average_violation_severity: 'low',
       public_disclosures: 0,
-      regulatory_notifications: 0
+      regulatory_notifications: 0,
     };
-    
+
     for (const broker of dataBrokers) {
       const brokerMetrics = await this.getBrokerComplianceMetrics(broker);
-      
+
       if (brokerMetrics.compliant) {
         metrics.compliant_brokers++;
       } else {
@@ -6629,10 +6699,10 @@ We will continue to monitor and publicly disclose all re-ingestion violations to
         metrics.regulatory_notifications += brokerMetrics.regulatory_notifications;
       }
     }
-    
+
     metrics.compliance_rate = metrics.compliant_brokers / metrics.total_brokers;
     metrics.average_violation_severity = this.calculateAverageViolationSeverity(dataBrokers);
-    
+
     return metrics;
   }
 }
@@ -6650,9 +6720,7 @@ class CommercialImplementerService {
   /**
    * Register commercial implementer (e.g., Null Engine)
    */
-  async registerImplementer(
-    implementerInfo: ImplementerInfo
-  ): Promise<ImplementerRegistration> {
+  async registerImplementer(implementerInfo: ImplementerInfo): Promise<ImplementerRegistration> {
     // Validate implementer credentials
     const validation = await this.validateImplementerInfo(implementerInfo);
     if (!validation.valid) {
@@ -6661,16 +6729,16 @@ class CommercialImplementerService {
 
     // Generate implementer subject handle
     const implementerSubjectHandle = await this.generateImplementerSubjectHandle(implementerInfo);
-    
+
     // Create compliance profile
     const complianceProfile = await this.createComplianceProfile(implementerInfo);
-    
+
     // Register with Null Protocol
     const nullProtocolRegistration = await this.nullProtocol.registerImplementer(
       implementerSubjectHandle,
       complianceProfile
     );
-    
+
     // Create implementer registration
     const registration: ImplementerRegistration = {
       implementer_id: generateId(),
@@ -6686,15 +6754,15 @@ class CommercialImplementerService {
         negative_registry_integration: true,
         mask_receipt_minting: true,
         canon_registry_anchoring: true,
-        re_ingestion_monitoring: true
+        re_ingestion_monitoring: true,
       },
       registration_date: Date.now(),
-      compliance_status: 'active'
+      compliance_status: 'active',
     };
 
     // Store registration
     await this.storeImplementerRegistration(registration);
-    
+
     return registration;
   }
 
@@ -6712,17 +6780,10 @@ class CommercialImplementerService {
     }
 
     // Process deletion across data brokers
-    const deletionResults = await this.processDeletionAcrossBrokers(
-      implementer,
-      userRequest
-    );
+    const deletionResults = await this.processDeletionAcrossBrokers(implementer, userRequest);
 
     // Create compliance log
-    const complianceLog = await this.createComplianceLog(
-      implementer,
-      userRequest,
-      deletionResults
-    );
+    const complianceLog = await this.createComplianceLog(implementer, userRequest, deletionResults);
 
     // Submit to foundation registry
     const registryEntry = await this.foundationRegistry.processCommercialDeletionRequest({
@@ -6734,7 +6795,7 @@ class CommercialImplementerService {
       implementer_id: implementerId,
       deletion_evidence: deletionResults.evidence,
       compliance_log: complianceLog,
-      registry_entry: null // Will be created by registry
+      registry_entry: null, // Will be created by registry
     });
 
     return {
@@ -6745,7 +6806,7 @@ class CommercialImplementerService {
       compliance_log: complianceLog,
       registry_entry: registryEntry,
       processing_timestamp: Date.now(),
-      status: 'completed'
+      status: 'completed',
     };
   }
 
@@ -6758,15 +6819,15 @@ class CommercialImplementerService {
       successful_deletions: 0,
       failed_deletions: 0,
       evidence: [],
-      compliance_attestations: []
+      compliance_attestations: [],
     };
 
     // Get list of data brokers to contact
     const dataBrokers = await this.getDataBrokersForUser(userRequest);
-    
+
     for (const broker of dataBrokers) {
       results.total_brokers_contacted++;
-      
+
       try {
         // Process deletion with broker
         const deletionResult = await this.processDeletionWithBroker(
@@ -6774,7 +6835,7 @@ class CommercialImplementerService {
           broker,
           userRequest
         );
-        
+
         if (deletionResult.success) {
           results.successful_deletions++;
           results.evidence.push(deletionResult.evidence);
@@ -6801,11 +6862,11 @@ class CommercialImplementerService {
       implementer_id: implementer.implementer_id,
       user_identifiers: userRequest.identifiers,
       deletion_scope: userRequest.deletion_scope,
-      compliance_requirements: implementer.compliance_requirements
+      compliance_requirements: implementer.compliance_requirements,
     };
 
     const brokerResponse = await this.contactDataBroker(broker, deletionRequest);
-    
+
     if (brokerResponse.deletion_successful) {
       return {
         broker: broker,
@@ -6815,15 +6876,15 @@ class CommercialImplementerService {
           deletion_method: brokerResponse.deletion_method,
           deletion_timestamp: brokerResponse.deletion_timestamp,
           deletion_proof: brokerResponse.deletion_proof,
-          compliance_attestation: brokerResponse.compliance_attestation
+          compliance_attestation: brokerResponse.compliance_attestation,
         },
-        compliance_attestation: brokerResponse.compliance_attestation
+        compliance_attestation: brokerResponse.compliance_attestation,
       };
     } else {
       return {
         broker: broker,
         success: false,
-        error: brokerResponse.error_message
+        error: brokerResponse.error_message,
       };
     }
   }
@@ -6831,9 +6892,7 @@ class CommercialImplementerService {
   /**
    * Monitor for re-ingestion violations
    */
-  async monitorReIngestionViolations(
-    implementerId: string
-  ): Promise<ReIngestionViolationReport> {
+  async monitorReIngestionViolations(implementerId: string): Promise<ReIngestionViolationReport> {
     const implementer = await this.getImplementer(implementerId);
     if (!implementer) {
       throw new Error(`Implementer not found: ${implementerId}`);
@@ -6841,10 +6900,10 @@ class CommercialImplementerService {
 
     // Get users processed by this implementer
     const processedUsers = await this.getProcessedUsers(implementerId);
-    
+
     // Check for re-ingestion violations
     const violations = await this.checkForReIngestionViolations(processedUsers);
-    
+
     // Generate violation report
     const report: ReIngestionViolationReport = {
       implementer_id: implementerId,
@@ -6852,7 +6911,7 @@ class CommercialImplementerService {
       total_users_monitored: processedUsers.length,
       violations_detected: violations.length,
       violations: violations,
-      compliance_metrics: await this.calculateComplianceMetrics(implementerId, violations)
+      compliance_metrics: await this.calculateComplianceMetrics(implementerId, violations),
     };
 
     // Submit violations to foundation registry
@@ -6865,11 +6924,11 @@ class CommercialImplementerService {
     users: ProcessedUser[]
   ): Promise<ReIngestionViolation[]> {
     const violations: ReIngestionViolation[] = [];
-    
+
     for (const user of users) {
       // Check if user's data has reappeared in data broker systems
       const reIngestionDetected = await this.checkUserReIngestion(user);
-      
+
       if (reIngestionDetected) {
         const violation: ReIngestionViolation = {
           user_id: user.user_id,
@@ -6877,13 +6936,13 @@ class CommercialImplementerService {
           data_broker: reIngestionDetected.broker,
           violation_timestamp: Date.now(),
           evidence: reIngestionDetected.evidence,
-          severity: this.calculateViolationSeverity(user, reIngestionDetected)
+          severity: this.calculateViolationSeverity(user, reIngestionDetected),
         };
-        
+
         violations.push(violation);
       }
     }
-    
+
     return violations;
   }
 }
@@ -6926,76 +6985,69 @@ class AdoptionMetricsService {
   /**
    * Track adoption metrics to demonstrate viability
    */
-  async trackAdoptionMetrics(
-    registryEntry: RegistryEntry
-  ): Promise<void> {
+  async trackAdoptionMetrics(registryEntry: RegistryEntry): Promise<void> {
     // Update total deletion requests
     this.metrics.total_deletion_requests++;
-    
+
     // Update successful deletions
     if (registryEntry.status === 'active') {
       this.metrics.successful_deletions++;
     }
-    
+
     // Update commercial implementer activity
     await this.updateCommercialImplementerMetrics(registryEntry);
-    
+
     // Update data broker compliance
     await this.updateDataBrokerComplianceMetrics(registryEntry);
-    
+
     // Update public accountability metrics
     await this.updatePublicAccountabilityMetrics(registryEntry);
-    
+
     // Generate adoption report
     await this.generateAdoptionReport();
   }
 
-  private async updateCommercialImplementerMetrics(
-    registryEntry: RegistryEntry
-  ): Promise<void> {
+  private async updateCommercialImplementerMetrics(registryEntry: RegistryEntry): Promise<void> {
     const implementerVerification = registryEntry.implementer_verification;
-    
+
     // Track active implementers
-    this.metrics.commercial_implementer_activity.active_implementers = 
+    this.metrics.commercial_implementer_activity.active_implementers =
       await this.countActiveImplementers();
-    
+
     // Track deletion requests processed
     this.metrics.commercial_implementer_activity.deletion_requests_processed++;
-    
+
     // Track compliance rate
-    this.metrics.commercial_implementer_activity.compliance_rate = 
+    this.metrics.commercial_implementer_activity.compliance_rate =
       await this.calculateImplementerComplianceRate();
-    
+
     // Track re-ingestion violations detected
-    this.metrics.commercial_implementer_activity.re_ingestion_violations_detected = 
+    this.metrics.commercial_implementer_activity.re_ingestion_violations_detected =
       await this.countReIngestionViolations();
-    
+
     // Track public disclosures made
-    this.metrics.commercial_implementer_activity.public_disclosures_made = 
+    this.metrics.commercial_implementer_activity.public_disclosures_made =
       await this.countPublicDisclosures();
   }
 
-  private async updatePublicAccountabilityMetrics(
-    registryEntry: RegistryEntry
-  ): Promise<void> {
+  private async updatePublicAccountabilityMetrics(registryEntry: RegistryEntry): Promise<void> {
     // Track data broker violations publicized
-    this.metrics.public_accountability.data_broker_violations_publicized = 
+    this.metrics.public_accountability.data_broker_violations_publicized =
       await this.countDataBrokerViolations();
-    
+
     // Track regulatory notifications sent
-    this.metrics.public_accountability.regulatory_notifications_sent = 
+    this.metrics.public_accountability.regulatory_notifications_sent =
       await this.countRegulatoryNotifications();
-    
+
     // Track media alerts issued
-    this.metrics.public_accountability.media_alerts_issued = 
-      await this.countMediaAlerts();
-    
+    this.metrics.public_accountability.media_alerts_issued = await this.countMediaAlerts();
+
     // Track public transparency reports
-    this.metrics.public_accountability.public_transparency_reports = 
+    this.metrics.public_accountability.public_transparency_reports =
       await this.countTransparencyReports();
-    
+
     // Track compliance pressure applied
-    this.metrics.public_accountability.compliance_pressure_applied = 
+    this.metrics.public_accountability.compliance_pressure_applied =
       await this.calculateCompliancePressure();
   }
 
@@ -7011,40 +7063,40 @@ class AdoptionMetricsService {
       data_broker_compliance_status: await this.getDataBrokerComplianceStatus(),
       regulatory_engagement: await this.getRegulatoryEngagement(),
       public_pressure_applied: await this.getPublicPressureApplied(),
-      recommendations: await this.generateRecommendations()
+      recommendations: await this.generateRecommendations(),
     };
 
     // Publish report
     await this.publishPublicAccountabilityReport(report);
-    
+
     return report;
   }
 
   private async getKeyViolations(): Promise<DataBrokerViolation[]> {
     // Get recent violations for public disclosure
     const violations = await this.getRecentViolations();
-    
-    return violations.map(violation => ({
+
+    return violations.map((violation) => ({
       data_broker: violation.data_broker,
       violation_type: violation.violation_type,
       severity: violation.severity,
       detection_timestamp: violation.detection_timestamp,
       public_disclosure: violation.public_disclosure,
       regulatory_notification: violation.regulatory_notification,
-      media_alert: violation.media_alert
+      media_alert: violation.media_alert,
     }));
   }
 
   private async getDataBrokerComplianceStatus(): Promise<DataBrokerComplianceStatus> {
     const dataBrokers = await this.getDataBrokers();
-    
+
     return {
       total_brokers: dataBrokers.length,
       compliant_brokers: await this.countCompliantBrokers(),
       non_compliant_brokers: await this.countNonCompliantBrokers(),
       compliance_rate: await this.calculateOverallComplianceRate(),
       violations_by_broker: await this.getViolationsByBroker(),
-      public_pressure_applied: await this.getPublicPressureByBroker()
+      public_pressure_applied: await this.getPublicPressureByBroker(),
     };
   }
 
@@ -7056,37 +7108,37 @@ class AdoptionMetricsService {
     violation: DataBrokerViolation
   ): Promise<PublicPressureResult> {
     const pressureActions: PublicPressureAction[] = [];
-    
+
     // Public disclosure
     if (violation.public_disclosure) {
       await this.publishPublicDisclosure(dataBroker, violation);
       pressureActions.push('public_disclosure');
     }
-    
+
     // Regulatory notification
     if (violation.regulatory_notification) {
       await this.notifyRegulators(dataBroker, violation);
       pressureActions.push('regulatory_notification');
     }
-    
+
     // Media alert
     if (violation.media_alert) {
       await this.alertMedia(dataBroker, violation);
       pressureActions.push('media_alert');
     }
-    
+
     // Social media campaign
     if (violation.severity === 'critical' || violation.severity === 'high') {
       await this.launchSocialMediaCampaign(dataBroker, violation);
       pressureActions.push('social_media_campaign');
     }
-    
+
     return {
       data_broker: dataBroker,
       violation: violation,
       pressure_actions: pressureActions,
       pressure_applied_timestamp: Date.now(),
-      expected_compliance_improvement: this.calculateExpectedComplianceImprovement(violation)
+      expected_compliance_improvement: this.calculateExpectedComplianceImprovement(violation),
     };
   }
 
@@ -7100,12 +7152,12 @@ class AdoptionMetricsService {
       severity: violation.severity,
       detection_timestamp: violation.detection_timestamp,
       evidence: violation.evidence,
-      public_message: this.generatePublicDisclosureMessage(dataBroker, violation)
+      public_message: this.generatePublicDisclosureMessage(dataBroker, violation),
     };
-    
+
     // Publish to transparency engine
     await this.transparencyEngine.publishDisclosure(disclosure);
-    
+
     // Update metrics
     this.metrics.public_accountability.data_broker_violations_publicized++;
   }
@@ -7137,171 +7189,181 @@ We will continue to monitor and publicly disclose all violations to ensure data 
   }
 }
 ```
+
 }
 
 interface DataBrokerComplianceMetrics {
-  brokers_using_registry: number;
-  compliance_rate: number;
-  opt_out_respect_rate: number;
-  average_response_time: number;
-  violation_incidents: number;
+brokers_using_registry: number;
+compliance_rate: number;
+opt_out_respect_rate: number;
+average_response_time: number;
+violation_incidents: number;
 }
 
 interface CommunityEngagementMetrics {
-  active_verifiers: number;
-  verification_accuracy: number;
-  community_consensus_rate: number;
-  user_satisfaction_score: number;
-  adoption_growth_rate: number;
+active_verifiers: number;
+verification_accuracy: number;
+community_consensus_rate: number;
+user_satisfaction_score: number;
+adoption_growth_rate: number;
 }
 
 class AdoptionMetricsService {
-  private metrics: AdoptionMetrics;
-  private reportingEngine: ReportingEngine;
+private metrics: AdoptionMetrics;
+private reportingEngine: ReportingEngine;
 
-  /**
-   * Track adoption metrics to demonstrate viability
-   */
+/\*\*
+
+- Track adoption metrics to demonstrate viability
+  \*/
   async trackAdoptionMetrics(
-    registryEntry: RegistryEntry
+  registryEntry: RegistryEntry
   ): Promise<void> {
-    // Update total deletion requests
-    this.metrics.total_deletion_requests++;
-    
-    // Update successful deletions
-    if (registryEntry.status === 'active') {
-      this.metrics.successful_deletions++;
-    }
-    
-    // Update community engagement
-    await this.updateCommunityEngagementMetrics(registryEntry);
-    
-    // Update data broker compliance
-    await this.updateDataBrokerComplianceMetrics(registryEntry);
-    
-    // Generate adoption report
-    await this.generateAdoptionReport();
+  // Update total deletion requests
+  this.metrics.total_deletion_requests++;
+
+  // Update successful deletions
+  if (registryEntry.status === 'active') {
+  this.metrics.successful_deletions++;
   }
 
-  private async updateCommunityEngagementMetrics(
-    registryEntry: RegistryEntry
-  ): Promise<void> {
-    const communityVerification = registryEntry.community_verification;
-    
+  // Update community engagement
+  await this.updateCommunityEngagementMetrics(registryEntry);
+
+  // Update data broker compliance
+  await this.updateDataBrokerComplianceMetrics(registryEntry);
+
+  // Generate adoption report
+  await this.generateAdoptionReport();
+
+}
+
+private async updateCommunityEngagementMetrics(
+registryEntry: RegistryEntry
+): Promise<void> {
+const communityVerification = registryEntry.community_verification;
+
     // Track active verifiers
-    this.metrics.community_engagement.active_verifiers = 
+    this.metrics.community_engagement.active_verifiers =
       await this.countActiveVerifiers();
-    
+
     // Track verification accuracy
-    this.metrics.community_engagement.verification_accuracy = 
+    this.metrics.community_engagement.verification_accuracy =
       await this.calculateVerificationAccuracy();
-    
+
     // Track community consensus rate
-    this.metrics.community_engagement.community_consensus_rate = 
+    this.metrics.community_engagement.community_consensus_rate =
       await this.calculateConsensusRate();
-    
+
     // Track user satisfaction
-    this.metrics.community_engagement.user_satisfaction_score = 
+    this.metrics.community_engagement.user_satisfaction_score =
       await this.calculateUserSatisfaction();
-    
+
     // Track adoption growth
-    this.metrics.community_engagement.adoption_growth_rate = 
+    this.metrics.community_engagement.adoption_growth_rate =
       await this.calculateAdoptionGrowth();
-  }
 
-  private async updateDataBrokerComplianceMetrics(
-    registryEntry: RegistryEntry
-  ): Promise<void> {
-    // Track brokers using registry
-    this.metrics.data_broker_compliance.brokers_using_registry = 
-      await this.countBrokersUsingRegistry();
-    
+}
+
+private async updateDataBrokerComplianceMetrics(
+registryEntry: RegistryEntry
+): Promise<void> {
+// Track brokers using registry
+this.metrics.data_broker_compliance.brokers_using_registry =
+await this.countBrokersUsingRegistry();
+
     // Track compliance rate
-    this.metrics.data_broker_compliance.compliance_rate = 
+    this.metrics.data_broker_compliance.compliance_rate =
       await this.calculateComplianceRate();
-    
+
     // Track opt-out respect rate
-    this.metrics.data_broker_compliance.opt_out_respect_rate = 
+    this.metrics.data_broker_compliance.opt_out_respect_rate =
       await this.calculateOptOutRespectRate();
-    
+
     // Track average response time
-    this.metrics.data_broker_compliance.average_response_time = 
+    this.metrics.data_broker_compliance.average_response_time =
       await this.calculateAverageResponseTime();
-    
+
     // Track violation incidents
-    this.metrics.data_broker_compliance.violation_incidents = 
+    this.metrics.data_broker_compliance.violation_incidents =
       await this.countViolationIncidents();
-  }
 
-  /**
-   * Generate adoption report for regulators and stakeholders
-   */
+}
+
+/\*\*
+
+- Generate adoption report for regulators and stakeholders
+  \*/
   async generateAdoptionReport(): Promise<AdoptionReport> {
-    const report: AdoptionReport = {
-      report_id: generateId(),
-      report_date: Date.now(),
-      metrics: this.metrics,
-      key_insights: await this.generateKeyInsights(),
-      regulatory_implications: await this.generateRegulatoryImplications(),
-      enterprise_interest: await this.generateEnterpriseInterest(),
-      community_impact: await this.generateCommunityImpact(),
-      recommendations: await this.generateRecommendations()
-    };
+  const report: AdoptionReport = {
+  report_id: generateId(),
+  report_date: Date.now(),
+  metrics: this.metrics,
+  key_insights: await this.generateKeyInsights(),
+  regulatory_implications: await this.generateRegulatoryImplications(),
+  enterprise_interest: await this.generateEnterpriseInterest(),
+  community_impact: await this.generateCommunityImpact(),
+  recommendations: await this.generateRecommendations()
+  };
 
-    // Publish report
-    await this.publishAdoptionReport(report);
-    
-    return report;
-  }
+  // Publish report
+  await this.publishAdoptionReport(report);
 
-  private async generateKeyInsights(): Promise<string[]> {
-    const insights: string[] = [];
-    
+  return report;
+
+}
+
+private async generateKeyInsights(): Promise<string[]> {
+const insights: string[] = [];
+
     // High community engagement
     if (this.metrics.community_engagement.active_verifiers > 1000) {
       insights.push('Strong community engagement with over 1000 active verifiers');
     }
-    
+
     // High verification accuracy
     if (this.metrics.community_engagement.verification_accuracy > 0.95) {
       insights.push('High verification accuracy (>95%) demonstrates community reliability');
     }
-    
+
     // Growing data broker adoption
     if (this.metrics.data_broker_compliance.brokers_using_registry > 50) {
       insights.push('Growing data broker adoption with over 50 brokers using registry');
     }
-    
+
     // High compliance rate
     if (this.metrics.data_broker_compliance.compliance_rate > 0.9) {
       insights.push('High compliance rate (>90%) demonstrates regulatory effectiveness');
     }
-    
-    return insights;
-  }
 
-  private async generateRegulatoryImplications(): Promise<string[]> {
-    const implications: string[] = [];
-    
+    return insights;
+
+}
+
+private async generateRegulatoryImplications(): Promise<string[]> {
+const implications: string[] = [];
+
     // Demonstrate viability
     if (this.metrics.total_deletion_requests > 10000) {
       implications.push('Registry demonstrates viability with over 10,000 deletion requests');
     }
-    
+
     // Show community support
     if (this.metrics.community_engagement.user_satisfaction_score > 4.0) {
       implications.push('High user satisfaction (4.0+) demonstrates community support');
     }
-    
+
     // Prove effectiveness
     if (this.metrics.data_broker_compliance.opt_out_respect_rate > 0.85) {
       implications.push('High opt-out respect rate (>85%) proves regulatory effectiveness');
     }
-    
+
     return implications;
-  }
+
 }
-```
+}
+
+````
 
 #### 10.11.4 Regulatory Path to Mandate
 
@@ -7326,19 +7388,19 @@ class RegulatoryAdoptionStrategy {
   async executeRegulatoryAdoptionStrategy(): Promise<RegulatoryAdoptionPath> {
     // Phase 1: Community demonstration
     await this.executePhase1_CommunityDemonstration();
-    
+
     // Phase 2: Voluntary adoption
     await this.executePhase2_VoluntaryAdoption();
-    
+
     // Phase 3: Regulatory interest
     await this.executePhase3_RegulatoryInterest();
-    
+
     // Phase 4: Pilot programs
     await this.executePhase4_PilotPrograms();
-    
+
     // Phase 5: Regulatory mandate
     await this.executePhase5_RegulatoryMandate();
-    
+
     return {
       phase_1: 'community_demonstration',
       phase_2: 'voluntary_adoption',
@@ -7351,13 +7413,13 @@ class RegulatoryAdoptionStrategy {
   private async executePhase1_CommunityDemonstration(): Promise<void> {
     // Build community-driven registry
     await this.buildCommunityRegistry();
-    
+
     // Demonstrate viability through metrics
     await this.demonstrateViability();
-    
+
     // Show community engagement
     await this.showCommunityEngagement();
-    
+
     // Prove technical feasibility
     await this.proveTechnicalFeasibility();
   }
@@ -7365,13 +7427,13 @@ class RegulatoryAdoptionStrategy {
   private async executePhase2_VoluntaryAdoption(): Promise<void> {
     // Encourage voluntary data broker adoption
     await this.encourageVoluntaryAdoption();
-    
+
     // Provide compliance incentives
     await this.provideComplianceIncentives();
-    
+
     // Track voluntary adoption metrics
     await this.trackVoluntaryAdoption();
-    
+
     // Demonstrate business value
     await this.demonstrateBusinessValue();
   }
@@ -7379,13 +7441,13 @@ class RegulatoryAdoptionStrategy {
   private async executePhase3_RegulatoryInterest(): Promise<void> {
     // Engage with regulators
     await this.engageWithRegulators();
-    
+
     // Present adoption metrics
     await this.presentAdoptionMetrics();
-    
+
     // Demonstrate regulatory effectiveness
     await this.demonstrateRegulatoryEffectiveness();
-    
+
     // Show community support
     await this.showCommunitySupport();
   }
@@ -7393,13 +7455,13 @@ class RegulatoryAdoptionStrategy {
   private async executePhase4_PilotPrograms(): Promise<void> {
     // Launch pilot programs with regulators
     await this.launchPilotPrograms();
-    
+
     // Test regulatory compliance
     await this.testRegulatoryCompliance();
-    
+
     // Measure pilot program effectiveness
     await this.measurePilotEffectiveness();
-    
+
     // Gather regulatory feedback
     await this.gatherRegulatoryFeedback();
   }
@@ -7407,22 +7469,23 @@ class RegulatoryAdoptionStrategy {
   private async executePhase5_RegulatoryMandate(): Promise<void> {
     // Support regulatory mandate development
     await this.supportMandateDevelopment();
-    
+
     // Provide technical implementation guidance
     await this.provideImplementationGuidance();
-    
+
     // Ensure compliance infrastructure
     await this.ensureComplianceInfrastructure();
-    
+
     // Monitor mandate implementation
     await this.monitorMandateImplementation();
   }
 }
-```
+````
 
 #### 10.11.5 Benefits of Community-Driven Adoption
 
 **For the Foundation:**
+
 1. **Demonstrates Viability** - Real-world usage proves the concept works
 2. **Builds Community** - Engaged community of verifiers and users
 3. **Generates Metrics** - Concrete data to show regulators and enterprises
@@ -7430,6 +7493,7 @@ class RegulatoryAdoptionStrategy {
 5. **Creates Network Effects** - More users attract more data brokers
 
 **For the Community:**
+
 1. **Direct Control** - Community verifies and governs deletion requests
 2. **Transparency** - Full visibility into registry operations
 3. **Accountability** - Foundation held accountable by community
@@ -7437,6 +7501,7 @@ class RegulatoryAdoptionStrategy {
 5. **Impact** - Direct impact on data broker behavior
 
 **For Data Brokers:**
+
 1. **Voluntary Compliance** - Can adopt early for competitive advantage
 2. **Clear Framework** - Well-defined compliance requirements
 3. **Community Validation** - Community-verified deletion requests
@@ -7444,6 +7509,7 @@ class RegulatoryAdoptionStrategy {
 5. **Risk Mitigation** - Reduces regulatory and reputational risk
 
 **For Regulators:**
+
 1. **Proven Concept** - Real-world demonstration of viability
 2. **Community Support** - Strong community engagement and support
 3. **Technical Feasibility** - Proven technical implementation
@@ -7453,36 +7519,42 @@ class RegulatoryAdoptionStrategy {
 #### 10.11.6 Implementation Timeline
 
 **Phase 1: Community Demonstration (Months 1-6)**
+
 - Launch foundation-operated registry
 - Build community of verifiers
 - Process first 1,000 deletion requests
 - Demonstrate technical feasibility
 
 **Phase 2: Voluntary Adoption (Months 7-12)**
+
 - Encourage voluntary data broker adoption
 - Track compliance metrics
 - Build adoption momentum
 - Demonstrate business value
 
 **Phase 3: Regulatory Interest (Months 13-18)**
+
 - Engage with regulators
 - Present adoption metrics
 - Demonstrate regulatory effectiveness
 - Show community support
 
 **Phase 4: Pilot Programs (Months 19-24)**
+
 - Launch pilot programs with regulators
 - Test regulatory compliance
 - Measure effectiveness
 - Gather feedback
 
 **Phase 5: Regulatory Mandate (Months 25-36)**
+
 - Support mandate development
 - Provide implementation guidance
 - Ensure compliance infrastructure
 - Monitor implementation
 
 This community-driven approach creates a **virtuous cycle** where:
+
 1. **Community engagement** drives adoption
 2. **Adoption metrics** demonstrate viability
 3. **Viability proof** attracts regulatory interest
@@ -7501,21 +7573,22 @@ Enterprises integrate with the protocol through:
 4. **Attestation Response**: Sign and return deletion attestations
 
 Example integration flow:
+
 ```typescript
 // Enterprise endpoint handler
 app.post('/null/closure', async (req, res) => {
   const warrant = req.body;
-  
+
   // Validate warrant signature
   const isValid = await verifyWarrantSignature(warrant);
   if (!isValid) return res.status(400).json({ error: 'Invalid warrant' });
-  
+
   // Execute deletion routine
   const deletionResult = await executeDeletion(warrant.subject, warrant.scope);
-  
+
   // Create attestation
   const attestation = {
-    type: "DeletionAttestation@v0.1",
+    type: 'DeletionAttestation@v0.1',
     attestation_id: generateId(),
     warrant_id: warrant.warrant_id,
     enterprise_id: warrant.enterprise_id,
@@ -7523,16 +7596,16 @@ app.post('/null/closure', async (req, res) => {
     status: deletionResult.status,
     completed_at: new Date().toISOString(),
     evidence_hash: deletionResult.evidenceHash,
-    signature: await signAttestation(attestation)
+    signature: await signAttestation(attestation),
   };
-  
+
   // Send to relayer callback
   await fetch('https://canon.null.foundation/attest/' + warrant.warrant_id, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(attestation)
+    body: JSON.stringify(attestation),
   });
-  
+
   res.json({ status: 'accepted' });
 });
 ```
@@ -7562,12 +7635,14 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.1 Privacy-Preserving Architecture
 
 **HMAC-Based Subject Tags**
+
 - Subject tags use HMAC-BLAKE3 with controller-held keys
 - Prevents correlation attacks across different controllers
 - Engine never learns the controller key, maintaining privacy
 - VOPRF implementation for negative-registry checks without revealing identity
 
 **Receipt Privacy by Default**
+
 - W3C Verifiable Credentials as default receipt format
 - Mask SBTs are optional and feature-flagged OFF by default
 - Stealth address support (EIP-5564) for users who want on-chain proof
@@ -7576,6 +7651,7 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.2 Replay Protection & Uniqueness
 
 **Warrant Security Controls**
+
 - `aud` (audience): Controller DID/host validation
 - `jti` (JWT ID): Unique identifier preventing replay attacks
 - `nbf` (not before): Timestamp validation
@@ -7583,6 +7659,7 @@ Legacy email-based integration for enterprises without API capabilities:
 - `audience_bindings`: Domain whitelist for security
 
 **Attestation Security**
+
 - `ref`: Links to warrant `jti` for traceability
 - `processing_window`: Time-based validation
 - `accepted_claims`: Jurisdiction claim validation
@@ -7591,12 +7668,14 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.3 Cryptographic Security
 
 **Hash Function Security**
+
 - Blake3 provides 256-bit security with resistance to length extension attacks
 - Keccak256 is well-tested and widely adopted in blockchain systems
 - Dual hashing provides defense in depth against potential vulnerabilities
 - HMAC-based subject tags prevent brute-force attacks
 
 **Signature Security**
+
 - Multiple signature algorithms supported for different use cases
 - Ed25519 provides high performance with strong security guarantees
 - Secp256k1 ensures compatibility with existing blockchain infrastructure
@@ -7605,18 +7684,21 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.4 Smart Contract Security
 
 **Gas Optimization & Reentrancy Protection**
+
 - Hashed fields in events reduce gas costs and prevent string manipulation
 - Pull payment pattern for fee splits eliminates reentrancy risk
 - `nonReentrant` modifier on critical functions
 - `Pausable` functionality for emergency stops
 
 **Access Control**
+
 - MINTER_ROLE restricts SBT minting to authorized relayers
 - No admin functions in Canon Registry (immutable anchoring)
 - Role-based access control for future upgrades
 - Controller DID doc pinning prevents stale cache attacks
 
 **Gas Optimization**
+
 - Minimal storage operations in contracts
 - Efficient event emission with indexed parameters
 - Batch operations where possible
@@ -7624,11 +7706,13 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.3 Privacy Considerations
 
 **Data Minimization**
+
 - No raw PII stored on-chain
 - Only hashed subject handles and anchors
 - Evidence hashes reference off-chain deletion artifacts
 
 **Subject Handle Generation**
+
 - Salted hashing of user identifiers
 - Prevents correlation across different enterprises
 - Maintains privacy while enabling verification
@@ -7636,11 +7720,13 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 7.4 Operational Security
 
 **Relayer Security**
+
 - Private key management for relayer operations
 - Rate limiting on callback endpoints
 - Input validation and sanitization
 
 **Enterprise Security**
+
 - Signature verification of all incoming warrants
 - Secure deletion routine implementation
 - Audit logging of all deletion operations
@@ -7652,18 +7738,21 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.1 Critical Security Hardening (Week 1-2)
 
 **Privacy-Preserving Implementation**
+
 - [ ] Implement HMAC-based subject tags with controller-held keys
 - [ ] Switch to W3C Verifiable Credentials as default receipt format
 - [ ] Add VOPRF support for negative-registry checks
 - [ ] Implement stealth address support (EIP-5564) for optional SBTs
 
 **Replay Protection & Security Controls**
+
 - [ ] Add `aud`, `jti`, `nbf`, `exp` to warrant schema
 - [ ] Implement `audience_bindings` domain whitelist
 - [ ] Add structured evidence types (TEE_QUOTE, API_LOG, KEY_DESTROY, DKIM_ATTESTATION)
 - [ ] Implement pull payment pattern for fee splits
 
 **Smart Contract Security**
+
 - [ ] Deploy hardened CanonRegistry with hashed fields and gas optimization
 - [ ] Implement `nonReentrant` and `Pausable` modifiers
 - [ ] Add controller DID doc pinning and key rotation support
@@ -7672,12 +7761,14 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.2 Medium Priority Hardening (Week 3-6)
 
 **Controller Security & Evidence Standardization**
+
 - [ ] Implement DID doc pinning with digest verification
 - [ ] Add secure key rotation with previous key signatures
 - [ ] Define controlled vocabulary for evidence types
 - [ ] Implement Rekor-compatible transparency logging
 
 **Email Security & DKIM Protection**
+
 - [ ] Require aligned DKIM + SPF + DMARC for email attestations
 - [ ] Add one-time challenge nonce to warrants
 - [ ] Implement rate limiting and proof-of-work for spam prevention
@@ -7686,18 +7777,21 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.3 Phase 1: Core Infrastructure (MVP)
 
 **Smart Contracts**
+
 - [ ] Deploy hardened CanonRegistry to testnet (Base Sepolia/Polygon Amoy)
 - [ ] Deploy MaskSBT with proper access controls and feature flags
 - [ ] Implement comprehensive test suite with security scenarios
 - [ ] Gas optimization and professional security audit
 
 **Relayer System**
+
 - [ ] Implement core cryptographic utilities with HMAC support
 - [ ] Build callback API with signature verification and rate limiting
 - [ ] Create CLI tools for warrant issuance and attestation
 - [ ] Email ingestion system with DKIM validation
 
 **Schema Validation**
+
 - [ ] Lock JSON schemas at v0.2 with security controls
 - [ ] Publish schemas at `https://null.foundation/schemas/`
 - [ ] Implement comprehensive validation in relayer
@@ -7706,24 +7800,28 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.4 Open Questions & Critical Decisions
 
 **Subject Tag Derivation**
+
 - **Question**: Who derives subjectTag for anchoring?
-- **Options**: 
+- **Options**:
   - Controller-computed tag echoed by Engine
   - Engine validates with VOPRF token
   - MAC using per-controller shared key via ECDH
 - **Recommendation**: Controller-computed with Engine validation
 
 **SLA & Timers**
+
 - **Question**: Default enforcement window?
 - **Options**: 30 days under GDPR, variable by state law, configurable per jurisdiction
 - **Recommendation**: Encode SLA into warrants, measure time-to-attest
 
 **Dispute Flow**
+
 - **Question**: How can controllers contest denied badges?
 - **Solution**: Right-to-reply object, signed and anchored
 - **Benefits**: Keeps canon fair, due process, transparency
 
 **PII Redaction Policy**
+
 - **Question**: PII redaction policy for free-text fields?
 - **Solution**: Schema validation + PII-scrubbing for all evidence
 - **Implementation**: Controlled vocabulary + JSON-Schema validation
@@ -7731,12 +7829,14 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.5 Phase 2: Enterprise Integration
 
 **API Development**
+
 - [ ] Standardized closure endpoint specification
 - [ ] SDK development for common languages (TypeScript, Python, Go)
 - [ ] Integration testing framework
 - [ ] Enterprise onboarding documentation
 
 **Dashboard & Monitoring**
+
 - [ ] Enterprise dashboard for warrant tracking
 - [ ] Compliance scoreboard and reporting
 - [ ] Real-time monitoring of deletion operations
@@ -7745,12 +7845,14 @@ Legacy email-based integration for enterprises without API capabilities:
 ### 8.3 Phase 3: Advanced Features
 
 **Cryptographic Enhancements**
+
 - [ ] Zero-knowledge proof integration
 - [ ] Verifiable deletion proofs
 - [ ] Trusted execution environment support
 - [ ] Decentralized identity integration
 
 **Scalability Improvements**
+
 - [ ] Layer 2 optimization
 - [ ] Batch processing capabilities
 - [ ] Cross-chain interoperability
@@ -7822,22 +7924,22 @@ RECEIPTS_INBOX_DOMAIN=receipts.null.foundation
 ### 9.3 Hardhat Configuration
 
 ```typescript
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import dotenv from "dotenv";
+import { HardhatUserConfig } from 'hardhat/config';
+import '@nomicfoundation/hardhat-toolbox';
+import dotenv from 'dotenv';
 dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.20",
-    settings: { optimizer: { enabled: true, runs: 200 } }
+    version: '0.8.20',
+    settings: { optimizer: { enabled: true, runs: 200 } },
   },
   networks: {
     base_sepolia: {
-      url: process.env.RPC_URL || "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
-    }
-  }
+      url: process.env.RPC_URL || '',
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+  },
 };
 export default config;
 ```
@@ -7878,6 +7980,7 @@ This technical foundation enables the Null Protocol to fulfill its mission as th
 ---
 
 **Contact Information**
+
 - GitHub Repository: https://github.com/dansavage815-star/null
 - Technical Support: tech@nullfoundation.org
 

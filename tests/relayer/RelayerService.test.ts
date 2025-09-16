@@ -157,7 +157,7 @@ describe('RelayerService', () => {
     it('should handle anchoring failures with retry logic', async () => {
       // Mock the CanonService to fail with network error
       (mockCanonService.anchorWarrant as jest.Mock).mockRejectedValue(new Error('Network error'));
-      
+
       const mockWarrant = {
         type: 'NullWarrant@v0.2' as const,
         warrant_id: 'test-warrant-1',
@@ -285,11 +285,11 @@ describe('RelayerService', () => {
       // Mock failed signature verification
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(false);
       jest.spyOn(CryptoService, 'canonicalizeJSON').mockReturnValue('canonical-data');
-      
+
       // Mock the validateWarrant method to return validation failure
-      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ 
-        valid: false, 
-        error: 'Invalid signature' 
+      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({
+        valid: false,
+        error: 'Invalid signature',
       });
 
       const validation = await (relayerService as any).validateWarrant(mockWarrant);
@@ -303,7 +303,7 @@ describe('RelayerService', () => {
     it('should handle network timeouts gracefully', async () => {
       // Mock the CanonService to timeout
       (mockCanonService.anchorWarrant as jest.Mock).mockRejectedValue(new Error('Request timeout'));
-      
+
       const mockWarrant = {
         type: 'NullWarrant@v0.2' as const,
         warrant_id: '12345678-1234-1234-1234-123456789012',

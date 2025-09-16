@@ -38,7 +38,6 @@ async function deployFixture() {
 }
 
 describe('MaskSBT', function () {
-
   describe('Deployment', function () {
     it('initializes correctly', async function () {
       const { c, owner, MINTER_ROLE, DEFAULT_ADMIN_ROLE } = await loadFixture(deployFixture);
@@ -57,17 +56,21 @@ describe('MaskSBT', function () {
       const { c, minter, user, toHash } = await loadFixture(deployFixture);
 
       // Disabled by default
-      await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
-        .to.be.revertedWithCustomError(c, 'SBTMintingDisabled');
+      await expect(
+        c.connect(minter).mintReceipt(user.address, toHash('x'))
+      ).to.be.revertedWithCustomError(c, 'SBTMintingDisabled');
 
       await c.toggleSBTMinting(true);
 
       const receiptHash = toHash('a');
-      await expect(c.connect(minter).mintReceipt(user.address, receiptHash))
-        .to.emit(c, 'ReceiptMinted');
+      await expect(c.connect(minter).mintReceipt(user.address, receiptHash)).to.emit(
+        c,
+        'ReceiptMinted'
+      );
 
-      await expect(c.connect(user).mintReceipt(user.address, toHash('b')))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(
+        c.connect(user).mintReceipt(user.address, toHash('b'))
+      ).to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
     });
 
     it('increments token IDs and balances', async function () {
@@ -131,20 +134,22 @@ describe('MaskSBT', function () {
 
       // safeTransferFrom (with data)
       await expect(
-        c.connect(user)['safeTransferFrom(address,address,uint256,bytes)'](
-          user.address,
-          owner.address,
-          tokenId,
-          '0x'
-        )
+        c
+          .connect(user)
+          [
+            'safeTransferFrom(address,address,uint256,bytes)'
+          ](user.address, owner.address, tokenId, '0x')
       ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // approvals
-      await expect(c.connect(user).approve(owner.address, tokenId))
-        .to.be.revertedWithCustomError(c, 'ApprovalsDisabled');
+      await expect(c.connect(user).approve(owner.address, tokenId)).to.be.revertedWithCustomError(
+        c,
+        'ApprovalsDisabled'
+      );
 
-      await expect(c.connect(user).setApprovalForAll(owner.address, true))
-        .to.be.revertedWithCustomError(c, 'ApprovalsDisabled');
+      await expect(
+        c.connect(user).setApprovalForAll(owner.address, true)
+      ).to.be.revertedWithCustomError(c, 'ApprovalsDisabled');
     });
 
     it('allows transfer when toggled on, then blocks again when toggled off', async function () {
@@ -154,7 +159,8 @@ describe('MaskSBT', function () {
 
       await c.toggleTransfer(true);
       await expect(c.connect(user).transferFrom(user.address, owner.address, tokenId))
-        .to.emit(c, 'Transfer').withArgs(user.address, owner.address, tokenId);
+        .to.emit(c, 'Transfer')
+        .withArgs(user.address, owner.address, tokenId);
 
       await c.toggleTransfer(false);
       await expect(
@@ -167,21 +173,31 @@ describe('MaskSBT', function () {
     it('restricts toggles and role admin ops', async function () {
       const { c, user, rando, minter, MINTER_ROLE } = await loadFixture(deployFixture);
 
-      await expect(c.connect(user).toggleSBTMinting(true))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
-      await expect(c.connect(user).toggleTransfer(true))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(user).toggleSBTMinting(true)).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
+      await expect(c.connect(user).toggleTransfer(true)).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
 
-      await expect(c.connect(minter).toggleSBTMinting(true))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
-      await expect(c.connect(minter).toggleTransfer(true))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(minter).toggleSBTMinting(true)).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
+      await expect(c.connect(minter).toggleTransfer(true)).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
 
-      await expect(c.connect(rando).grantRole(MINTER_ROLE, rando.address))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(
+        c.connect(rando).grantRole(MINTER_ROLE, rando.address)
+      ).to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
-      await expect(c.connect(rando).revokeRole(MINTER_ROLE, minter.address))
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(
+        c.connect(rando).revokeRole(MINTER_ROLE, minter.address)
+      ).to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
     });
   });
 
@@ -190,21 +206,30 @@ describe('MaskSBT', function () {
       const { c, owner, user, minter, toHash } = await loadFixture(deployFixture);
       await c.toggleSBTMinting(true);
 
-      await expect(c.connect(user).pause())
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
-      await expect(c.connect(minter).pause())
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(user).pause()).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
+      await expect(c.connect(minter).pause()).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
 
       await c.connect(owner).pause();
       expect(await c.paused()).to.equal(true);
 
-      await expect(c.connect(user).unpause())
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
-      await expect(c.connect(minter).unpause())
-        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(user).unpause()).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
+      await expect(c.connect(minter).unpause()).to.be.revertedWithCustomError(
+        c,
+        'AccessControlUnauthorizedAccount'
+      );
 
-      await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
-        .to.be.revertedWithCustomError(c, 'EnforcedPause');
+      await expect(
+        c.connect(minter).mintReceipt(user.address, toHash('x'))
+      ).to.be.revertedWithCustomError(c, 'EnforcedPause');
 
       await c.connect(owner).unpause();
       expect(await c.paused()).to.equal(false);
@@ -214,8 +239,8 @@ describe('MaskSBT', function () {
   describe('Interfaces', function () {
     it('supports IERC721 and AccessControl', async function () {
       const { c } = await loadFixture(deployFixture);
-      expect(await c.supportsInterface('0x80ac58cd')).to.equal(true);  // IERC721
-      expect(await c.supportsInterface('0x7965db0b')).to.equal(true);  // AccessControl
+      expect(await c.supportsInterface('0x80ac58cd')).to.equal(true); // IERC721
+      expect(await c.supportsInterface('0x7965db0b')).to.equal(true); // AccessControl
     });
   });
 });
