@@ -8,7 +8,7 @@ const { ethers } = hre;
 
 async function deployFixture() {
   const [owner, relayer, user, foundation, implementer] = await ethers.getSigners();
-  
+
   const Factory = await ethers.getContractFactory('CanonRegistry');
   const c = (await Factory.deploy(
     foundation.address,
@@ -25,14 +25,33 @@ async function deployFixture() {
 
   const toHash = (s: string) => ethers.keccak256(ethers.toUtf8Bytes(s));
 
-  return { c, owner, relayer, _user: user, foundation, implementer, _RELAYER_ROLE: RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE, toHash };
+  return {
+    c,
+    owner,
+    relayer,
+    _user: user,
+    foundation,
+    implementer,
+    _RELAYER_ROLE: RELAYER_ROLE,
+    DEFAULT_ADMIN_ROLE,
+    TREASURY_ROLE,
+    toHash,
+  };
 }
 
 describe('CanonRegistry', function () {
   describe('Deployment', function () {
     it('initializes correctly', async function () {
-      const { c, owner, foundation, implementer, _RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE } = await loadFixture(deployFixture);
-      
+      const {
+        c,
+        owner,
+        foundation,
+        implementer,
+        _RELAYER_ROLE,
+        DEFAULT_ADMIN_ROLE,
+        TREASURY_ROLE,
+      } = await loadFixture(deployFixture);
+
       expect(await c.getAddress()).to.be.properAddress;
       expect(await c.hasRole(DEFAULT_ADMIN_ROLE, owner.address)).to.equal(true);
       expect(await c.hasRole(TREASURY_ROLE, foundation.address)).to.equal(true);
@@ -62,7 +81,7 @@ describe('CanonRegistry', function () {
   describe('Anchoring', function () {
     it('anchors events successfully with proper fees', async function () {
       const { c, relayer, _user, toHash } = await loadFixture(deployFixture);
-      
+
       const warrantDigest = toHash('warrant');
       const attestationDigest = toHash('attestation');
       const subjectTag = toHash('subject-tag');
@@ -85,7 +104,7 @@ describe('CanonRegistry', function () {
 
     it('validates assurance level', async function () {
       const { c, relayer, toHash } = await loadFixture(deployFixture);
-      
+
       await expect(
         c.connect(relayer).anchor(
           toHash('warrant'),
@@ -95,13 +114,14 @@ describe('CanonRegistry', function () {
           3, // invalid assurance level
           { value: ethers.parseEther('0.001') }
         )
-      ).to.be.revertedWithCustomError(c, 'InvalidAssuranceLevel')
+      )
+        .to.be.revertedWithCustomError(c, 'InvalidAssuranceLevel')
         .withArgs(3);
     });
 
     it('validates minimum fee', async function () {
       const { c, relayer, toHash } = await loadFixture(deployFixture);
-      
+
       await expect(
         c.connect(relayer).anchor(
           toHash('warrant'),
@@ -111,7 +131,8 @@ describe('CanonRegistry', function () {
           1,
           { value: ethers.parseEther('0.0001') } // too low
         )
-      ).to.be.revertedWithCustomError(c, 'InsufficientFee')
+      )
+        .to.be.revertedWithCustomError(c, 'InsufficientFee')
         .withArgs(ethers.parseEther('0.0001'), ethers.parseEther('0.001'));
     });
 
@@ -119,14 +140,16 @@ describe('CanonRegistry', function () {
       const { c, _user, toHash } = await loadFixture(deployFixture);
 
       await expect(
-        c.connect(_user).anchor(
-          toHash('warrant'),
-          toHash('attestation'),
-          toHash('subject-tag'),
-          toHash('controller-did'),
-          1,
-          { value: ethers.parseEther('0.001') }
-        )
+        c
+          .connect(_user)
+          .anchor(
+            toHash('warrant'),
+            toHash('attestation'),
+            toHash('subject-tag'),
+            toHash('controller-did'),
+            1,
+            { value: ethers.parseEther('0.001') }
+          )
       ).to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
     });
   });
@@ -136,14 +159,16 @@ describe('CanonRegistry', function () {
       const { c, relayer, toHash } = await loadFixture(deployFixture);
 
       await expect(
-        c.connect(relayer).anchorWarrant(
-          toHash('warrant'),
-          toHash('subject'),
-          toHash('enterprise'),
-          'enterprise-123',
-          'warrant-456',
-          { value: ethers.parseEther('0.0001') }
-        )
+        c
+          .connect(relayer)
+          .anchorWarrant(
+            toHash('warrant'),
+            toHash('subject'),
+            toHash('enterprise'),
+            'enterprise-123',
+            'warrant-456',
+            { value: ethers.parseEther('0.0001') }
+          )
       ).to.be.revertedWithCustomError(c, 'InsufficientFee');
     });
   });
@@ -178,8 +203,7 @@ describe('CanonRegistry', function () {
     it('rejects withdrawal with no balance', async function () {
       const { c, _user } = await loadFixture(deployFixture);
 
-      await expect(c.connect(_user).withdraw())
-        .to.be.revertedWithCustomError(c, 'NoBalance');
+      await expect(c.connect(_user).withdraw()).to.be.revertedWithCustomError(c, 'NoBalance');
     });
   });
 
@@ -199,15 +223,17 @@ describe('CanonRegistry', function () {
     it('validates emergency withdraw', async function () {
       const { c, owner } = await loadFixture(deployFixture);
 
-      await expect(c.connect(owner).emergencyWithdraw())
-        .to.be.revertedWithCustomError(c, 'NoBalance');
+      await expect(c.connect(owner).emergencyWithdraw()).to.be.revertedWithCustomError(
+        c,
+        'NoBalance'
+      );
     });
   });
 
   describe('Interfaces', function () {
     it('supports AccessControl', async function () {
       const { c } = await loadFixture(deployFixture);
-      expect(await c.supportsInterface('0x7965db0b')).to.equal(true);  // AccessControl
+      expect(await c.supportsInterface('0x7965db0b')).to.equal(true); // AccessControl
     });
   });
 });
