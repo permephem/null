@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import '@nomicfoundation/hardhat-chai-matchers';
+// anyValue will be available from hardhat-chai-matchers
 import type { MaskSBT } from '../../typechain-types';
 
 const { ethers } = hre;
@@ -57,12 +58,13 @@ describe('MaskSBT', function () {
 
       // Disabled by default
       await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
-        .to.be.revertedWith('SBT minting is disabled for privacy');
+        .to.be.revertedWithCustomError(c, 'SBTMintingDisabled');
 
       await c.toggleSBTMinting(true);
 
-      await expect(c.connect(minter).mintReceipt(user.address, toHash('a')))
-        .to.emit(c, 'Transfer');
+      const receiptHash = toHash('a');
+      await expect(c.connect(minter).mintReceipt(user.address, receiptHash))
+        .to.emit(c, 'ReceiptMinted');
 
       await expect(c.connect(user).mintReceipt(user.address, toHash('b')))
         .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
@@ -78,6 +80,36 @@ describe('MaskSBT', function () {
       expect(await c.ownerOf(t1)).to.equal(user.address);
       expect(await c.ownerOf(t2)).to.equal(user.address);
       expect(await c.balanceOf(user.address)).to.equal(2);
+      expect(await c.totalSupply()).to.equal(t2);
+    });
+
+    it('validates mint inputs', async function () {
+      const { c, minter, toHash } = await loadFixture(deployFixture);
+      await c.toggleSBTMinting(true);
+
+      await expect(
+        c.connect(minter).mintReceipt(ethers.ZeroAddress, toHash('x'))
+      ).to.be.revertedWithCustomError(c, 'MintToZeroAddress');
+
+      await expect(
+        c.connect(minter).mintReceipt(minter.address, ethers.ZeroHash)
+      ).to.be.revertedWithCustomError(c, 'InvalidReceiptHash');
+    });
+  });
+
+  describe('Receipt metadata', function () {
+    it('guards accessors for nonexistent tokens', async function () {
+      const { c } = await loadFixture(deployFixture);
+
+      await expect(c.getReceiptHash(1))
+        .to.be.revertedWithCustomError(c, 'NonexistentToken')
+        .withArgs(1n);
+      await expect(c.getMintTimestamp(1))
+        .to.be.revertedWithCustomError(c, 'NonexistentToken')
+        .withArgs(1n);
+      await expect(c.getOriginalMinter(1))
+        .to.be.revertedWithCustomError(c, 'NonexistentToken')
+        .withArgs(1n);
     });
   });
 
@@ -90,12 +122,12 @@ describe('MaskSBT', function () {
       // transferFrom
       await expect(
         c.connect(user).transferFrom(user.address, owner.address, tokenId)
-      ).to.be.revertedWith('Transfers are disabled for SBTs');
+      ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // safeTransferFrom (no data)
       await expect(
         c.connect(user).safeTransferFrom(user.address, owner.address, tokenId)
-      ).to.be.revertedWith('Transfers are disabled for SBTs');
+      ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // safeTransferFrom (with data)
       await expect(
@@ -105,14 +137,14 @@ describe('MaskSBT', function () {
           tokenId,
           '0x'
         )
-      ).to.be.revertedWith('Transfers are disabled for SBTs');
+      ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // approvals
       await expect(c.connect(user).approve(owner.address, tokenId))
-        .to.be.revertedWith('Approvals are disabled for SBTs');
+        .to.be.revertedWithCustomError(c, 'ApprovalsDisabled');
 
       await expect(c.connect(user).setApprovalForAll(owner.address, true))
-        .to.be.revertedWith('Approvals are disabled for SBTs');
+        .to.be.revertedWithCustomError(c, 'ApprovalsDisabled');
     });
 
     it('allows transfer when toggled on, then blocks again when toggled off', async function () {
@@ -127,7 +159,7 @@ describe('MaskSBT', function () {
       await c.toggleTransfer(false);
       await expect(
         c.connect(owner).transferFrom(owner.address, user.address, tokenId)
-      ).to.be.revertedWith('Transfers are disabled for SBTs');
+      ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
     });
   });
 
@@ -138,6 +170,11 @@ describe('MaskSBT', function () {
       await expect(c.connect(user).toggleSBTMinting(true))
         .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
       await expect(c.connect(user).toggleTransfer(true))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+
+      await expect(c.connect(minter).toggleSBTMinting(true))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(minter).toggleTransfer(true))
         .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
       await expect(c.connect(rando).grantRole(MINTER_ROLE, rando.address))
@@ -155,9 +192,16 @@ describe('MaskSBT', function () {
 
       await expect(c.connect(user).pause())
         .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(minter).pause())
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
       await c.connect(owner).pause();
       expect(await c.paused()).to.equal(true);
+
+      await expect(c.connect(user).unpause())
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(minter).unpause())
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
       await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
         .to.be.revertedWithCustomError(c, 'EnforcedPause');

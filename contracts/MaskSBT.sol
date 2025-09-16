@@ -19,6 +19,14 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+    // Custom errors
+    error SBTMintingDisabled();
+    error MintToZeroAddress();
+    error InvalidReceiptHash();
+    error NonexistentToken(uint256 tokenId);
+    error TransfersDisabled();
+    error ApprovalsDisabled();
+
     // Feature flags
     bool public sbtMintingEnabled = false; // Default OFF for privacy
     bool public transferEnabled = false;   // SBTs are non-transferable by default
@@ -73,9 +81,15 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         address to,
         bytes32 receiptHash
     ) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant returns (uint256) {
-        require(sbtMintingEnabled, "SBT minting is disabled for privacy");
-        require(to != address(0), "Cannot mint to zero address");
-        require(receiptHash != bytes32(0), "Invalid receipt hash");
+        if (!sbtMintingEnabled) {
+            revert SBTMintingDisabled();
+        }
+        if (to == address(0)) {
+            revert MintToZeroAddress();
+        }
+        if (receiptHash == bytes32(0)) {
+            revert InvalidReceiptHash();
+        }
 
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
@@ -98,10 +112,12 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @param tokenId Token ID to burn
      */
     function burnReceipt(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
-        require(ownerOf(tokenId) != address(0), "Token does not exist");
-        
+        address owner = _ownerOf(tokenId);
+        if (owner == address(0)) {
+            revert NonexistentToken(tokenId);
+        }
+
         bytes32 receiptHash = receiptHashes[tokenId];
-        address owner = ownerOf(tokenId);
         
         _burn(tokenId);
         
@@ -138,7 +154,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return receiptHash The receipt hash
      */
     function getReceiptHash(uint256 tokenId) external view returns (bytes32) {
-        require(ownerOf(tokenId) != address(0), "Token does not exist");
+        if (_ownerOf(tokenId) == address(0)) {
+            revert NonexistentToken(tokenId);
+        }
         return receiptHashes[tokenId];
     }
 
@@ -148,7 +166,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return timestamp The mint timestamp
      */
     function getMintTimestamp(uint256 tokenId) external view returns (uint256) {
-        require(ownerOf(tokenId) != address(0), "Token does not exist");
+        if (_ownerOf(tokenId) == address(0)) {
+            revert NonexistentToken(tokenId);
+        }
         return mintTimestamps[tokenId];
     }
 
@@ -158,7 +178,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return minter The original minter address
      */
     function getOriginalMinter(uint256 tokenId) external view returns (address) {
-        require(ownerOf(tokenId) != address(0), "Token does not exist");
+        if (_ownerOf(tokenId) == address(0)) {
+            revert NonexistentToken(tokenId);
+        }
         return originalMinter[tokenId];
     }
 
@@ -169,7 +191,8 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      */
     function isReceiptMinted(bytes32 receiptHash) external view returns (bool) {
         for (uint256 i = 1; i <= _tokenIdCounter; i++) {
-            if (ownerOf(i) != address(0) && receiptHashes[i] == receiptHash) {
+            address owner = _ownerOf(i);
+            if (owner != address(0) && receiptHashes[i] == receiptHash) {
                 return true;
             }
         }
@@ -200,7 +223,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         }
 
         // Block transfers unless explicitly enabled
-        require(transferEnabled, "Transfers are disabled for SBTs");
+        if (!transferEnabled) {
+            revert TransfersDisabled();
+        }
         return super._update(to, tokenId, auth);
     }
 
@@ -208,12 +233,16 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @dev Override approve functions to prevent approvals
      */
     function approve(address to, uint256 tokenId) public override {
-        require(transferEnabled, "Approvals are disabled for SBTs");
+        if (!transferEnabled) {
+            revert ApprovalsDisabled();
+        }
         super.approve(to, tokenId);
     }
 
     function setApprovalForAll(address operator, bool approved) public override {
-        require(transferEnabled, "Approvals are disabled for SBTs");
+        if (!transferEnabled) {
+            revert ApprovalsDisabled();
+        }
         super.setApprovalForAll(operator, approved);
     }
 
