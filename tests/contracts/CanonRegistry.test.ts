@@ -25,13 +25,13 @@ async function deployFixture() {
 
   const toHash = (s: string) => ethers.keccak256(ethers.toUtf8Bytes(s));
 
-  return { c, owner, relayer, user, foundation, implementer, RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE, toHash };
+  return { c, owner, relayer, _user: user, foundation, implementer, _RELAYER_ROLE: RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE, toHash };
 }
 
 describe('CanonRegistry', function () {
   describe('Deployment', function () {
     it('initializes correctly', async function () {
-      const { c, owner, foundation, implementer, RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE } = await loadFixture(deployFixture);
+      const { c, owner, foundation, implementer, _RELAYER_ROLE, DEFAULT_ADMIN_ROLE, TREASURY_ROLE } = await loadFixture(deployFixture);
       
       expect(await c.getAddress()).to.be.properAddress;
       expect(await c.hasRole(DEFAULT_ADMIN_ROLE, owner.address)).to.equal(true);
@@ -61,7 +61,7 @@ describe('CanonRegistry', function () {
 
   describe('Anchoring', function () {
     it('anchors events successfully with proper fees', async function () {
-      const { c, relayer, user, toHash } = await loadFixture(deployFixture);
+      const { c, relayer, _user, toHash } = await loadFixture(deployFixture);
       
       const warrantDigest = toHash('warrant');
       const attestationDigest = toHash('attestation');
@@ -116,10 +116,10 @@ describe('CanonRegistry', function () {
     });
 
     it('requires RELAYER_ROLE', async function () {
-      const { c, user, toHash } = await loadFixture(deployFixture);
+      const { c, _user, toHash } = await loadFixture(deployFixture);
 
       await expect(
-        c.connect(user).anchor(
+        c.connect(_user).anchor(
           toHash('warrant'),
           toHash('attestation'),
           toHash('subject-tag'),
@@ -176,9 +176,9 @@ describe('CanonRegistry', function () {
     });
 
     it('rejects withdrawal with no balance', async function () {
-      const { c, user } = await loadFixture(deployFixture);
+      const { c, _user } = await loadFixture(deployFixture);
 
-      await expect(c.connect(user).withdraw())
+      await expect(c.connect(_user).withdraw())
         .to.be.revertedWithCustomError(c, 'NoBalance');
     });
   });

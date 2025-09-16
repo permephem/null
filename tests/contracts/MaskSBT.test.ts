@@ -134,11 +134,12 @@ describe('MaskSBT', function () {
 
       // safeTransferFrom (with data)
       await expect(
-        c
-          .connect(user)
-          [
-            'safeTransferFrom(address,address,uint256,bytes)'
-          ](user.address, owner.address, tokenId, '0x')
+        c.connect(user)['safeTransferFrom(address,address,uint256,bytes)'](
+          user.address,
+          owner.address,
+          tokenId,
+          '0x'
+        )
       ).to.be.revertedWithCustomError(c, 'TransfersDisabled');
 
       // approvals
