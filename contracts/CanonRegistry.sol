@@ -18,6 +18,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
 
+    // Custom errors
+    error InvalidAssuranceLevel(uint8 assurance);
+    error InsufficientFee(uint256 provided, uint256 required);
+    error NoBalance();
+    error ZeroAddress();
+    error InvalidTreasuryAddress();
+
     // Events
     event Anchored(
         bytes32 indexed warrantDigest,
@@ -81,6 +88,16 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         address _implementerTreasury,
         address _admin
     ) {
+        if (_foundationTreasury == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_implementerTreasury == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_admin == address(0)) {
+            revert ZeroAddress();
+        }
+        
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(RELAYER_ROLE, _admin);
         _grantRole(TREASURY_ROLE, _foundationTreasury);
@@ -105,8 +122,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         bytes32 controllerDidHash,
         uint8 assurance
     ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
-        require(assurance <= 2, "Invalid assurance level");
-        require(msg.value >= baseFee, "Insufficient fee");
+        if (assurance > 2) {
+            revert InvalidAssuranceLevel(assurance);
+        }
+        if (msg.value < baseFee) {
+            revert InsufficientFee(msg.value, baseFee);
+        }
         
         // Record the anchor
         _lastAnchor[warrantDigest] = block.number;
@@ -140,7 +161,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         string calldata enterpriseId,
         string calldata warrantId
     ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
-        require(msg.value >= baseFee, "Insufficient fee");
+        if (msg.value < baseFee) {
+            revert InsufficientFee(msg.value, baseFee);
+        }
         
         _lastAnchor[warrantHash] = block.number;
         
@@ -169,7 +192,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         string calldata enterpriseId,
         string calldata attestationId
     ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
-        require(msg.value >= baseFee, "Insufficient fee");
+        if (msg.value < baseFee) {
+            revert InsufficientFee(msg.value, baseFee);
+        }
         
         _lastAnchor[attestationHash] = block.number;
         
@@ -197,7 +222,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         bytes32 attestationHash,
         address subjectWallet
     ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
-        require(msg.value >= baseFee, "Insufficient fee");
+        if (msg.value < baseFee) {
+            revert InsufficientFee(msg.value, baseFee);
+        }
         
         _lastAnchor[receiptHash] = block.number;
         
@@ -220,7 +247,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
      */
     function withdraw() external nonReentrant {
         uint256 amount = balances[msg.sender];
-        require(amount > 0, "No balance");
+        if (amount == 0) {
+            revert NoBalance();
+        }
         
         balances[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
@@ -254,6 +283,10 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         address _foundationTreasury,
         address _implementerTreasury
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_foundationTreasury == address(0) || _implementerTreasury == address(0)) {
+            revert InvalidTreasuryAddress();
+        }
+        
         foundationTreasury = _foundationTreasury;
         implementerTreasury = _implementerTreasury;
     }
@@ -288,7 +321,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
      */
     function emergencyWithdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 balance = address(this).balance;
-        require(balance > 0, "No balance");
+        if (balance == 0) {
+            revert NoBalance();
+        }
         
         payable(msg.sender).transfer(balance);
     }
