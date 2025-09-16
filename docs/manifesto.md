@@ -18,8 +18,6 @@ In today's system, a "burn" or deletion is absence without witness. But absence 
 
 Digital deletion faces the same gap. Regulators accept it in theory, but there is no standard witness, no cultural recognition, and no public proof. Deletion requests often resolve not in erasure, but in data suppression lists — a loophole that ensures data resurfaces again.
 
-Public record must not mean public property.
-
 ## The Solution: Witnessing Absence
 
 Null Protocol transforms deletion into a process that is visible, verifiable, and ceremonial.
