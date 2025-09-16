@@ -1,168 +1,177 @@
 import { expect } from 'chai';
 import hre from 'hardhat';
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import '@nomicfoundation/hardhat-chai-matchers';
-import type { MaskSBT as _MaskSBT } from '../../typechain-types';
+import type { MaskSBT } from '../../typechain-types';
 
 const { ethers } = hre;
 
+async function deployFixture() {
+  const [owner, minter, user, rando] = await ethers.getSigners();
+  const Factory = await ethers.getContractFactory('MaskSBT');
+  const c = (await Factory.deploy(
+    'Null Protocol Mask Receipts',
+    'MASK',
+    owner.address
+  )) as unknown as MaskSBT;
+  await c.waitForDeployment();
+
+  const MINTER_ROLE = await c.MINTER_ROLE();
+  const DEFAULT_ADMIN_ROLE = await c.DEFAULT_ADMIN_ROLE();
+
+  await c.grantRole(MINTER_ROLE, minter.address);
+
+  const toHash = (s: string) => ethers.keccak256(ethers.toUtf8Bytes(s));
+
+  const mintTo = async (to: string, label = 'test-receipt') => {
+    const h = toHash(label);
+    const tx = await c.connect(minter).mintReceipt(to, h);
+    const rc = await tx.wait();
+    // Find Transfer(tokenId) robustly
+    const log = rc!.logs.find((l: any) => l.fragment?.name === 'Transfer');
+    const tokenId = log?.args?.tokenId ?? 1n;
+    return { tokenId: Number(tokenId), receiptHash: h };
+  };
+
+  return { c, owner, minter, user, rando, MINTER_ROLE, DEFAULT_ADMIN_ROLE, toHash, mintTo };
+}
+
 describe('MaskSBT', function () {
-  let maskSBT: any;
-  let owner: any;
-  let minter: any;
-  let user: any;
-
-  beforeEach(async function () {
-    [owner, minter, user] = await ethers.getSigners();
-
-    const MaskSBTFactory = await ethers.getContractFactory('MaskSBT');
-    maskSBT = await MaskSBTFactory.deploy('Null Protocol Mask Receipts', 'MASK', owner.address);
-    await maskSBT.waitForDeployment();
-
-    // Grant minter role to the minter account
-    await maskSBT.grantRole(await maskSBT.MINTER_ROLE(), minter.address);
-  });
 
   describe('Deployment', function () {
-    it('Should deploy with correct initial state', async function () {
-      expect(await maskSBT.getAddress()).to.be.properAddress;
-      expect(await maskSBT.name()).to.equal('Null Protocol Mask Receipts');
-      expect(await maskSBT.symbol()).to.equal('MASK');
-      expect(await maskSBT.sbtMintingEnabled()).to.be.false;
-    });
+    it('initializes correctly', async function () {
+      const { c, owner, MINTER_ROLE, DEFAULT_ADMIN_ROLE } = await loadFixture(deployFixture);
+      expect(await c.getAddress()).to.be.properAddress;
+      expect(await c.name()).to.equal('Null Protocol Mask Receipts');
+      expect(await c.symbol()).to.equal('MASK');
+      expect(await c.sbtMintingEnabled()).to.equal(false);
 
-    it('Should have correct role assignments', async function () {
-      expect(await maskSBT.hasRole(await maskSBT.DEFAULT_ADMIN_ROLE(), owner.address)).to.be.true;
-      expect(await maskSBT.hasRole(await maskSBT.MINTER_ROLE(), owner.address)).to.be.true;
-      expect(await maskSBT.hasRole(await maskSBT.MINTER_ROLE(), minter.address)).to.be.true;
+      expect(await c.hasRole(DEFAULT_ADMIN_ROLE, owner.address)).to.equal(true);
+      expect(await c.hasRole(MINTER_ROLE, owner.address)).to.equal(true);
     });
   });
 
-  describe('SBT Minting', function () {
-    beforeEach(async function () {
-      // Enable SBT minting for tests
-      await maskSBT.toggleSBTMinting(true);
+  describe('Minting (SBT)', function () {
+    it('mints only when enabled and only by MINTER_ROLE', async function () {
+      const { c, minter, user, toHash } = await loadFixture(deployFixture);
+
+      // Disabled by default
+      await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
+        .to.be.revertedWith('SBT minting is disabled for privacy');
+
+      await c.toggleSBTMinting(true);
+
+      await expect(c.connect(minter).mintReceipt(user.address, toHash('a')))
+        .to.emit(c, 'Transfer');
+
+      await expect(c.connect(user).mintReceipt(user.address, toHash('b')))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
     });
 
-    it('Should mint SBT successfully', async function () {
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
+    it('increments token IDs and balances', async function () {
+      const { c, user, mintTo } = await loadFixture(deployFixture);
+      await c.toggleSBTMinting(true);
+      const { tokenId: t1 } = await mintTo(user.address, 'r1');
+      const { tokenId: t2 } = await mintTo(user.address, 'r2');
 
-      await expect(maskSBT.connect(minter).mintReceipt(user.address, receiptHash))
-        .to.emit(maskSBT, 'Transfer')
-        .withArgs(ethers.ZeroAddress, user.address, 1);
-
-      expect(await maskSBT.ownerOf(1)).to.equal(user.address);
-      expect(await maskSBT.balanceOf(user.address)).to.equal(1);
-    });
-
-    it('Should not allow minting when disabled', async function () {
-      await maskSBT.toggleSBTMinting(false);
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
-
-      await expect(
-        maskSBT.connect(minter).mintReceipt(user.address, receiptHash)
-      ).to.be.revertedWith('SBT minting is disabled for privacy');
-    });
-
-    it('Should only allow minter role to mint', async function () {
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
-
-      await expect(
-        maskSBT.connect(user).mintReceipt(user.address, receiptHash)
-      ).to.be.revertedWithCustomError(maskSBT, 'AccessControlUnauthorizedAccount');
-    });
-
-    it('Should increment token ID correctly', async function () {
-      const receiptHash1 = ethers.keccak256(ethers.toUtf8Bytes('test-receipt-1'));
-      const receiptHash2 = ethers.keccak256(ethers.toUtf8Bytes('test-receipt-2'));
-
-      await maskSBT.connect(minter).mintReceipt(user.address, receiptHash1);
-      await maskSBT.connect(minter).mintReceipt(user.address, receiptHash2);
-
-      expect(await maskSBT.ownerOf(1)).to.equal(user.address);
-      expect(await maskSBT.ownerOf(2)).to.equal(user.address);
-      expect(await maskSBT.balanceOf(user.address)).to.equal(2);
+      expect(t2).to.equal(t1 + 1);
+      expect(await c.ownerOf(t1)).to.equal(user.address);
+      expect(await c.ownerOf(t2)).to.equal(user.address);
+      expect(await c.balanceOf(user.address)).to.equal(2);
     });
   });
 
-  describe('Soulbound Properties', function () {
-    beforeEach(async function () {
-      await maskSBT.toggleSBTMinting(true);
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
-      await maskSBT.connect(minter).mintReceipt(user.address, receiptHash);
+  describe('Soulbound enforcement', function () {
+    it('blocks transfer/approval surfaces by default', async function () {
+      const { c, user, owner, mintTo } = await loadFixture(deployFixture);
+      await c.toggleSBTMinting(true);
+      const { tokenId } = await mintTo(user.address);
+
+      // transferFrom
+      await expect(
+        c.connect(user).transferFrom(user.address, owner.address, tokenId)
+      ).to.be.revertedWith('Transfers are disabled for SBTs');
+
+      // safeTransferFrom (no data)
+      await expect(
+        c.connect(user).safeTransferFrom(user.address, owner.address, tokenId)
+      ).to.be.revertedWith('Transfers are disabled for SBTs');
+
+      // safeTransferFrom (with data)
+      await expect(
+        c.connect(user)['safeTransferFrom(address,address,uint256,bytes)'](
+          user.address,
+          owner.address,
+          tokenId,
+          '0x'
+        )
+      ).to.be.revertedWith('Transfers are disabled for SBTs');
+
+      // approvals
+      await expect(c.connect(user).approve(owner.address, tokenId))
+        .to.be.revertedWith('Approvals are disabled for SBTs');
+
+      await expect(c.connect(user).setApprovalForAll(owner.address, true))
+        .to.be.revertedWith('Approvals are disabled for SBTs');
     });
 
-    it('Should not allow transfers by default', async function () {
+    it('allows transfer when toggled on, then blocks again when toggled off', async function () {
+      const { c, user, owner, mintTo } = await loadFixture(deployFixture);
+      await c.toggleSBTMinting(true);
+      const { tokenId } = await mintTo(user.address);
+
+      await c.toggleTransfer(true);
+      await expect(c.connect(user).transferFrom(user.address, owner.address, tokenId))
+        .to.emit(c, 'Transfer').withArgs(user.address, owner.address, tokenId);
+
+      await c.toggleTransfer(false);
       await expect(
-        maskSBT.connect(user).transferFrom(user.address, owner.address, 1)
+        c.connect(owner).transferFrom(owner.address, user.address, tokenId)
       ).to.be.revertedWith('Transfers are disabled for SBTs');
     });
+  });
 
-    it('Should not allow approvals by default', async function () {
-      await expect(maskSBT.connect(user).approve(owner.address, 1)).to.be.revertedWith(
-        'Approvals are disabled for SBTs'
-      );
-    });
+  describe('Admin & AccessControl', function () {
+    it('restricts toggles and role admin ops', async function () {
+      const { c, user, rando, minter, MINTER_ROLE } = await loadFixture(deployFixture);
 
-    it('Should allow transfers when enabled', async function () {
-      await maskSBT.toggleTransfer(true);
+      await expect(c.connect(user).toggleSBTMinting(true))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
+      await expect(c.connect(user).toggleTransfer(true))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
-      await expect(maskSBT.connect(user).transferFrom(user.address, owner.address, 1))
-        .to.emit(maskSBT, 'Transfer')
-        .withArgs(user.address, owner.address, 1);
+      await expect(c.connect(rando).grantRole(MINTER_ROLE, rando.address))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
-      expect(await maskSBT.ownerOf(1)).to.equal(owner.address);
+      await expect(c.connect(rando).revokeRole(MINTER_ROLE, minter.address))
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
     });
   });
 
-  describe('Admin Functions', function () {
-    it('Should allow admin to enable/disable SBT minting', async function () {
-      expect(await maskSBT.sbtMintingEnabled()).to.be.false;
+  describe('Pausable', function () {
+    it('only admin can pause/unpause; pause blocks minting', async function () {
+      const { c, owner, user, minter, toHash } = await loadFixture(deployFixture);
+      await c.toggleSBTMinting(true);
 
-      await maskSBT.toggleSBTMinting(true);
-      expect(await maskSBT.sbtMintingEnabled()).to.be.true;
+      await expect(c.connect(user).pause())
+        .to.be.revertedWithCustomError(c, 'AccessControlUnauthorizedAccount');
 
-      await maskSBT.toggleSBTMinting(false);
-      expect(await maskSBT.sbtMintingEnabled()).to.be.false;
-    });
+      await c.connect(owner).pause();
+      expect(await c.paused()).to.equal(true);
 
-    it('Should not allow non-admin to change SBT minting status', async function () {
-      await expect(maskSBT.connect(user).toggleSBTMinting(true)).to.be.revertedWithCustomError(
-        maskSBT,
-        'AccessControlUnauthorizedAccount'
-      );
-    });
+      await expect(c.connect(minter).mintReceipt(user.address, toHash('x')))
+        .to.be.revertedWithCustomError(c, 'EnforcedPause');
 
-    it('Should allow admin to enable/disable transfers', async function () {
-      expect(await maskSBT.transferEnabled()).to.be.false;
-
-      await maskSBT.toggleTransfer(true);
-      expect(await maskSBT.transferEnabled()).to.be.true;
-
-      await maskSBT.toggleTransfer(false);
-      expect(await maskSBT.transferEnabled()).to.be.false;
+      await c.connect(owner).unpause();
+      expect(await c.paused()).to.equal(false);
     });
   });
 
-  describe('Pausable Functionality', function () {
-    beforeEach(async function () {
-      await maskSBT.toggleSBTMinting(true);
-    });
-
-    it('Should pause and unpause the contract', async function () {
-      await maskSBT.pause();
-      expect(await maskSBT.paused()).to.be.true;
-
-      await maskSBT.unpause();
-      expect(await maskSBT.paused()).to.be.false;
-    });
-
-    it('Should not allow minting when paused', async function () {
-      await maskSBT.pause();
-      const receiptHash = ethers.keccak256(ethers.toUtf8Bytes('test-receipt'));
-
-      await expect(
-        maskSBT.connect(minter).mintReceipt(user.address, receiptHash)
-      ).to.be.revertedWithCustomError(maskSBT, 'EnforcedPause');
+  describe('Interfaces', function () {
+    it('supports IERC721 and AccessControl', async function () {
+      const { c } = await loadFixture(deployFixture);
+      expect(await c.supportsInterface('0x80ac58cd')).to.equal(true);  // IERC721
+      expect(await c.supportsInterface('0x7965db0b')).to.equal(true);  // AccessControl
     });
   });
 });
