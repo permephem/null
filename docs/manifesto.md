@@ -148,6 +148,6 @@ Welcome to the age of witnessed endings.
 **Learn More:**
 - Technical Whitepaper: [docs/technical-whitepaper.md](./technical-whitepaper.md)
 - GitHub Repository: [github.com/dansavage815-star/null](https://github.com/dansavage815-star/null)
-- Foundation Website: Coming Soon
+- Foundation Website: [nullprotocol.org](https://www.nullprotocol.org)
 
 **"In the beginning was the Word. In the end, there is Null."**
