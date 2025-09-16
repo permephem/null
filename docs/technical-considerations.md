@@ -284,11 +284,11 @@ npm run deploy:portal
 - **Protection:** Economic model drives adoption and development
 - **Duration:** Self-reinforcing as more implementers join
 
-#### **5. ETH-Based Utility Model**
+#### **5. NULL Token Utility Model**
 
-- **Barrier:** No speculative token inflation, real utility tied to usage
-- **Protection:** ETH-based payments leverage established credibility
-- **Duration:** Permanent advantage over inflationary token models
+- **Barrier:** Fixed supply NULL token with real utility tied to deletion usage
+- **Protection:** Dual-layer payment system (fiat → NULL) with mandatory protocol settlement
+- **Duration:** Permanent advantage as NULL becomes the only settlement currency for deletions
 
 ---
 
