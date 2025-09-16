@@ -150,4 +150,4 @@ Welcome to the age of witnessed endings.
 - GitHub Repository: [github.com/dansavage815-star/null](https://github.com/dansavage815-star/null)
 - Foundation Website: [nullprotocol.org](https://www.nullprotocol.org)
 
-**"In the beginning was the Word. In the end, there is Null."**
+**"Every ending deserves a witness."**
