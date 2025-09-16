@@ -2,150 +2,142 @@
 
 ## Executive Summary
 
-Digital culture has standardized beginnings — minting, creation, exchange — but not endings.
+Digital systems have perfected beginnings — minting, creation, exchange — but not endings.
 
-Deletion today carries weight in law and practice: regulators accept it as compliance. Yet it remains opaque — unseen, unwitnessed, unceremonial.
+Today, deletion is recognized in law as compliance, yet in practice it is opaque: invisible, unverifiable, and often symbolic rather than real.
 
-Beginnings are honored with ceremony. Endings should be celebrated with equal weight — not as vanishings, but as transformations witnessed, verified, and recorded.
+Societies mark beginnings with ceremony. Endings deserve the same weight — not as vanishings into silence, but as transformations that are witnessed, verified, and preserved.
 
-Null Protocol introduces the first architecture for closure: a ritual for endings, a canon of memory, a digital death certificate. Built on Ethereum with NULL tokens as the currency of absence, the protocol enables verifiable deletion through a dual-layer payment system that serves both enterprises and the digital rights movement.
+Null Protocol establishes the first architecture for closure: a verifiable system for digital endings. Anchored on Ethereum and powered by the NULL token, the protocol makes deletion transparent, accountable, and permanent.
 
 Not optional. Not speculative. Necessary and imminent.
 
 ## The Problem
 
-Today, a "burn" is only erasure: absence without witness. Yet absence alone does not prove death.
+In today's system, a "burn" or deletion is absence without witness. But absence alone does not prove death — society requires a certificate to recognize and validate it.
 
-The absence of a body does not prove death. What society accepts is the death certificate: the inscription that absence is real, witnessed, and irreversible.
+Digital deletion faces the same gap. Regulators accept it in theory, but there is no standard witness, no cultural recognition, and no public proof. Deletion requests often resolve not in erasure, but in data suppression lists — a loophole that ensures data resurfaces again.
 
-So too in the digital sphere. Deletion today carries meaning in law and practice — regulators accept it as compliance. But it lacks witness, transparency, and cultural recognition. Without proof that can be seen and shared, endings dissolve into silence.
-
-Even now, deletion requests do not mean erasure, they simply mean transfer my data to a suppression list. Public record should not mean public property!
+Public record must not mean public property.
 
 ## The Solution: Witnessing Absence
 
-Null Protocol makes deletion visible, verifiable, and ceremonial.
+Null Protocol transforms deletion into a process that is visible, verifiable, and ceremonial.
 
-Every deletion becomes a **Null Warrant** — a cryptographically signed, timestamped certificate of intended absence. Every fulfillment becomes a **Deletion Attestation** — a sworn statement that erasure occurred. Every completion becomes a **Mask Receipt** — a soulbound token that serves as a permanent tombstone, a digital death certificate that cannot be transferred or destroyed.
+**Null Warrants**: Cryptographically signed deletion requests.
 
-The protocol operates through three layers:
+**Deletion Attestations**: Enterprise proclamations that deletion occurred.
 
-### 1. The Warrant Layer (Intent)
-- **Null Warrants**: Cryptographically signed deletion commands
-- **DID-based authentication**: Verifiable identity without revealing PII
-- **Standardized schemas**: Universal format for deletion requests
+**Mask Receipts**: Soulbound tokens — immutable tombstones of closure, forever inscribed in the Canon Registry.
 
-### 2. The Execution Layer (Action)
-- **Enterprise compliance**: Automated deletion workflows
-- **Deletion attestations**: Cryptographic proof of completion
-- **Evidence preservation**: Immutable audit trails
+Together, these elements form a chain of custody for absence: intent, action, and witness.
 
-### 3. The Memory Layer (Witness)
-- **Canon Registry**: Ethereum-based ledger of all deletions
-- **Mask Receipts**: Soulbound tokens as permanent tombstones
-- **Public verification**: Anyone can verify any deletion occurred
+## Protocol Layers
+
+### Warrant Layer (Intent)
+
+- Cryptographically signed deletion commands
+- DID-based authentication (identity without exposing PII)
+- Universal schemas for standardized requests
+
+### Execution Layer (Action)
+
+- Enterprise deletion workflows
+- Cryptographic attestations of completion
+- Immutable, auditable proofs
+
+### Memory Layer (Witness)
+
+- Canon Registry: an append-only ledger of closures
+- Mask Receipts: non-transferable certificates of deletion
+- Public verification: accessible to users, regulators, and watchdogs
 
 ## Economic Architecture
 
-The protocol operates on a dual-layer payment system:
+Null Protocol introduces a dual-layer economic model:
 
-### NULL Token Economics
-- **Enterprise payments**: Fiat-to-NULL conversion for deletion fees
-- **Protocol settlement**: All on-chain operations paid in NULL
-- **Value capture**: Token demand driven by deletion volume
-- **Foundation funding**: 1/13 of all fees fund protocol development
+### NULL Token
+
+- Enterprises pay for deletions in fiat, converted to NULL for settlement.
+- On-chain operations require NULL, tying token demand to deletion volume.
+- Token value is secured through protocol activity, not speculation.
 
 ### The Obol System
-Named after the coin placed on the eyes of the dead in Greek mythology, the Obol is the unit of payment for digital death:
-- **12/13 to implementers**: Sustainable business model for service providers
-- **1/13 to Foundation**: Protocol development and governance funding
-- **Transparent treasury**: All flows publicly auditable on-chain
+
+Inspired by the ancient coin placed with the dead, the Obol is the elemental fee for digital death.
+
+- 12/13 of every protocol enactment sustains implementers.
+- 1/13 is tithed to the Foundation, ensuring governance and continuity.
+- All treasury flows are on-chain, transparent, and auditable.
 
 ## Cultural Significance
 
-Null Protocol transforms deletion from shame to ceremony.
+Null reframes deletion from an act of secrecy to a public, trusted ritual.
 
-### From Secrecy to Transparency
-- Current state: Deletions happen in darkness
-- Null future: Every deletion is witnessed and recorded
+**From Darkness to Witness**: Deletion becomes visible, verifiable, and permanent.
 
-### From Compliance to Culture
-- Current state: Deletion as legal obligation
-- Null future: Deletion as digital right and cultural practice
+**From Obligation to Right**: No longer a compliance checkbox, but a core digital right.
 
-### From Forgetting to Remembering
-- Current state: Deletion means disappearance
-- Null future: Deletion means transformation, witnessed and honored
+**From Erasure to Transformation**: Endings are not vanishing points, but transitions — memorialized in the Canon.
 
 ## Technical Innovation
 
-### Cryptographic Primitives
-- **HMAC-Blake3 subject tags**: Privacy-preserving identity anchoring
-- **JWS signatures**: Industry-standard cryptographic proofs
-- **Zero-knowledge proofs**: Private verification of public claims
-- **VOPRF protocols**: Unlinkable negative registry queries
+**Privacy-Preserving Cryptography**: HMAC-Blake3 subject tags, JWS signatures, zero-knowledge proofs, VOPRF queries.
 
-### Blockchain Architecture
-- **Ethereum mainnet**: Maximum security and decentralization
-- **ERC-721 Mask Receipts**: Soulbound deletion certificates
-- **Gas optimization**: Efficient batch operations and minimal storage
-- **Cross-chain compatibility**: Future expansion to other networks
+**Ethereum Integration**: Canon Registry on mainnet, ERC-721 soulbound Mask Receipts, gas-optimized batch operations.
 
-### Privacy by Design
-- **No PII on-chain**: Only cryptographic hashes and proofs
-- **Unlinkable queries**: Data brokers can't correlate requests
-- **Selective disclosure**: Users control what information is revealed
-- **Forward secrecy**: Key rotation prevents retroactive compromise
+**Privacy by Design**: No PII on-chain; unlinkable queries; selective disclosure; forward secrecy.
 
-## Community-Driven Adoption
+## Roadmap
 
 ### Phase 1: Foundation & Registry (2025)
-- Swiss Verein incorporation
-- NULL token launch and initial distribution
-- Canon Registry deployment on Ethereum mainnet
-- Community-driven deletion request processing
 
-### Phase 2: Commercial Implementation (2025-2026)
-- Null Engine commercial service launch
-- Enterprise integration partnerships
+- Incorporation of the Swiss Verein
+- Launch of NULL token
+- Canon Registry deployment
+- Initial deletion request processing
+
+### Phase 2: Commercial Integration (2025–2026)
+
+- Null Engine: first commercial implementation
+- Enterprise APIs and SDKs
 - Data broker compliance monitoring
-- Public metrics and transparency reports
+- Public dashboards and transparency reporting
 
-### Phase 3: Regulatory Mandate (2026-2027)
-- Demonstrated viability leads to policy adoption
-- "Public record does not mean public property"
-- Mandatory compliance for data brokers
-- Global expansion of deletion rights
+### Phase 3: Regulatory Adoption (2026–2027)
+
+- Policy recognition: "Public record does not mean public property"
+- Mandatory broker compliance
+- Expansion across finance, healthcare, and cultural archives
 
 ## The Null Covenant
 
-We believe:
+We affirm:
 
-1. **Digital death is a fundamental right**, as essential as digital birth
-2. **Transparency serves privacy**, making deletion verifiable serves users
-3. **Ceremony honors transitions**, giving deletion the weight it deserves
-4. **Absence can be beautiful**, when witnessed and remembered
-5. **Endings enable beginnings**, creating space for what comes next
+1. **Digital death is a fundamental right** — equal to digital birth.
+2. **Transparency safeguards privacy** — verifiable absence empowers users.
+3. **Ceremony matters** — transitions deserve to be honored, not hidden.
+4. **Absence has value** — when witnessed, it protects and preserves dignity.
+5. **Endings enable beginnings** — clearing space for renewal.
 
 ## Call to Action
 
-The infrastructure exists. The need is urgent. The moment is now.
+The infrastructure exists. The urgency is undeniable.
 
-Join the Null Protocol:
-- **Developers**: Build on our open-source protocol
-- **Enterprises**: Implement verifiable deletion
-- **Users**: Claim your right to digital death
-- **Investors**: Support the future of digital rights
-- **Advocates**: Champion transparent deletion
+- **Developers**: Contribute to the protocol.
+- **Enterprises**: Implement verified deletion.
+- **Users**: Claim your right to closure.
+- **Investors**: Sustain a covenant for digital rights.
+- **Advocates**: Enshrine deletion as culture.
 
-Digital culture has mastered creation. Now we master closure.
+Null Protocol makes deletion real — witnessed, verifiable, permanent.
 
-Welcome to the age of witnessed endings.
+Welcome to the age of endings.
 
 ---
 
 **Null Protocol Foundation**  
-*Null - a placeholder for absence*
+*Null — the placeholder for absence*
 
 **Learn More:**
 - Technical Whitepaper: [docs/technical-whitepaper.md](./technical-whitepaper.md)
