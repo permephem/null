@@ -28,20 +28,20 @@ describe('Null Protocol Integration Tests (Foundry + Jest)', () => {
     canonService = new CanonService({
       rpcUrl: 'http://localhost:8545',
       contractAddress: MOCK_CANON_REGISTRY_ADDRESS,
-      privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+      privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
     });
 
     sbtService = new SBTService({
       rpcUrl: 'http://localhost:8545',
       contractAddress: MOCK_MASK_SBT_ADDRESS,
-      privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+      privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
     });
 
     emailService = new EmailService({
       smtpHost: 'localhost',
       smtpPort: 587,
       smtpUser: 'test@example.com',
-      smtpPass: 'test-password'
+      smtpPass: 'test-password',
     });
 
     cryptoService = new CryptoService();
@@ -50,7 +50,7 @@ describe('Null Protocol Integration Tests (Foundry + Jest)', () => {
       canonService,
       sbtService,
       emailService,
-      cryptoService
+      cryptoService,
     });
   });
 
@@ -207,7 +207,7 @@ describe('Null Protocol Integration Tests (Foundry + Jest)', () => {
       jest.spyOn(relayerService, 'processWarrant').mockImplementation(async (warrant) => {
         let attempts = 0;
         const maxAttempts = 3;
-        
+
         while (attempts < maxAttempts) {
           try {
             await canonService.anchorWarrant(warrant);
@@ -218,7 +218,7 @@ describe('Null Protocol Integration Tests (Foundry + Jest)', () => {
               throw error;
             }
             // Wait before retry (mocked)
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
         }
       });
