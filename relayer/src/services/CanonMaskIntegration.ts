@@ -48,7 +48,7 @@ export class CanonMaskIntegration {
   public async startEventListening(): Promise<void> {
     try {
       logger.info('Starting Canon Registry event listening...');
-      
+
       // For now, we'll implement a polling mechanism instead of event listening
       // This avoids the complex TypeChain event handling issues
       logger.info('Event listening will be implemented via polling mechanism');
@@ -81,7 +81,7 @@ export class CanonMaskIntegration {
         attestationDigest: event.attestationDigest,
         relayer: event.relayer,
         assurance: event.assurance,
-        transactionHash: event.transactionHash
+        transactionHash: event.transactionHash,
       });
 
       if (!this.autoMintEnabled) {
@@ -91,7 +91,7 @@ export class CanonMaskIntegration {
 
       // Calculate tokenId as keccak256(warrant||attest) as requested
       const tokenId = this.calculateTokenId(event.warrantDigest, event.attestationDigest);
-      
+
       // Add delay if configured
       if (this.mintingDelay > 0) {
         await this.delay(this.mintingDelay);
@@ -113,7 +113,7 @@ export class CanonMaskIntegration {
         recipient,
         receiptHash,
         warrantDigest: event.warrantDigest,
-        attestationDigest: event.attestationDigest
+        attestationDigest: event.attestationDigest,
       });
 
       const transactionHash = await this.sbtService.mintReceipt(recipient, receiptHash);
@@ -122,7 +122,7 @@ export class CanonMaskIntegration {
         tokenId,
         recipient,
         receiptHash,
-        transactionHash
+        transactionHash,
       });
 
       // Notify event listeners
@@ -132,9 +132,8 @@ export class CanonMaskIntegration {
         receiptHash,
         warrantDigest: event.warrantDigest,
         attestationDigest: event.attestationDigest,
-        canonEvent: event
+        canonEvent: event,
       });
-
     } catch (error) {
       logger.error('Failed to handle Anchored event:', error);
       // Don't throw to prevent event listener from crashing
@@ -162,7 +161,7 @@ export class CanonMaskIntegration {
         event.subjectTag,
         event.controllerDidHash,
         event.assurance,
-        event.timestamp
+        event.timestamp,
       ]
     );
     return keccak256(receiptData);
@@ -200,7 +199,7 @@ export class CanonMaskIntegration {
    * Utility function to delay execution
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -214,7 +213,7 @@ export class CanonMaskIntegration {
     return {
       autoMintEnabled: this.autoMintEnabled,
       mintingDelay: this.mintingDelay,
-      eventListenersCount: this.eventListeners.size
+      eventListenersCount: this.eventListeners.size,
     };
   }
 
@@ -228,7 +227,7 @@ export class CanonMaskIntegration {
   ): Promise<{ tokenId: string; receiptHash: string; transactionHash: string }> {
     try {
       const tokenId = this.calculateTokenId(warrantDigest, attestationDigest);
-      
+
       // Check if SBT already exists
       const existingToken = await this.sbtService.isReceiptMinted(tokenId);
       if (existingToken) {
@@ -247,13 +246,13 @@ export class CanonMaskIntegration {
         tokenId,
         recipient,
         receiptHash,
-        transactionHash
+        transactionHash,
       });
 
       return {
         tokenId,
         receiptHash,
-        transactionHash
+        transactionHash,
       };
     } catch (error) {
       logger.error('Failed to manually mint Mask SBT:', error);

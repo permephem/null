@@ -20,7 +20,12 @@ contract MaskSBTTest is Test {
         uint256 timestamp
     );
 
-    event ReceiptBurned(uint256 indexed tokenId, bytes32 indexed receiptHash, address indexed owner, uint256 timestamp);
+    event ReceiptBurned(
+        uint256 indexed tokenId,
+        bytes32 indexed receiptHash,
+        address indexed owner,
+        uint256 timestamp
+    );
 
     event SBTMintingToggled(bool enabled);
     event TransferToggled(bool enabled);

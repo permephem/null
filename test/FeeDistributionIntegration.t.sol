@@ -36,8 +36,12 @@ contract FeeDistributionIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, fee);
 
-        canonRegistry.anchor{value: fee}(
-            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
+        canonRegistry.anchor{ value: fee }(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
         );
         vm.stopPrank();
 
@@ -59,8 +63,12 @@ contract FeeDistributionIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, fee);
 
-        canonRegistry.anchor{value: fee}(
-            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
+        canonRegistry.anchor{ value: fee }(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
         );
         vm.stopPrank();
 
@@ -95,13 +103,21 @@ contract FeeDistributionIntegrationTest is Test {
         vm.deal(relayer, fee1 + fee2);
 
         // First anchor
-        canonRegistry.anchor{value: fee1}(
-            keccak256("warrant1"), keccak256("attestation1"), keccak256("subject1"), keccak256("controller1"), 1
+        canonRegistry.anchor{ value: fee1 }(
+            keccak256("warrant1"),
+            keccak256("attestation1"),
+            keccak256("subject1"),
+            keccak256("controller1"),
+            1
         );
 
         // Second anchor
-        canonRegistry.anchor{value: fee2}(
-            keccak256("warrant2"), keccak256("attestation2"), keccak256("subject2"), keccak256("controller2"), 1
+        canonRegistry.anchor{ value: fee2 }(
+            keccak256("warrant2"),
+            keccak256("attestation2"),
+            keccak256("subject2"),
+            keccak256("controller2"),
+            1
         );
         vm.stopPrank();
 
@@ -121,7 +137,7 @@ contract FeeDistributionIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, fee);
 
-        canonRegistry.anchor{value: fee}(
+        canonRegistry.anchor{ value: fee }(
             keccak256("warrant-ratio-test"),
             keccak256("attestation-ratio-test"),
             keccak256("subject-ratio-test"),
@@ -154,8 +170,12 @@ contract FeeDistributionIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, fee);
 
-        canonRegistry.anchor{value: fee}(
-            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
+        canonRegistry.anchor{ value: fee }(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
         );
         vm.stopPrank();
 

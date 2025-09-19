@@ -4,7 +4,10 @@
  */
 
 import { solidityPacked, keccak256 } from 'ethers';
-import { CanonMaskIntegration, type CanonMaskIntegrationConfig } from '../../relayer/src/services/CanonMaskIntegration';
+import {
+  CanonMaskIntegration,
+  type CanonMaskIntegrationConfig,
+} from '../../relayer/src/services/CanonMaskIntegration';
 import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 
@@ -66,7 +69,8 @@ describe('CanonMaskIntegration', () => {
   describe('Token ID Calculation', () => {
     it('should calculate tokenId as keccak256(warrant||attest)', async () => {
       const warrantDigest = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-      const attestationDigest = '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
+      const attestationDigest =
+        '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
 
       // Calculate expected tokenId
       const combined = solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
@@ -89,7 +93,8 @@ describe('CanonMaskIntegration', () => {
   describe('Manual Minting', () => {
     it('should manually mint Mask SBT for Canon event', async () => {
       const warrantDigest = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-      const attestationDigest = '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
+      const attestationDigest =
+        '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
       const recipient = '0xrecipient';
 
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
@@ -108,7 +113,8 @@ describe('CanonMaskIntegration', () => {
 
     it('should throw error if SBT already exists', async () => {
       const warrantDigest = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-      const attestationDigest = '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
+      const attestationDigest =
+        '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
       const recipient = '0xrecipient';
 
       const combined = solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);

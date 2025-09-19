@@ -21,16 +21,16 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
 
     // EIP-712 Type Hash for meta-transactions
-    bytes32 public constant ANCHOR_TYPEHASH =
-        keccak256(
-            "Anchor(bytes32 warrantDigest,bytes32 attestationDigest,bytes32 subjectTag,bytes32 controllerDidHash,uint8 assurance,uint256 nonce,uint256 deadline)"
-        );
+    bytes32 public constant ANCHOR_TYPEHASH = keccak256(
+        "Anchor(bytes32 warrantDigest,bytes32 attestationDigest,bytes32 subjectTag,bytes32 controllerDidHash,uint8 assurance,uint256 nonce,uint256 deadline)"
+    );
 
     // Assurance Tier Policies
     enum AssuranceTier {
-        EMAIL_DKIM,    // 0: Email DKIM verification
-        DID_JWS,       // 1: DID JWS signature verification
+        EMAIL_DKIM, // 0: Email DKIM verification
+        DID_JWS, // 1: DID JWS signature verification
         TEE_ATTESTATION // 2: Trusted Execution Environment attestation
+
     }
 
     // Custom errors
@@ -145,7 +145,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             revert InsufficientFee(msg.value, baseFee);
         }
 
-        _performAnchor(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, msg.sender);
+        _performAnchor(
+            warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, msg.sender
+        );
     }
 
     /**
@@ -182,7 +184,15 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
 
         // Verify meta-transaction signature
         address signer = _verifyMetaTransaction(
-            warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, deadline, v, r, s
+            warrantDigest,
+            attestationDigest,
+            subjectTag,
+            controllerDidHash,
+            assurance,
+            deadline,
+            v,
+            r,
+            s
         );
 
         // Verify signer has RELAYER_ROLE
@@ -190,7 +200,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             revert("Invalid relayer signature");
         }
 
-        _performAnchor(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, signer);
+        _performAnchor(
+            warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, signer
+        );
     }
 
     /**
@@ -210,7 +222,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
 
         // Emit optimized event with additional indexing fields
         emit Anchored(
-            warrantDigest, attestationDigest, relayer, subjectTag, controllerDidHash, assurance, block.timestamp
+            warrantDigest,
+            attestationDigest,
+            relayer,
+            subjectTag,
+            controllerDidHash,
+            assurance,
+            block.timestamp
         );
 
         // Distribute fees using pull payment pattern
@@ -313,7 +331,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         _lastAnchor[warrantHash] = block.number;
 
         emit WarrantAnchored(
-            warrantHash, subjectHandleHash, enterpriseHash, enterpriseId, warrantId, msg.sender, block.timestamp
+            warrantHash,
+            subjectHandleHash,
+            enterpriseHash,
+            enterpriseId,
+            warrantId,
+            msg.sender,
+            block.timestamp
         );
 
         _distributeFees(msg.value);
@@ -338,7 +362,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         _lastAnchor[attestationHash] = block.number;
 
         emit AttestationAnchored(
-            attestationHash, warrantHash, enterpriseHash, enterpriseId, attestationId, msg.sender, block.timestamp
+            attestationHash,
+            warrantHash,
+            enterpriseHash,
+            enterpriseId,
+            attestationId,
+            msg.sender,
+            block.timestamp
         );
 
         _distributeFees(msg.value);
@@ -349,20 +379,21 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     /**
      * @dev Legacy receipt anchoring (deprecated)
      */
-    function anchorReceipt(bytes32 receiptHash, bytes32 warrantHash, bytes32 attestationHash, address subjectWallet)
-        external
-        payable
-        onlyRole(RELAYER_ROLE)
-        whenNotPaused
-        nonReentrant
-    {
+    function anchorReceipt(
+        bytes32 receiptHash,
+        bytes32 warrantHash,
+        bytes32 attestationHash,
+        address subjectWallet
+    ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
 
         _lastAnchor[receiptHash] = block.number;
 
-        emit ReceiptAnchored(receiptHash, warrantHash, attestationHash, subjectWallet, msg.sender, block.timestamp);
+        emit ReceiptAnchored(
+            receiptHash, warrantHash, attestationHash, subjectWallet, msg.sender, block.timestamp
+        );
 
         _distributeFees(msg.value);
         totalAnchors++;

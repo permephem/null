@@ -66,7 +66,7 @@ contract SimpleIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, 1 ether);
 
-        canonRegistry.anchor{value: canonRegistry.baseFee()}(
+        canonRegistry.anchor{ value: canonRegistry.baseFee() }(
             warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance
         );
 
@@ -112,7 +112,7 @@ contract SimpleIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, 1 ether);
 
-        canonRegistry.anchor{value: canonRegistry.baseFee()}(
+        canonRegistry.anchor{ value: canonRegistry.baseFee() }(
             warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance
         );
 
@@ -133,11 +133,11 @@ contract SimpleIntegrationTest is Test {
         vm.startPrank(relayer);
         vm.deal(relayer, 1 ether);
 
-        canonRegistry.anchor{value: canonRegistry.baseFee()}(
+        canonRegistry.anchor{ value: canonRegistry.baseFee() }(
             keccak256("test1"), keccak256("test1"), keccak256("test1"), keccak256("test1"), 1
         );
 
-        canonRegistry.anchor{value: canonRegistry.baseFee()}(
+        canonRegistry.anchor{ value: canonRegistry.baseFee() }(
             keccak256("test2"), keccak256("test2"), keccak256("test2"), keccak256("test2"), 1
         );
 
@@ -166,7 +166,7 @@ contract SimpleIntegrationTest is Test {
         vm.startPrank(newRelayer);
         vm.deal(newRelayer, 1 ether);
 
-        canonRegistry.anchor{value: canonRegistry.baseFee()}(
+        canonRegistry.anchor{ value: canonRegistry.baseFee() }(
             keccak256("test"), keccak256("test"), keccak256("test"), keccak256("test"), 1
         );
 

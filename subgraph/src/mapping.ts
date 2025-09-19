@@ -1,4 +1,4 @@
-import { BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { BigInt, ethereum } from '@graphprotocol/graph-ts';
 import {
   AnchoredEvent,
   Relayer,
@@ -7,15 +7,15 @@ import {
   SubjectTag,
   ControllerDID,
   DailyStats,
-} from "../generated/schema";
+} from '../generated/schema';
 
 // Assurance tier names
-const ASSURANCE_TIER_NAMES = ["EMAIL_DKIM", "DID_JWS", "TEE_ATTESTATION"];
+const ASSURANCE_TIER_NAMES = ['EMAIL_DKIM', 'DID_JWS', 'TEE_ATTESTATION'];
 
 export function handleAnchored(event: ethereum.Event): void {
   // Create AnchoredEvent entity
   let anchoredEvent = new AnchoredEvent(
-    event.transaction.hash.toHex() + "-" + event.logIndex.toString()
+    event.transaction.hash.toHex() + '-' + event.logIndex.toString()
   );
   anchoredEvent.warrantDigest = event.params.warrantDigest;
   anchoredEvent.attestationDigest = event.params.attestationDigest;
@@ -50,7 +50,7 @@ export function handleAnchored(event: ethereum.Event): void {
   if (assuranceTier == null) {
     assuranceTier = new AssuranceTier(assuranceId);
     assuranceTier.level = event.params.assurance;
-    assuranceTier.name = ASSURANCE_TIER_NAMES[event.params.assurance] || "UNKNOWN";
+    assuranceTier.name = ASSURANCE_TIER_NAMES[event.params.assurance] || 'UNKNOWN';
     assuranceTier.totalAnchors = BigInt.fromI32(0);
   }
   assuranceTier.totalAnchors = assuranceTier.totalAnchors.plus(BigInt.fromI32(1));
@@ -83,24 +83,22 @@ export function handleAnchored(event: ethereum.Event): void {
   controllerDID.save();
 
   // Update ProtocolStats
-  let protocolStats = ProtocolStats.load("protocol");
+  let protocolStats = ProtocolStats.load('protocol');
   if (protocolStats == null) {
-    protocolStats = new ProtocolStats("protocol");
+    protocolStats = new ProtocolStats('protocol');
     protocolStats.totalAnchors = BigInt.fromI32(0);
     protocolStats.totalFeesCollected = BigInt.fromI32(0);
     protocolStats.uniqueRelayers = BigInt.fromI32(0);
     protocolStats.uniqueSubjects = BigInt.fromI32(0);
   }
   protocolStats.totalAnchors = protocolStats.totalAnchors.plus(BigInt.fromI32(1));
-  protocolStats.totalFeesCollected = protocolStats.totalFeesCollected.plus(
-    event.transaction.value
-  );
+  protocolStats.totalFeesCollected = protocolStats.totalFeesCollected.plus(event.transaction.value);
   protocolStats.lastUpdate = event.block.timestamp;
   protocolStats.save();
 
   // Update DailyStats
   let date = new Date(event.block.timestamp.toI32() * 1000);
-  let dateString = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+  let dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
   let dailyStats = DailyStats.load(dateString);
   if (dailyStats == null) {
     dailyStats = new DailyStats(dateString);
@@ -117,17 +115,11 @@ export function handleAnchored(event: ethereum.Event): void {
 
   // Update assurance-specific counters
   if (event.params.assurance == 0) {
-    dailyStats.assurance0Anchors = dailyStats.assurance0Anchors.plus(
-      BigInt.fromI32(1)
-    );
+    dailyStats.assurance0Anchors = dailyStats.assurance0Anchors.plus(BigInt.fromI32(1));
   } else if (event.params.assurance == 1) {
-    dailyStats.assurance1Anchors = dailyStats.assurance1Anchors.plus(
-      BigInt.fromI32(1)
-    );
+    dailyStats.assurance1Anchors = dailyStats.assurance1Anchors.plus(BigInt.fromI32(1));
   } else if (event.params.assurance == 2) {
-    dailyStats.assurance2Anchors = dailyStats.assurance2Anchors.plus(
-      BigInt.fromI32(1)
-    );
+    dailyStats.assurance2Anchors = dailyStats.assurance2Anchors.plus(BigInt.fromI32(1));
   }
 
   dailyStats.save();

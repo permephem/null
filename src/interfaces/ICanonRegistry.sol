@@ -72,9 +72,12 @@ interface ICanonRegistry {
         string calldata attestationId
     ) external payable;
 
-    function anchorReceipt(bytes32 receiptHash, bytes32 warrantHash, bytes32 attestationHash, address subjectWallet)
-        external
-        payable;
+    function anchorReceipt(
+        bytes32 receiptHash,
+        bytes32 warrantHash,
+        bytes32 attestationHash,
+        address subjectWallet
+    ) external payable;
 
     function lastAnchorBlock(bytes32 hash) external view returns (uint256);
     function isAnchored(bytes32 hash) external view returns (bool);

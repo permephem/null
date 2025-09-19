@@ -51,7 +51,12 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         uint256 timestamp
     );
 
-    event ReceiptBurned(uint256 indexed tokenId, bytes32 indexed receiptHash, address indexed owner, uint256 timestamp);
+    event ReceiptBurned(
+        uint256 indexed tokenId,
+        bytes32 indexed receiptHash,
+        address indexed owner,
+        uint256 timestamp
+    );
 
     event SBTMintingToggled(bool enabled);
     event TransferToggled(bool enabled);
@@ -204,7 +209,11 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Override transfer functions to enforce SBT behavior
      */
-    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override
+        returns (address)
+    {
         address from = _ownerOf(tokenId);
 
         // Allow minting and burning
@@ -253,7 +262,12 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Supports interface
      */
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, AccessControl)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 }

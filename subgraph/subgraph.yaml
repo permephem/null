@@ -6,7 +6,7 @@ dataSources:
     name: CanonRegistry
     network: mainnet
     source:
-      address: "0x0000000000000000000000000000000000000000" # Replace with actual contract address
+      address: '0x0000000000000000000000000000000000000000' # Replace with actual contract address
       abi: CanonRegistry
       startBlock: 0 # Replace with actual deployment block
     mapping:

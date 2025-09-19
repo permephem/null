@@ -33,7 +33,10 @@ contract CanonRegistryInvariantTest is Test {
         uint256 foundationBalance = canonRegistry.balances(foundationTreasury);
         uint256 implementerBalance = canonRegistry.balances(implementerTreasury);
 
-        assertEq(contractBalance + foundationBalance + implementerBalance, canonRegistry.totalFeesCollected());
+        assertEq(
+            contractBalance + foundationBalance + implementerBalance,
+            canonRegistry.totalFeesCollected()
+        );
     }
 
     function invariant_feeDistributionRatio() public {

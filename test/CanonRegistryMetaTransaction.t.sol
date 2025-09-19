@@ -60,14 +60,15 @@ contract CanonRegistryMetaTransactionTest is Test {
         digest = keccak256(abi.encodePacked("\x19\x01", digest, structHash));
 
         // Sign with relayer's private key (the actual relayer who has the role)
-        uint256 relayerPrivateKey = 0x1234567890123456789012345678901234567890123456789012345678901234;
+        uint256 relayerPrivateKey =
+            0x1234567890123456789012345678901234567890123456789012345678901234;
         address relayerSigner = vm.addr(relayerPrivateKey);
-        
+
         // Make sure the signer has the relayer role
         vm.startPrank(owner);
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayerSigner);
         vm.stopPrank();
-        
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(relayerPrivateKey, digest);
 
         // Fund the executor for gas and fees
@@ -75,7 +76,7 @@ contract CanonRegistryMetaTransactionTest is Test {
 
         // Execute meta-transaction
         vm.startPrank(metaTxExecutor);
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
@@ -116,14 +117,15 @@ contract CanonRegistryMetaTransactionTest is Test {
         bytes32 digest = canonRegistry.getDomainSeparator();
         digest = keccak256(abi.encodePacked("\x19\x01", digest, structHash));
 
-        uint256 relayerPrivateKey = 0x1234567890123456789012345678901234567890123456789012345678901234;
+        uint256 relayerPrivateKey =
+            0x1234567890123456789012345678901234567890123456789012345678901234;
         address relayerSigner = vm.addr(relayerPrivateKey);
-        
+
         // Make sure the signer has the relayer role
         vm.startPrank(owner);
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayerSigner);
         vm.stopPrank();
-        
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(relayerPrivateKey, digest);
 
         vm.deal(metaTxExecutor, 1 ether);
@@ -131,7 +133,7 @@ contract CanonRegistryMetaTransactionTest is Test {
         // Should revert due to expired deadline
         vm.startPrank(metaTxExecutor);
         vm.expectRevert("Meta-transaction expired");
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
@@ -175,7 +177,7 @@ contract CanonRegistryMetaTransactionTest is Test {
         // Should revert due to invalid relayer signature
         vm.startPrank(metaTxExecutor);
         vm.expectRevert("Invalid relayer signature");
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
@@ -231,20 +233,21 @@ contract CanonRegistryMetaTransactionTest is Test {
         bytes32 digest = canonRegistry.getDomainSeparator();
         digest = keccak256(abi.encodePacked("\x19\x01", digest, structHash));
 
-        uint256 relayerPrivateKey = 0x1234567890123456789012345678901234567890123456789012345678901234;
+        uint256 relayerPrivateKey =
+            0x1234567890123456789012345678901234567890123456789012345678901234;
         address relayerSigner = vm.addr(relayerPrivateKey);
-        
+
         // Make sure the signer has the relayer role
         vm.startPrank(owner);
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayerSigner);
         vm.stopPrank();
-        
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(relayerPrivateKey, digest);
 
         vm.deal(metaTxExecutor, 1 ether);
 
         vm.startPrank(metaTxExecutor);
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
@@ -265,7 +268,7 @@ contract CanonRegistryMetaTransactionTest is Test {
     function testDomainSeparator() public {
         bytes32 domainSeparator = canonRegistry.getDomainSeparator();
         assertTrue(domainSeparator != bytes32(0));
-        
+
         // Domain separator should be consistent
         bytes32 domainSeparator2 = canonRegistry.getDomainSeparator();
         assertEq(domainSeparator, domainSeparator2);
@@ -292,21 +295,22 @@ contract CanonRegistryMetaTransactionTest is Test {
         bytes32 digest = canonRegistry.getDomainSeparator();
         digest = keccak256(abi.encodePacked("\x19\x01", digest, structHash));
 
-        uint256 relayerPrivateKey = 0x1234567890123456789012345678901234567890123456789012345678901234;
+        uint256 relayerPrivateKey =
+            0x1234567890123456789012345678901234567890123456789012345678901234;
         address relayerSigner = vm.addr(relayerPrivateKey);
-        
+
         // Make sure the signer has the relayer role
         vm.startPrank(owner);
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayerSigner);
         vm.stopPrank();
-        
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(relayerPrivateKey, digest);
 
         vm.deal(metaTxExecutor, 2 ether);
 
         // Execute first meta-transaction
         vm.startPrank(metaTxExecutor);
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
@@ -322,7 +326,7 @@ contract CanonRegistryMetaTransactionTest is Test {
         // Try to execute the same meta-transaction again (should fail due to nonce)
         vm.startPrank(metaTxExecutor);
         vm.expectRevert(); // ECDSA.recover will fail due to nonce mismatch
-        canonRegistry.anchorMeta{value: canonRegistry.baseFee()}(
+        canonRegistry.anchorMeta{ value: canonRegistry.baseFee() }(
             warrantDigest,
             attestationDigest,
             subjectTag,
