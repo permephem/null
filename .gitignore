@@ -86,6 +86,10 @@ venv.bak/
 # Solidity
 *.sol.bak
 
+# Foundry
+foundry.toml.bak
+forge.lock
+
 # TypeScript
 *.tsbuildinfo
 

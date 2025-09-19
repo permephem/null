@@ -1,26 +1,29 @@
 # Dependencies
+lib/
 node_modules/
 
 # Build outputs
 dist/
-build/
 out/
 artifacts/
-cache/
+typechain-types/
+
+# Generated files
+crytic-export/
 
 # Logs
 *.log
 
-# Environment files
-.env*
-
-# Package lock files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Coverage reports
+# Coverage
 coverage/
 
-# Generated files that should not be formatted
-typechain-types/
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
