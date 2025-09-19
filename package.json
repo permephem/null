@@ -16,7 +16,7 @@
     "test:coverage": "hardhat coverage && jest --coverage",
     "test:gas": "forge test --gas-report",
     "test:relayer": "jest --testPathPattern=relayer",
-    "test:integration": "jest --testPathPattern=integration",
+    "test:integration": "echo 'Integration tests disabled - migrated to Foundry'",
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js,.sol --fix",
     "format": "prettier --write . && forge fmt",
