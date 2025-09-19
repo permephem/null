@@ -1,0 +1,72 @@
+# Null Protocol Subgraph Schema
+# Indexes CanonRegistry Anchored events for efficient querying
+
+type AnchoredEvent @entity {
+  id: ID! # Transaction hash + log index
+  warrantDigest: Bytes! # Indexed warrant digest
+  attestationDigest: Bytes! # Indexed attestation digest
+  relayer: Bytes! # Indexed relayer address
+  subjectTag: Bytes! # HMAC-based privacy-preserving tag
+  controllerDidHash: Bytes! # Hash of controller DID
+  assurance: Int! # Assurance level (0-2)
+  timestamp: BigInt! # Block timestamp
+  blockNumber: BigInt! # Block number
+  transactionHash: Bytes! # Transaction hash
+  logIndex: BigInt! # Log index within transaction
+}
+
+type Relayer @entity {
+  id: ID! # Relayer address
+  address: Bytes! # Relayer address
+  totalAnchors: BigInt! # Total anchors performed by this relayer
+  firstAnchor: BigInt! # Block number of first anchor
+  lastAnchor: BigInt! # Block number of last anchor
+  totalFeesPaid: BigInt! # Total fees paid by this relayer
+  anchors: [AnchoredEvent!]! @derivedFrom(field: "relayer")
+}
+
+type AssuranceTier @entity {
+  id: ID! # Assurance level (0, 1, 2)
+  level: Int! # Assurance level
+  name: String! # Tier name (EMAIL_DKIM, DID_JWS, TEE_ATTESTATION)
+  totalAnchors: BigInt! # Total anchors at this assurance level
+  anchors: [AnchoredEvent!]! @derivedFrom(field: "assurance")
+}
+
+type ProtocolStats @entity {
+  id: ID! # "protocol"
+  totalAnchors: BigInt! # Total anchors across all relayers
+  totalFeesCollected: BigInt! # Total fees collected
+  uniqueRelayers: BigInt! # Number of unique relayers
+  uniqueSubjects: BigInt! # Number of unique subject tags
+  lastUpdate: BigInt! # Last update timestamp
+}
+
+type SubjectTag @entity {
+  id: ID! # Subject tag hash
+  tag: Bytes! # Subject tag
+  totalAnchors: BigInt! # Total anchors for this subject
+  firstAnchor: BigInt! # Block number of first anchor
+  lastAnchor: BigInt! # Block number of last anchor
+  anchors: [AnchoredEvent!]! @derivedFrom(field: "subjectTag")
+}
+
+type ControllerDID @entity {
+  id: ID! # Controller DID hash
+  didHash: Bytes! # Controller DID hash
+  totalAnchors: BigInt! # Total anchors for this controller
+  firstAnchor: BigInt! # Block number of first anchor
+  lastAnchor: BigInt! # Block number of last anchor
+  anchors: [AnchoredEvent!]! @derivedFrom(field: "controllerDidHash")
+}
+
+type DailyStats @entity {
+  id: ID! # Date string (YYYY-MM-DD)
+  date: String! # Date string
+  anchors: BigInt! # Anchors on this date
+  fees: BigInt! # Fees collected on this date
+  uniqueRelayers: BigInt! # Unique relayers on this date
+  assurance0Anchors: BigInt! # EMAIL_DKIM anchors
+  assurance1Anchors: BigInt! # DID_JWS anchors
+  assurance2Anchors: BigInt! # TEE_ATTESTATION anchors
+}

@@ -1,11 +1,33 @@
 [profile.default]
 src = "src"
-out = "artifacts"
-libs = ["node_modules", "lib"]
+out = "out"
+libs = ["lib"]
+test = "test"
+solc = "0.8.20"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+verbosity = 2
+fuzz = { runs = 1000, max_test_rejects = 65536 }
+invariant = { runs = 256, depth = 15, fail_on_revert = false, call_override = false }
+gas_reports = ["*"]
+gas_reports_ignore = ["forge-std"]
 remappings = [
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "eth-gas-reporter/=node_modules/eth-gas-reporter/",
-    "hardhat/=node_modules/hardhat/",
+    "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+    "forge-std/=lib/forge-std/src/",
 ]
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+
+[etherscan]
+mainnet = { key = "${ETHERSCAN_API_KEY}" }
+base_sepolia = { key = "${BASESCAN_API_KEY}" }
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+int_types = "long"

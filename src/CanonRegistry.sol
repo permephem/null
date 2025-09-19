@@ -5,18 +5,33 @@ import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-contracts/contracts/utils/Pausable.sol";
 import "openzeppelin-contracts/contracts/utils/Address.sol";
+import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @title CanonRegistry
  * @dev Append-only ledger for closure events with privacy-preserving and gas-optimized design
  * @author Null Foundation
  */
-contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
+contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     using Address for address;
 
     // Roles
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
     bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
+
+    // EIP-712 Type Hash for meta-transactions
+    bytes32 public constant ANCHOR_TYPEHASH =
+        keccak256(
+            "Anchor(bytes32 warrantDigest,bytes32 attestationDigest,bytes32 subjectTag,bytes32 controllerDidHash,uint8 assurance,uint256 nonce,uint256 deadline)"
+        );
+
+    // Assurance Tier Policies
+    enum AssuranceTier {
+        EMAIL_DKIM,    // 0: Email DKIM verification
+        DID_JWS,       // 1: DID JWS signature verification
+        TEE_ATTESTATION // 2: Trusted Execution Environment attestation
+    }
 
     // Custom errors
     error InvalidAssuranceLevel(uint8 assurance);
@@ -85,7 +100,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     uint256 public totalAnchors;
     uint256 public totalFeesCollected;
 
-    constructor(address _foundationTreasury, address _implementerTreasury, address _admin) {
+    // Meta-transaction nonces
+    mapping(address => uint256) public nonces;
+
+    constructor(address _foundationTreasury, address _implementerTreasury, address _admin)
+        EIP712("CanonRegistry", "1")
+    {
         if (_foundationTreasury == address(0)) {
             revert ZeroAddress();
         }
@@ -120,20 +140,77 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         bytes32 controllerDidHash,
         uint8 assurance
     ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
-        if (assurance > 2) {
-            revert InvalidAssuranceLevel(assurance);
-        }
+        _validateAssuranceTier(assurance);
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
 
+        _performAnchor(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, msg.sender);
+    }
+
+    /**
+     * @dev Anchor a closure event via meta-transaction (EIP-712)
+     * @param warrantDigest Hash of the warrant
+     * @param attestationDigest Hash of the attestation
+     * @param subjectTag HMAC-based privacy-preserving tag
+     * @param controllerDidHash Hash of controller DID
+     * @param assurance Assurance level (0-2)
+     * @param deadline Meta-transaction deadline
+     * @param v Signature recovery ID
+     * @param r Signature r value
+     * @param s Signature s value
+     */
+    function anchorMeta(
+        bytes32 warrantDigest,
+        bytes32 attestationDigest,
+        bytes32 subjectTag,
+        bytes32 controllerDidHash,
+        uint8 assurance,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external payable whenNotPaused nonReentrant {
+        if (block.timestamp > deadline) {
+            revert("Meta-transaction expired");
+        }
+
+        _validateAssuranceTier(assurance);
+        if (msg.value < baseFee) {
+            revert InsufficientFee(msg.value, baseFee);
+        }
+
+        // Verify meta-transaction signature
+        address signer = _verifyMetaTransaction(
+            warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, deadline, v, r, s
+        );
+
+        // Verify signer has RELAYER_ROLE
+        if (!hasRole(RELAYER_ROLE, signer)) {
+            revert("Invalid relayer signature");
+        }
+
+        _performAnchor(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance, signer);
+    }
+
+    /**
+     * @dev Internal function to perform the actual anchoring logic
+     */
+    function _performAnchor(
+        bytes32 warrantDigest,
+        bytes32 attestationDigest,
+        bytes32 subjectTag,
+        bytes32 controllerDidHash,
+        uint8 assurance,
+        address relayer
+    ) internal {
         // Record the anchor
         _lastAnchor[warrantDigest] = block.number;
         _lastAnchor[attestationDigest] = block.number;
 
-        // Emit optimized event
+        // Emit optimized event with additional indexing fields
         emit Anchored(
-            warrantDigest, attestationDigest, msg.sender, subjectTag, controllerDidHash, assurance, block.timestamp
+            warrantDigest, attestationDigest, relayer, subjectTag, controllerDidHash, assurance, block.timestamp
         );
 
         // Distribute fees using pull payment pattern
@@ -141,6 +218,82 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
 
         totalAnchors++;
         totalFeesCollected += msg.value;
+    }
+
+    /**
+     * @dev Validate assurance tier policy
+     */
+    function _validateAssuranceTier(uint8 assurance) internal pure {
+        if (assurance > 2) {
+            revert InvalidAssuranceLevel(assurance);
+        }
+        // Additional validation can be added here based on assurance tier requirements
+    }
+
+    /**
+     * @dev Verify EIP-712 meta-transaction signature
+     */
+    function _verifyMetaTransaction(
+        bytes32 warrantDigest,
+        bytes32 attestationDigest,
+        bytes32 subjectTag,
+        bytes32 controllerDidHash,
+        uint8 assurance,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal returns (address) {
+        address signer = ECDSA.recover(
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        ANCHOR_TYPEHASH,
+                        warrantDigest,
+                        attestationDigest,
+                        subjectTag,
+                        controllerDidHash,
+                        assurance,
+                        nonces[msg.sender]++,
+                        deadline
+                    )
+                )
+            ),
+            v,
+            r,
+            s
+        );
+
+        return signer;
+    }
+
+    /**
+     * @dev Get the domain separator for EIP-712 meta-transactions
+     */
+    function getDomainSeparator() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
+    /**
+     * @dev Get the current nonce for an address
+     */
+    function getNonce(address account) external view returns (uint256) {
+        return nonces[account];
+    }
+
+    /**
+     * @dev Get assurance tier policy description
+     */
+    function getAssuranceTierPolicy(uint8 assurance) external pure returns (string memory) {
+        if (assurance == 0) {
+            return "EMAIL_DKIM: Email DKIM verification";
+        } else if (assurance == 1) {
+            return "DID_JWS: DID JWS signature verification";
+        } else if (assurance == 2) {
+            return "TEE_ATTESTATION: Trusted Execution Environment attestation";
+        } else {
+            return "INVALID: Unknown assurance tier";
+        }
     }
 
     /**
