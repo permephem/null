@@ -20,12 +20,7 @@ contract MaskSBTTest is Test {
         uint256 timestamp
     );
 
-    event ReceiptBurned(
-        uint256 indexed tokenId,
-        bytes32 indexed receiptHash,
-        address indexed owner,
-        uint256 timestamp
-    );
+    event ReceiptBurned(uint256 indexed tokenId, bytes32 indexed receiptHash, address indexed owner, uint256 timestamp);
 
     event SBTMintingToggled(bool enabled);
     event TransferToggled(bool enabled);
@@ -37,12 +32,8 @@ contract MaskSBTTest is Test {
         rando = makeAddr("rando");
 
         vm.startPrank(owner);
-        maskSBT = new MaskSBT(
-            "Null Protocol Mask Receipts",
-            "MASK",
-            owner
-        );
-        
+        maskSBT = new MaskSBT("Null Protocol Mask Receipts", "MASK", owner);
+
         // Grant minter role
         maskSBT.grantRole(maskSBT.MINTER_ROLE(), minter);
         vm.stopPrank();
@@ -60,7 +51,7 @@ contract MaskSBTTest is Test {
 
     function testMintOnlyWhenEnabled() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(minter);
         vm.expectRevert(MaskSBT.SBTMintingDisabled.selector);
         maskSBT.mintReceipt(user, receiptHash);
@@ -69,7 +60,7 @@ contract MaskSBTTest is Test {
 
     function testMintReceipt() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -77,7 +68,7 @@ contract MaskSBTTest is Test {
         vm.startPrank(minter);
         vm.expectEmit(true, true, true, true);
         emit ReceiptMinted(1, receiptHash, user, minter, block.timestamp);
-        
+
         uint256 tokenId = maskSBT.mintReceipt(user, receiptHash);
         vm.stopPrank();
 
@@ -93,7 +84,7 @@ contract MaskSBTTest is Test {
 
     function testMintToZeroAddress() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -117,7 +108,7 @@ contract MaskSBTTest is Test {
 
     function testOnlyMinterCanMint() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -130,7 +121,7 @@ contract MaskSBTTest is Test {
 
     function testBurnReceipt() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -142,29 +133,27 @@ contract MaskSBTTest is Test {
         vm.startPrank(owner);
         vm.expectEmit(true, true, true, true);
         emit ReceiptBurned(tokenId, receiptHash, user, block.timestamp);
-        
+
         maskSBT.burnReceipt(tokenId);
         vm.stopPrank();
 
         vm.expectRevert();
         maskSBT.ownerOf(tokenId);
-        
+
         assertEq(maskSBT.totalSupply(), 0);
         assertFalse(maskSBT.isReceiptMinted(receiptHash));
     }
 
     function testBurnNonexistentToken() public {
         vm.startPrank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1));
         maskSBT.burnReceipt(1);
         vm.stopPrank();
     }
 
     function testOnlyAdminCanBurn() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -185,7 +174,7 @@ contract MaskSBTTest is Test {
         emit SBTMintingToggled(true);
         maskSBT.toggleSBTMinting(true);
         assertTrue(maskSBT.sbtMintingEnabled());
-        
+
         vm.expectEmit(true, true, true, true);
         emit SBTMintingToggled(false);
         maskSBT.toggleSBTMinting(false);
@@ -206,7 +195,7 @@ contract MaskSBTTest is Test {
         emit TransferToggled(true);
         maskSBT.toggleTransfer(true);
         assertTrue(maskSBT.transferEnabled());
-        
+
         vm.expectEmit(true, true, true, true);
         emit TransferToggled(false);
         maskSBT.toggleTransfer(false);
@@ -223,7 +212,7 @@ contract MaskSBTTest is Test {
 
     function testTransfersDisabledByDefault() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();
@@ -235,16 +224,16 @@ contract MaskSBTTest is Test {
         vm.startPrank(user);
         vm.expectRevert(MaskSBT.TransfersDisabled.selector);
         maskSBT.transferFrom(user, rando, tokenId);
-        
+
         vm.expectRevert(MaskSBT.TransfersDisabled.selector);
         maskSBT.safeTransferFrom(user, rando, tokenId);
-        
+
         vm.expectRevert(MaskSBT.TransfersDisabled.selector);
         maskSBT.safeTransferFrom(user, rando, tokenId, "");
-        
+
         vm.expectRevert(MaskSBT.ApprovalsDisabled.selector);
         maskSBT.approve(rando, tokenId);
-        
+
         vm.expectRevert(MaskSBT.ApprovalsDisabled.selector);
         maskSBT.setApprovalForAll(rando, true);
         vm.stopPrank();
@@ -252,7 +241,7 @@ contract MaskSBTTest is Test {
 
     function testTransfersWhenEnabled() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         maskSBT.toggleTransfer(true);
@@ -273,7 +262,7 @@ contract MaskSBTTest is Test {
 
     function testApprovalsWhenEnabled() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         maskSBT.toggleTransfer(true);
@@ -286,7 +275,7 @@ contract MaskSBTTest is Test {
         vm.startPrank(user);
         maskSBT.approve(rando, tokenId);
         assertEq(maskSBT.getApproved(tokenId), rando);
-        
+
         maskSBT.setApprovalForAll(rando, true);
         assertTrue(maskSBT.isApprovedForAll(user, rando));
         vm.stopPrank();
@@ -296,7 +285,7 @@ contract MaskSBTTest is Test {
         vm.startPrank(owner);
         maskSBT.pause();
         assertTrue(maskSBT.paused());
-        
+
         maskSBT.unpause();
         assertFalse(maskSBT.paused());
         vm.stopPrank();
@@ -311,7 +300,7 @@ contract MaskSBTTest is Test {
 
     function testPausedContractBlocksMinting() public {
         bytes32 receiptHash = keccak256("test-receipt");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         maskSBT.pause();
@@ -324,19 +313,13 @@ contract MaskSBTTest is Test {
     }
 
     function testAccessorsForNonexistentToken() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1));
         maskSBT.getReceiptHash(1);
-        
-        vm.expectRevert(
-            abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1)
-        );
+
+        vm.expectRevert(abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1));
         maskSBT.getMintTimestamp(1);
-        
-        vm.expectRevert(
-            abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1)
-        );
+
+        vm.expectRevert(abi.encodeWithSelector(MaskSBT.NonexistentToken.selector, 1));
         maskSBT.getOriginalMinter(1);
     }
 
@@ -348,7 +331,7 @@ contract MaskSBTTest is Test {
     function testMultipleMints() public {
         bytes32 receiptHash1 = keccak256("receipt1");
         bytes32 receiptHash2 = keccak256("receipt2");
-        
+
         vm.startPrank(owner);
         maskSBT.toggleSBTMinting(true);
         vm.stopPrank();

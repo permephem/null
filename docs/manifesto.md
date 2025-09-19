@@ -135,9 +135,10 @@ Welcome to the age of endings.
 ---
 
 **Null Protocol Foundation**  
-*Null — the placeholder for absence*
+_Null — the placeholder for absence_
 
 **Learn More:**
+
 - Technical Whitepaper: [docs/technical-whitepaper.md](./technical-whitepaper.md)
 - GitHub Repository: [github.com/dansavage815-star/null](https://github.com/dansavage815-star/null)
 - Foundation Website: [nullprotocol.org](https://www.nullprotocol.org)

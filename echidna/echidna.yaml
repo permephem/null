@@ -3,12 +3,12 @@ testMode: property
 testLimit: 10000
 shrinkLimit: 5000
 seqLen: 100
-contractAddr: "0x00a329c0648769A73afAc7F9381E08FB43dBEA72"
-sender: ["0x10000", "0x20000", "0x30000"]
-psender: "0x10000"
+contractAddr: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'
+sender: ['0x10000', '0x20000', '0x30000']
+psender: '0x10000'
 coverage: true
 format: text
-corpusDir: "echidna/corpus"
+corpusDir: 'echidna/corpus'
 buildCache: true
-cryticArgs: ["--compile-force-framework", "foundry"]
-filterFunctions: ["echidna_"]
+cryticArgs: ['--compile-force-framework', 'foundry']
+filterFunctions: ['echidna_']

@@ -29,7 +29,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
 
     // Feature flags
     bool public sbtMintingEnabled = false; // Default OFF for privacy
-    bool public transferEnabled = false;   // SBTs are non-transferable by default
+    bool public transferEnabled = false; // SBTs are non-transferable by default
 
     // Counters
 
@@ -51,21 +51,12 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         uint256 timestamp
     );
 
-    event ReceiptBurned(
-        uint256 indexed tokenId,
-        bytes32 indexed receiptHash,
-        address indexed owner,
-        uint256 timestamp
-    );
+    event ReceiptBurned(uint256 indexed tokenId, bytes32 indexed receiptHash, address indexed owner, uint256 timestamp);
 
     event SBTMintingToggled(bool enabled);
     event TransferToggled(bool enabled);
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address admin
-    ) ERC721(name, symbol) {
+    constructor(string memory name, string memory symbol, address admin) ERC721(name, symbol) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
         _grantRole(MINTER_ROLE, admin);
@@ -77,10 +68,13 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @param receiptHash Hash of the receipt
      * @return tokenId The minted token ID
      */
-    function mintReceipt(
-        address to,
-        bytes32 receiptHash
-    ) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant returns (uint256) {
+    function mintReceipt(address to, bytes32 receiptHash)
+        external
+        onlyRole(MINTER_ROLE)
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
         if (!sbtMintingEnabled) {
             revert SBTMintingDisabled();
         }
@@ -95,7 +89,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         uint256 tokenId = _tokenIdCounter;
 
         _safeMint(to, tokenId);
-        
+
         receiptHashes[tokenId] = receiptHash;
         mintTimestamps[tokenId] = block.timestamp;
         originalMinter[tokenId] = msg.sender;
@@ -118,13 +112,13 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         }
 
         bytes32 receiptHash = receiptHashes[tokenId];
-        
+
         _burn(tokenId);
-        
+
         delete receiptHashes[tokenId];
         delete mintTimestamps[tokenId];
         delete originalMinter[tokenId];
-        
+
         totalBurned++;
 
         emit ReceiptBurned(tokenId, receiptHash, owner, block.timestamp);
@@ -210,13 +204,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Override transfer functions to enforce SBT behavior
      */
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal override returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         address from = _ownerOf(tokenId);
-        
+
         // Allow minting and burning
         if (from == address(0) || to == address(0)) {
             return super._update(to, tokenId, auth);
@@ -263,12 +253,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Supports interface
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

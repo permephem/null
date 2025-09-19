@@ -26,13 +26,15 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     error InvalidTreasuryAddress();
 
     // Events
-    event Anchored(
+    // Hash instead of string for gas optimization
+    // Assurance level (0-2)
+    event Anchored( // HMAC-based privacy-preserving tag
         bytes32 indexed warrantDigest,
         bytes32 indexed attestationDigest,
         address indexed relayer,
-        bytes32 subjectTag,           // HMAC-based privacy-preserving tag
-        bytes32 controllerDidHash,    // Hash instead of string for gas optimization
-        uint8 assurance,              // Assurance level (0-2)
+        bytes32 subjectTag,
+        bytes32 controllerDidHash,
+        uint8 assurance,
         uint256 timestamp
     );
 
@@ -41,8 +43,8 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         bytes32 indexed warrantHash,
         bytes32 indexed subjectHandleHash,
         bytes32 indexed enterpriseHash,
-        string  enterpriseId,
-        string  warrantId,
+        string enterpriseId,
+        string warrantId,
         address submitter,
         uint256 ts
     );
@@ -51,8 +53,8 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         bytes32 indexed attestationHash,
         bytes32 indexed warrantHash,
         bytes32 indexed enterpriseHash,
-        string  enterpriseId,
-        string  attestationId,
+        string enterpriseId,
+        string attestationId,
         address submitter,
         uint256 ts
     );
@@ -69,12 +71,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     // Storage
     mapping(bytes32 => uint256) private _lastAnchor;
     mapping(address => uint256) public balances;
-    
+
     // Fee configuration
     uint256 public constant FEE_DENOMINATOR = 13;
     uint256 public constant FOUNDATION_FEE = 1; // 1/13 to Foundation
     uint256 public constant IMPLEMENTER_FEE = 12; // 12/13 to implementer
-    
+
     uint256 public baseFee = 0.001 ether; // Base fee in ETH
     address public foundationTreasury;
     address public implementerTreasury;
@@ -83,11 +85,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     uint256 public totalAnchors;
     uint256 public totalFeesCollected;
 
-    constructor(
-        address _foundationTreasury,
-        address _implementerTreasury,
-        address _admin
-    ) {
+    constructor(address _foundationTreasury, address _implementerTreasury, address _admin) {
         if (_foundationTreasury == address(0)) {
             revert ZeroAddress();
         }
@@ -97,12 +95,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (_admin == address(0)) {
             revert ZeroAddress();
         }
-        
+
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(RELAYER_ROLE, _admin);
         _grantRole(TREASURY_ROLE, _foundationTreasury);
         _grantRole(TREASURY_ROLE, _implementerTreasury);
-        
+
         foundationTreasury = _foundationTreasury;
         implementerTreasury = _implementerTreasury;
     }
@@ -128,25 +126,19 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
-        
+
         // Record the anchor
         _lastAnchor[warrantDigest] = block.number;
         _lastAnchor[attestationDigest] = block.number;
-        
+
         // Emit optimized event
         emit Anchored(
-            warrantDigest,
-            attestationDigest,
-            msg.sender,
-            subjectTag,
-            controllerDidHash,
-            assurance,
-            block.timestamp
+            warrantDigest, attestationDigest, msg.sender, subjectTag, controllerDidHash, assurance, block.timestamp
         );
-        
+
         // Distribute fees using pull payment pattern
         _distributeFees(msg.value);
-        
+
         totalAnchors++;
         totalFeesCollected += msg.value;
     }
@@ -164,19 +156,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
-        
+
         _lastAnchor[warrantHash] = block.number;
-        
+
         emit WarrantAnchored(
-            warrantHash,
-            subjectHandleHash,
-            enterpriseHash,
-            enterpriseId,
-            warrantId,
-            msg.sender,
-            block.timestamp
+            warrantHash, subjectHandleHash, enterpriseHash, enterpriseId, warrantId, msg.sender, block.timestamp
         );
-        
+
         _distributeFees(msg.value);
         totalAnchors++;
         totalFeesCollected += msg.value;
@@ -195,19 +181,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
-        
+
         _lastAnchor[attestationHash] = block.number;
-        
+
         emit AttestationAnchored(
-            attestationHash,
-            warrantHash,
-            enterpriseHash,
-            enterpriseId,
-            attestationId,
-            msg.sender,
-            block.timestamp
+            attestationHash, warrantHash, enterpriseHash, enterpriseId, attestationId, msg.sender, block.timestamp
         );
-        
+
         _distributeFees(msg.value);
         totalAnchors++;
         totalFeesCollected += msg.value;
@@ -216,27 +196,21 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Legacy receipt anchoring (deprecated)
      */
-    function anchorReceipt(
-        bytes32 receiptHash,
-        bytes32 warrantHash,
-        bytes32 attestationHash,
-        address subjectWallet
-    ) external payable onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
+    function anchorReceipt(bytes32 receiptHash, bytes32 warrantHash, bytes32 attestationHash, address subjectWallet)
+        external
+        payable
+        onlyRole(RELAYER_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
-        
+
         _lastAnchor[receiptHash] = block.number;
-        
-        emit ReceiptAnchored(
-            receiptHash,
-            warrantHash,
-            attestationHash,
-            subjectWallet,
-            msg.sender,
-            block.timestamp
-        );
-        
+
+        emit ReceiptAnchored(receiptHash, warrantHash, attestationHash, subjectWallet, msg.sender, block.timestamp);
+
         _distributeFees(msg.value);
         totalAnchors++;
         totalFeesCollected += msg.value;
@@ -250,7 +224,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (amount == 0) {
             revert NoBalance();
         }
-        
+
         balances[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
     }
@@ -279,14 +253,14 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     /**
      * @dev Set treasury addresses (admin only)
      */
-    function setTreasuries(
-        address _foundationTreasury,
-        address _implementerTreasury
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTreasuries(address _foundationTreasury, address _implementerTreasury)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         if (_foundationTreasury == address(0) || _implementerTreasury == address(0)) {
             revert InvalidTreasuryAddress();
         }
-        
+
         foundationTreasury = _foundationTreasury;
         implementerTreasury = _implementerTreasury;
     }
@@ -311,7 +285,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     function _distributeFees(uint256 totalFee) internal {
         uint256 foundationAmount = (totalFee * FOUNDATION_FEE) / FEE_DENOMINATOR;
         uint256 implementerAmount = (totalFee * IMPLEMENTER_FEE) / FEE_DENOMINATOR;
-        
+
         balances[foundationTreasury] += foundationAmount;
         balances[implementerTreasury] += implementerAmount;
     }
@@ -324,7 +298,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (balance == 0) {
             revert NoBalance();
         }
-        
+
         payable(msg.sender).transfer(balance);
     }
 

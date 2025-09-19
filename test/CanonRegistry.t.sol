@@ -31,12 +31,8 @@ contract CanonRegistryTest is Test {
         implementerTreasury = makeAddr("implementerTreasury");
 
         vm.startPrank(owner);
-        canonRegistry = new CanonRegistry(
-            foundationTreasury,
-            implementerTreasury,
-            owner
-        );
-        
+        canonRegistry = new CanonRegistry(foundationTreasury, implementerTreasury, owner);
+
         // Grant relayer role
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayer);
         vm.stopPrank();
@@ -74,22 +70,10 @@ contract CanonRegistryTest is Test {
 
         vm.expectEmit(true, true, true, true);
         emit Anchored(
-            warrantDigest,
-            attestationDigest,
-            relayer,
-            subjectTag,
-            controllerDidHash,
-            assurance,
-            block.timestamp
+            warrantDigest, attestationDigest, relayer, subjectTag, controllerDidHash, assurance, block.timestamp
         );
 
-        canonRegistry.anchor{value: fee}(
-            warrantDigest,
-            attestationDigest,
-            subjectTag,
-            controllerDidHash,
-            assurance
-        );
+        canonRegistry.anchor{value: fee}(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance);
 
         vm.stopPrank();
 
@@ -112,20 +96,10 @@ contract CanonRegistryTest is Test {
         vm.deal(relayer, insufficientFee);
         vm.startPrank(relayer);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CanonRegistry.InsufficientFee.selector,
-                insufficientFee,
-                0.001 ether
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CanonRegistry.InsufficientFee.selector, insufficientFee, 0.001 ether));
 
         canonRegistry.anchor{value: insufficientFee}(
-            warrantDigest,
-            attestationDigest,
-            subjectTag,
-            controllerDidHash,
-            assurance
+            warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance
         );
 
         vm.stopPrank();
@@ -142,19 +116,10 @@ contract CanonRegistryTest is Test {
         vm.deal(relayer, fee);
         vm.startPrank(relayer);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CanonRegistry.InvalidAssuranceLevel.selector,
-                invalidAssurance
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CanonRegistry.InvalidAssuranceLevel.selector, invalidAssurance));
 
         canonRegistry.anchor{value: fee}(
-            warrantDigest,
-            attestationDigest,
-            subjectTag,
-            controllerDidHash,
-            invalidAssurance
+            warrantDigest, attestationDigest, subjectTag, controllerDidHash, invalidAssurance
         );
 
         vm.stopPrank();
@@ -172,13 +137,7 @@ contract CanonRegistryTest is Test {
         vm.startPrank(user);
 
         vm.expectRevert();
-        canonRegistry.anchor{value: fee}(
-            warrantDigest,
-            attestationDigest,
-            subjectTag,
-            controllerDidHash,
-            assurance
-        );
+        canonRegistry.anchor{value: fee}(warrantDigest, attestationDigest, subjectTag, controllerDidHash, assurance);
 
         vm.stopPrank();
     }
@@ -186,14 +145,10 @@ contract CanonRegistryTest is Test {
     function testFeeDistribution() public {
         uint256 fee = 0.001 ether;
         vm.deal(relayer, fee);
-        
+
         vm.startPrank(relayer);
         canonRegistry.anchor{value: fee}(
-            keccak256("warrant"),
-            keccak256("attestation"),
-            keccak256("subject"),
-            keccak256("controller"),
-            1
+            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
         );
         vm.stopPrank();
 
@@ -208,14 +163,10 @@ contract CanonRegistryTest is Test {
     function testWithdraw() public {
         uint256 fee = 0.001 ether;
         vm.deal(relayer, fee);
-        
+
         vm.startPrank(relayer);
         canonRegistry.anchor{value: fee}(
-            keccak256("warrant"),
-            keccak256("attestation"),
-            keccak256("subject"),
-            keccak256("controller"),
-            1
+            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
         );
         vm.stopPrank();
 
@@ -239,7 +190,7 @@ contract CanonRegistryTest is Test {
 
     function testSetBaseFee() public {
         uint256 newFee = 0.002 ether;
-        
+
         vm.startPrank(owner);
         canonRegistry.setBaseFee(newFee);
         vm.stopPrank();
@@ -249,7 +200,7 @@ contract CanonRegistryTest is Test {
 
     function testOnlyAdminCanSetBaseFee() public {
         uint256 newFee = 0.002 ether;
-        
+
         vm.startPrank(user);
         vm.expectRevert();
         canonRegistry.setBaseFee(newFee);
@@ -259,7 +210,7 @@ contract CanonRegistryTest is Test {
     function testSetTreasuries() public {
         address newFoundation = makeAddr("newFoundation");
         address newImplementer = makeAddr("newImplementer");
-        
+
         vm.startPrank(owner);
         canonRegistry.setTreasuries(newFoundation, newImplementer);
         vm.stopPrank();
@@ -270,7 +221,7 @@ contract CanonRegistryTest is Test {
 
     function testSetTreasuriesRejectsZeroAddress() public {
         address newFoundation = makeAddr("newFoundation");
-        
+
         vm.startPrank(owner);
         vm.expectRevert(CanonRegistry.InvalidTreasuryAddress.selector);
         canonRegistry.setTreasuries(address(0), newFoundation);
@@ -281,7 +232,7 @@ contract CanonRegistryTest is Test {
         vm.startPrank(owner);
         canonRegistry.pause();
         assertTrue(canonRegistry.paused());
-        
+
         canonRegistry.unpause();
         assertFalse(canonRegistry.paused());
         vm.stopPrank();
@@ -301,15 +252,11 @@ contract CanonRegistryTest is Test {
 
         uint256 fee = 0.001 ether;
         vm.deal(relayer, fee);
-        
+
         vm.startPrank(relayer);
         vm.expectRevert();
         canonRegistry.anchor{value: fee}(
-            keccak256("warrant"),
-            keccak256("attestation"),
-            keccak256("subject"),
-            keccak256("controller"),
-            1
+            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
         );
         vm.stopPrank();
     }
@@ -317,14 +264,10 @@ contract CanonRegistryTest is Test {
     function testEmergencyWithdraw() public {
         uint256 fee = 0.001 ether;
         vm.deal(relayer, fee);
-        
+
         vm.startPrank(relayer);
         canonRegistry.anchor{value: fee}(
-            keccak256("warrant"),
-            keccak256("attestation"),
-            keccak256("subject"),
-            keccak256("controller"),
-            1
+            keccak256("warrant"), keccak256("attestation"), keccak256("subject"), keccak256("controller"), 1
         );
         vm.stopPrank();
 
@@ -348,7 +291,7 @@ contract CanonRegistryTest is Test {
     function testReceive() public {
         uint256 amount = 1 ether;
         vm.deal(user, amount);
-        
+
         vm.startPrank(user);
         (bool success,) = address(canonRegistry).call{value: amount}("");
         assertTrue(success);

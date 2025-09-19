@@ -8,12 +8,14 @@
 ## Foundry Installation
 
 ### macOS/Linux
+
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 ```
 
 ### Windows
+
 ```bash
 # Install via Git Bash or WSL
 curl -L https://foundry.paradigm.xyz | bash
@@ -27,18 +29,21 @@ foundryup
 Add Foundry to your shell profile:
 
 **For zsh (macOS default):**
+
 ```bash
 echo 'export PATH="$PATH:$HOME/.foundry/bin"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
 **For bash:**
+
 ```bash
 echo 'export PATH="$PATH:$HOME/.foundry/bin"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 ### 2. Verify Installation
+
 ```bash
 forge --version
 cast --version
@@ -48,6 +53,7 @@ anvil --version
 ## Project Setup
 
 1. **Clone and install dependencies:**
+
 ```bash
 git clone <repository-url>
 cd null-protocol
@@ -55,16 +61,19 @@ npm install
 ```
 
 2. **Install Foundry dependencies:**
+
 ```bash
 forge install
 ```
 
 3. **Build contracts:**
+
 ```bash
 npm run compile
 ```
 
 4. **Run tests:**
+
 ```bash
 npm run test:contracts
 ```
@@ -90,6 +99,7 @@ npm run test:contracts
 If you get `sh: 1: forge: not found` when running npm scripts:
 
 1. **Check if Foundry is installed:**
+
 ```bash
 which forge
 ```
@@ -99,6 +109,7 @@ which forge
 3. **Restart your terminal** or run `source ~/.zshrc` (or `~/.bashrc`)
 
 4. **Verify PATH includes Foundry:**
+
 ```bash
 echo $PATH | grep foundry
 ```
@@ -110,21 +121,25 @@ The CI/CD pipeline automatically installs Foundry, so no additional setup is nee
 ## Development Workflow
 
 1. **Start local blockchain:**
+
 ```bash
 npm run anvil
 ```
 
 2. **In another terminal, run tests:**
+
 ```bash
 npm run test:contracts
 ```
 
 3. **Deploy to local network:**
+
 ```bash
 npm run deploy:local
 ```
 
 4. **Format and lint before committing:**
+
 ```bash
 npm run format
 npm run lint

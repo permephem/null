@@ -22,8 +22,8 @@ interface ICanonRegistry {
         bytes32 indexed warrantHash,
         bytes32 indexed subjectHandleHash,
         bytes32 indexed enterpriseHash,
-        string  enterpriseId,
-        string  warrantId,
+        string enterpriseId,
+        string warrantId,
         address submitter,
         uint256 ts
     );
@@ -32,8 +32,8 @@ interface ICanonRegistry {
         bytes32 indexed attestationHash,
         bytes32 indexed warrantHash,
         bytes32 indexed enterpriseHash,
-        string  enterpriseId,
-        string  attestationId,
+        string enterpriseId,
+        string attestationId,
         address submitter,
         uint256 ts
     );
@@ -72,12 +72,9 @@ interface ICanonRegistry {
         string calldata attestationId
     ) external payable;
 
-    function anchorReceipt(
-        bytes32 receiptHash,
-        bytes32 warrantHash,
-        bytes32 attestationHash,
-        address subjectWallet
-    ) external payable;
+    function anchorReceipt(bytes32 receiptHash, bytes32 warrantHash, bytes32 attestationHash, address subjectWallet)
+        external
+        payable;
 
     function lastAnchorBlock(bytes32 hash) external view returns (uint256);
     function isAnchored(bytes32 hash) external view returns (bool);

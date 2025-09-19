@@ -19,12 +19,8 @@ contract CanonRegistryInvariantTest is Test {
         implementerTreasury = makeAddr("implementerTreasury");
 
         vm.startPrank(owner);
-        canonRegistry = new CanonRegistry(
-            foundationTreasury,
-            implementerTreasury,
-            owner
-        );
-        
+        canonRegistry = new CanonRegistry(foundationTreasury, implementerTreasury, owner);
+
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), relayer);
         vm.stopPrank();
     }
@@ -36,11 +32,8 @@ contract CanonRegistryInvariantTest is Test {
         uint256 contractBalance = address(canonRegistry).balance;
         uint256 foundationBalance = canonRegistry.balances(foundationTreasury);
         uint256 implementerBalance = canonRegistry.balances(implementerTreasury);
-        
-        assertEq(
-            contractBalance + foundationBalance + implementerBalance,
-            canonRegistry.totalFeesCollected()
-        );
+
+        assertEq(contractBalance + foundationBalance + implementerBalance, canonRegistry.totalFeesCollected());
     }
 
     function invariant_feeDistributionRatio() public {
@@ -48,7 +41,7 @@ contract CanonRegistryInvariantTest is Test {
         // Foundation gets 1/13, implementer gets 12/13
         uint256 foundationBalance = canonRegistry.balances(foundationTreasury);
         uint256 implementerBalance = canonRegistry.balances(implementerTreasury);
-        
+
         if (foundationBalance > 0 || implementerBalance > 0) {
             // Calculate the ratio (implementer should be 12x foundation)
             uint256 ratio = implementerBalance * 13 / foundationBalance;

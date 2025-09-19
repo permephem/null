@@ -1,4 +1,5 @@
 Null Protocol: A Canon for Endings
+
 1. Executive Summary
 
 Digital culture has standardized beginnings — minting, creation, exchange — but not endings.
@@ -22,7 +23,7 @@ So too in the digital sphere. Deletion today carries meaning in law and practice
 Null does not perform deletion. Custodians remain responsible for destruction. What Null verifies is the proclamation of deletion — the Seal, the Marker, the Canon. It transforms a private act into a public record, bearing witness so that absence is not only claimed but inscribed.
 
 3. Why Now: The Convergence
-3.1 Regulatory Convergence
+   3.1 Regulatory Convergence
 
 GDPR (EU): Enforces the “right to be forgotten.”
 
@@ -71,7 +72,7 @@ Obol — one part in thirteen surrendered in NULL tokens, proving that closure r
 Together, these primitives form the digital death certificate — inaugurating the first canon of memory for digital life.
 
 5. The Two Lanes
-5.1 Art & Culture Lane
+   5.1 Art & Culture Lane
 
 Governs symbolic assets: artworks, archives, cultural tokens.
 
@@ -126,7 +127,7 @@ Provides fiat → NULL conversion, SDK integration.
 Retains 12/13 of revenue; cannot alter surrender rule.
 
 7. Token Economics
-7.1 Dual-Layer Payment System
+   7.1 Dual-Layer Payment System
 
 Enterprises: Pay in fiat/ETH.
 

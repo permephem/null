@@ -20,7 +20,7 @@ The protocol operates through three core components: **Null Warrants** (enforcea
 **MVP Implementation Complete (v1.0.0)**
 
 - ✅ **Smart Contracts:** CanonRegistry and MaskSBT deployed and tested (338 + 275 lines)
-- ✅ **Relayer System:** Full TypeScript implementation with validation (2000+ lines) 
+- ✅ **Relayer System:** Full TypeScript implementation with validation (2000+ lines)
 - ✅ **JSON Schemas:** Complete v0.2 schemas for warrants, attestations, and receipts
 - ✅ **Integration Tests:** 22 contract tests + 6 relayer tests passing
 - ✅ **CI/CD Pipeline:** GitHub Actions with automated testing and deployment
@@ -31,7 +31,7 @@ The protocol operates through three core components: **Null Warrants** (enforcea
 ## Table of Contents
 
 1. [System Architecture](#1-system-architecture)
-2. [Smart Contract Specifications](#2-smart-contract-specifications)  
+2. [Smart Contract Specifications](#2-smart-contract-specifications)
 3. [Data Structures & Schemas](#3-data-structures--schemas)
 4. [Relayer System](#4-relayer-system)
 5. [Cryptographic Primitives](#5-cryptographic-primitives)
@@ -70,21 +70,25 @@ The Null Protocol implements a three-tier architecture with role-based access co
 ### 1.2 Component Responsibilities
 
 **User Layer:**
+
 - DID-based authentication and warrant signing
 - Optional soulbound token claiming
 - Privacy-preserving subject identification
 
-**Enterprise Layer:**  
+**Enterprise Layer:**
+
 - Null Engine commercial implementation
 - RESTful API endpoints for integration
 - Automated compliance monitoring
 
 **Blockchain Layer:**
+
 - Canon Registry: Immutable deletion event ledger
-- Mask SBT: Optional soulbound deletion certificates  
+- Mask SBT: Optional soulbound deletion certificates
 - Indexed events for efficient querying
 
 **Relayer System:**
+
 - Cryptographic validation (JWS/DID signatures)
 - Workflow orchestration between layers
 - Real-time monitoring and compliance tracking
@@ -120,7 +124,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     address public implementerTreasury;   // 12/13 of fees
     uint256 public totalAnchors;
     uint256 public totalFeesCollected;
-    
+
     mapping(bytes32 => uint256) private _lastAnchor;
     mapping(address => uint256) private _pendingWithdrawals;
 
@@ -152,20 +156,20 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (msg.value < baseFee) {
             revert InsufficientFee(msg.value, baseFee);
         }
-        
+
         // Record anchors
         _lastAnchor[warrantDigest] = block.number;
         _lastAnchor[attestationDigest] = block.number;
-        
+
         // Emit event
         emit Anchored(
             warrantDigest, attestationDigest, msg.sender,
             subjectTag, controllerDidHash, assurance, block.timestamp
         );
-        
+
         // Distribute fees (Obol model: 12/13 to implementer, 1/13 to foundation)
         _distributeFees(msg.value);
-        
+
         totalAnchors++;
         totalFeesCollected += msg.value;
     }
@@ -173,7 +177,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     function _distributeFees(uint256 amount) internal {
         uint256 foundationShare = amount / 13;
         uint256 implementerShare = amount - foundationShare;
-        
+
         _pendingWithdrawals[foundationTreasury] += foundationShare;
         _pendingWithdrawals[implementerTreasury] += implementerShare;
     }
@@ -182,7 +186,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
     function withdraw() external nonReentrant {
         uint256 amount = _pendingWithdrawals[msg.sender];
         if (amount == 0) revert NoBalance();
-        
+
         _pendingWithdrawals[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "Withdrawal failed");
@@ -206,10 +210,10 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     // Feature flags - privacy-first design
     bool public sbtMintingEnabled = false;  // OFF by default
     bool public transfersEnabled = false;   // Soulbound
-    
+
     mapping(uint256 => bytes32) public receiptHashes;
     mapping(uint256 => uint256) public mintTimestamps;
-    
+
     event ReceiptMinted(
         uint256 indexed tokenId,
         bytes32 indexed receiptHash,
@@ -218,19 +222,19 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         uint256 timestamp
     );
 
-    function mintReceipt(address to, bytes32 receiptHash) 
-        external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant 
+    function mintReceipt(address to, bytes32 receiptHash)
+        external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant
         returns (uint256) {
-        
+
         if (!sbtMintingEnabled) revert SBTMintingDisabled();
-        
+
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
         _safeMint(to, tokenId);
-        
+
         receiptHashes[tokenId] = receiptHash;
         mintTimestamps[tokenId] = block.timestamp;
-        
+
         emit ReceiptMinted(tokenId, receiptHash, to, msg.sender, block.timestamp);
         return tokenId;
     }
@@ -239,7 +243,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     function transferFrom(address, address, uint256) public pure override {
         revert TransfersDisabled();
     }
-    
+
     function approve(address, uint256) public pure override {
         revert ApprovalsDisabled();
     }
@@ -258,20 +262,20 @@ Current implementation with DID support and modern cryptographic algorithms:
 
 ```typescript
 export const NullWarrantSchema = z.object({
-  type: z.literal('NullWarrant@v0.2'),        // CURRENT VERSION
+  type: z.literal('NullWarrant@v0.2'), // CURRENT VERSION
   warrant_id: z.string(),
   enterprise_id: z.string(),
-  subject: z.string(),                        // DID or identifier
-  scope: z.array(z.string()),                 // Data categories
-  jurisdiction: z.string(),                   // Legal jurisdiction
-  legal_basis: z.string(),                    // GDPR, CCPA, etc.
-  issued_at: z.string(),                      // ISO timestamp
+  subject: z.string(), // DID or identifier
+  scope: z.array(z.string()), // Data categories
+  jurisdiction: z.string(), // Legal jurisdiction
+  legal_basis: z.string(), // GDPR, CCPA, etc.
+  issued_at: z.string(), // ISO timestamp
   expires_at: z.string(),
   return_channels: z.array(z.string()),
-  nonce: z.string(),                          // Replay protection
-  
+  nonce: z.string(), // Replay protection
+
   signature: z.object({
-    alg: z.enum(['ed25519', 'secp256k1', 'p256']),  // UPDATED ALGORITHMS
+    alg: z.enum(['ed25519', 'secp256k1', 'p256']), // UPDATED ALGORITHMS
     kid: z.string(),
     sig: z.string(),
     type: z.string().optional(),
@@ -279,7 +283,7 @@ export const NullWarrantSchema = z.object({
     verificationMethod: z.string().optional(),
     proofValue: z.string().optional(),
   }),
-  
+
   // JWT compatibility
   aud: z.string(),
   jti: z.string(),
@@ -296,22 +300,22 @@ export const NullWarrantSchema = z.object({
 
 ```typescript
 export const DeletionAttestationSchema = z.object({
-  type: z.literal('DeletionAttestation@v0.2'),  // CURRENT VERSION
+  type: z.literal('DeletionAttestation@v0.2'), // CURRENT VERSION
   attestation_id: z.string(),
   warrant_id: z.string(),
   enterprise_id: z.string(),
-  subject_handle: z.string(),                   // Privacy-preserving identifier
+  subject_handle: z.string(), // Privacy-preserving identifier
   status: z.enum(['deleted', 'not_found', 'denied']),
   completed_at: z.string(),
   evidence_hash: z.string(),
-  
+
   signature: z.object({
     alg: z.enum(['ed25519', 'secp256k1', 'p256']),
     kid: z.string(),
     sig: z.string(),
     // ... additional fields
   }),
-  
+
   deletion_method: z.string(),
   retention_period: z.string().optional(),
   exceptions: z.array(z.string()),
@@ -342,18 +346,18 @@ export class RelayerService {
     try {
       // 1. Validate warrant (schema + signature)
       await this.validateWarrant(warrant);
-      
+
       // 2. Execute deletion with enterprise
       const attestation = await this.executeWarrant(warrant);
-      
+
       // 3. Anchor to blockchain via Canon Registry
       const txHash = await this.canonService.anchorWarrant(warrant, attestation);
-      
+
       // 4. Optional SBT minting
       if (warrant.receipt_requested) {
         await this.sbtService.mintReceipt(warrant, attestation);
       }
-      
+
       return { success: true, txHash, attestation };
     } catch (error) {
       return this.handleError(error, warrant);
@@ -363,11 +367,11 @@ export class RelayerService {
   private async validateWarrant(warrant: NullWarrant): Promise<void> {
     // Schema validation using Zod
     NullWarrantSchema.parse(warrant);
-    
+
     // Cryptographic signature verification
     const isValid = await this.cryptoService.verifyJWS(warrant.signature);
     if (!isValid) throw new Error('Invalid warrant signature');
-    
+
     // DID resolution and verification
     await this.cryptoService.verifyDID(warrant.subject);
   }
@@ -390,17 +394,17 @@ export class CanonService {
     const attestationDigest = this.cryptoService.hashAttestation(attestation);
     const subjectTag = this.cryptoService.generateSubjectTag(warrant.subject);
     const controllerDidHash = ethers.keccak256(ethers.toUtf8Bytes(warrant.subject));
-    
+
     // Call CURRENT unified anchor function
     const tx = await this.contract.anchor(
       warrantDigest,
-      attestationDigest, 
+      attestationDigest,
       subjectTag,
       controllerDidHash,
       warrant.assurance_level || 1,
-      { value: ethers.parseEther("0.001") }  // baseFee
+      { value: ethers.parseEther('0.001') } // baseFee
     );
-    
+
     await tx.wait();
     return tx.hash;
   }
@@ -430,7 +434,7 @@ export class CryptoService {
     switch (signature.alg) {
       case 'ed25519':
         return await this.verifyEd25519(signature, payload);
-      case 'secp256k1': 
+      case 'secp256k1':
         return await this.verifySecp256k1(signature, payload);
       case 'p256':
         return await this.verifyP256(signature, payload);
@@ -464,11 +468,11 @@ export class CryptoService {
 **Current REST API endpoints:**
 
 ```typescript
-POST /api/v1/warrants          // Submit deletion warrant
-GET  /api/v1/warrants/{id}     // Check warrant status
-POST /api/v1/attestations      // Submit deletion attestation  
-GET  /api/v1/receipts/{id}     // Retrieve deletion receipt
-POST /api/v1/verify            // Verify deletion proof
+POST / api / v1 / warrants; // Submit deletion warrant
+GET / api / v1 / warrants / { id }; // Check warrant status
+POST / api / v1 / attestations; // Submit deletion attestation
+GET / api / v1 / receipts / { id }; // Retrieve deletion receipt
+POST / api / v1 / verify; // Verify deletion proof
 ```
 
 ### 6.2 Data Broker Negative Registry
@@ -477,11 +481,7 @@ POST /api/v1/verify            // Verify deletion proof
 
 ```typescript
 // Data broker workflow
-const identifierHashes = [
-  blake3.hash(email),
-  blake3.hash(phone), 
-  blake3.hash(name + address)
-];
+const identifierHashes = [blake3.hash(email), blake3.hash(phone), blake3.hash(name + address)];
 
 // Query Canon Registry for opt-outs
 if (await canonRegistry.checkOptOut(identifierHashes)) {
@@ -554,6 +554,7 @@ await ingestData(scrapedData);
 ### 9.1 Smart Contract Addresses
 
 **Testnet (Base Sepolia):**
+
 - CanonRegistry: `[Deployed via CI/CD]`
 - MaskSBT: `[Deployed via CI/CD]`
 
@@ -620,6 +621,7 @@ The Null Protocol v1.1 represents a **production-ready technical implementation*
 ---
 
 **Technical Resources:**
+
 - **Repository**: [github.com/dansavage815-star/null](https://github.com/dansavage815-star/null)
 - **Documentation**: [Complete docs suite](./README.md)
 - **API Reference**: [Integration guides](./api/)
