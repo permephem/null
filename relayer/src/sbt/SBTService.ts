@@ -80,4 +80,21 @@ export class SBTService {
       throw error;
     }
   }
+
+  async isReceiptMinted(receiptHash: string): Promise<boolean> {
+    try {
+      if (!this.contract) {
+        return false;
+      }
+
+      return await this.contract.isReceiptMinted(receiptHash);
+    } catch (error) {
+      logger.error('Failed to check if receipt is minted', { receiptHash, error });
+      return false;
+    }
+  }
+
+  getContract(): MaskSBT {
+    return this.contract;
+  }
 }

@@ -20,6 +20,10 @@ export class CanonService {
     this.contract = CanonRegistry__factory.connect(config.contractAddress, this.wallet);
   }
 
+  getContract(): CanonRegistry {
+    return this.contract;
+  }
+
   async anchorWarrant(
     warrantHash: string,
     subjectHandleHash: string,

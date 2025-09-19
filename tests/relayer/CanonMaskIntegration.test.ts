@@ -3,8 +3,8 @@
  * Tests the integration between Canon Registry events and Mask SBT minting
  */
 
-import { ethers } from 'ethers';
-import { CanonMaskIntegration, CanonMaskIntegrationConfig } from '../../relayer/src/services/CanonMaskIntegration';
+import { solidityPacked, keccak256 } from 'ethers';
+import { CanonMaskIntegration, type CanonMaskIntegrationConfig } from '../../relayer/src/services/CanonMaskIntegration';
 import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 
@@ -69,15 +69,12 @@ describe('CanonMaskIntegration', () => {
       const attestationDigest = '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
 
       // Calculate expected tokenId
-      const combined = ethers.utils.solidityPack(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
-      const expectedTokenId = ethers.utils.keccak256(combined);
+      const combined = solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
+      const expectedTokenId = keccak256(combined);
 
       // Mock the manual mint function to test tokenId calculation
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
-      mockSBTService.mintReceipt.mockResolvedValue({
-        hash: '0xtest',
-        wait: jest.fn().mockResolvedValue({}),
-      } as any);
+      mockSBTService.mintReceipt.mockResolvedValue('0xtest');
 
       const result = await integration.manualMintForCanonEvent(
         warrantDigest,
@@ -96,10 +93,7 @@ describe('CanonMaskIntegration', () => {
       const recipient = '0xrecipient';
 
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
-      mockSBTService.mintReceipt.mockResolvedValue({
-        hash: '0xtest',
-        wait: jest.fn().mockResolvedValue({}),
-      } as any);
+      mockSBTService.mintReceipt.mockResolvedValue('0xtest');
 
       const result = await integration.manualMintForCanonEvent(
         warrantDigest,
@@ -117,8 +111,8 @@ describe('CanonMaskIntegration', () => {
       const attestationDigest = '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
       const recipient = '0xrecipient';
 
-      const combined = ethers.utils.solidityPack(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
-      const tokenId = ethers.utils.keccak256(combined);
+      const combined = solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
+      const tokenId = keccak256(combined);
 
       mockSBTService.isReceiptMinted.mockResolvedValue(true);
 
@@ -143,10 +137,7 @@ describe('CanonMaskIntegration', () => {
       };
 
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
-      mockSBTService.mintReceipt.mockResolvedValue({
-        hash: '0xtest',
-        wait: jest.fn().mockResolvedValue({}),
-      } as any);
+      mockSBTService.mintReceipt.mockResolvedValue('0xtest');
 
       // Simulate event emission
       const eventHandler = mockContract.on.mock.calls[0][1];
