@@ -26,7 +26,7 @@ contract DeployScript is Script {
         canonRegistry = new CanonRegistry(
             deployer, // foundation treasury
             deployer, // implementer treasury
-            deployer  // admin
+            deployer // admin
         );
 
         console.log("CanonRegistry deployed at:", address(canonRegistry));
