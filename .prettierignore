@@ -1,0 +1,29 @@
+# Dependencies
+lib/
+node_modules/
+
+# Build outputs
+dist/
+out/
+artifacts/
+typechain-types/
+
+# Generated files
+crytic-export/
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/

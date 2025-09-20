@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://null.foundation/schemas/NullWarrant.v0.2.json",
+  "title": "NullWarrant@v0.2",
+  "description": "Enhanced Null Warrant with security controls for verifiable deletion",
+  "type": "object",
+  "required": [
+    "type",
+    "warrant_id",
+    "enterprise_id",
+    "subject",
+    "scope",
+    "jurisdiction",
+    "legal_basis",
+    "issued_at",
+    "expires_at",
+    "return_channels",
+    "nonce",
+    "signature",
+    "aud",
+    "jti",
+    "nbf",
+    "exp",
+    "audience_bindings",
+    "version",
+    "evidence_requested",
+    "sla_seconds"
+  ],
+  "properties": {
+    "type": {
+      "const": "NullWarrant@v0.2",
+      "description": "Schema type identifier"
+    },
+    "warrant_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "description": "Unique warrant identifier (UUID v4)"
+    },
+    "enterprise_id": {
+      "type": "string",
+      "description": "Enterprise identifier"
+    },
+    "subject": {
+      "type": "object",
+      "required": ["subject_handle", "anchors"],
+      "properties": {
+        "subject_handle": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{16,}$",
+          "description": "Privacy-preserving subject handle"
+        },
+        "anchors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["namespace", "hash"],
+            "properties": {
+              "namespace": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "phone",
+                  "name+dob+zip",
+                  "account_id",
+                  "gov_id_redacted",
+                  "custom"
+                ],
+                "description": "Identifier namespace"
+              },
+              "hash": {
+                "type": "string",
+                "pattern": "^0x[0-9a-fA-F]{16,}$",
+                "description": "Hashed identifier"
+              },
+              "hint": {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Optional hint for identification"
+              }
+            }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "delete_all",
+          "suppress_resale",
+          "marketing",
+          "analytics",
+          "credit_header",
+          "background_screening",
+          "data_broker_profile",
+          "location",
+          "inference"
+        ]
+      },
+      "description": "Deletion scope"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": ["GDPR", "CCPA/CPRA", "VCDPA", "CPA", "PIPEDA", "LGPD", "DPDP-India", "Other"],
+      "description": "Applicable jurisdiction"
+    },
+    "legal_basis": {
+      "type": "string",
+      "maxLength": 160,
+      "description": "Legal basis for deletion"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Warrant issuance timestamp"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Warrant expiration timestamp"
+    },
+    "sla": {
+      "type": "object",
+      "properties": {
+        "respond_within_days": { "type": "integer", "minimum": 1, "maximum": 45 },
+        "complete_within_days": { "type": "integer", "minimum": 1, "maximum": 90 }
+      },
+      "description": "Service level agreement"
+    },
+    "return_channels": {
+      "type": "object",
+      "required": ["email", "callback_url"],
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "callback_url": { "type": "string", "format": "uri" },
+        "subject_receipt_wallet": { "type": "string" }
+      },
+      "description": "Communication channels"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{16,}$",
+      "description": "Unique nonce for replay protection"
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "include_backup_sets": { "type": "boolean", "default": true },
+        "include_processors": { "type": "boolean", "default": true },
+        "suppress_reharvest": { "type": "boolean", "default": true },
+        "evidence_required": { "type": "boolean", "default": true }
+      },
+      "description": "Deletion policy"
+    },
+    "signature": {
+      "type": "object",
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "type": "string", "enum": ["ed25519", "secp256k1", "p256"] },
+        "kid": { "type": "string" },
+        "sig": { "type": "string", "contentEncoding": "base64" }
+      },
+      "description": "Cryptographic signature"
+    },
+    "aud": {
+      "type": "string",
+      "description": "Controller DID/host (audience)"
+    },
+    "jti": {
+      "type": "string",
+      "description": "Unique identifier (prevents replay)"
+    },
+    "nbf": {
+      "type": "number",
+      "description": "Not before timestamp"
+    },
+    "exp": {
+      "type": "number",
+      "description": "Expiry timestamp"
+    },
+    "audience_bindings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Acceptable domains"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version"
+    },
+    "evidence_requested": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["TEE_QUOTE", "API_LOG", "KEY_DESTROY", "DKIM_ATTESTATION"]
+      },
+      "description": "Structured evidence types"
+    },
+    "sla_seconds": {
+      "type": "number",
+      "description": "Service level agreement in seconds"
+    }
+  },
+  "additionalProperties": false
+}
