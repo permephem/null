@@ -5,6 +5,14 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice Null Warrant system for revoking fraudulent or problematic tickets
 contract NullWarrant is Ownable {
+    enum Reason {
+        Fraud,
+        PolicyBreach,
+        Duplicate,
+        InvalidTransfer,
+        VenueRequest
+    }
+
     struct Warrant {
         bytes32 ticketCommit;
         string reason;
@@ -106,6 +114,40 @@ contract NullWarrant is Ownable {
         return warrants[warrantId];
     }
 
+    /// @notice Revoke a ticket (simplified interface for testing)
+    /// @param ticketCommit Commitment to ticket ID
+    /// @param reason Reason for revocation
+    /// @param evidence Evidence URI
+    function revoke(
+        bytes32 ticketCommit,
+        Reason reason,
+        string calldata evidence
+    ) external {
+        require(isAuthorizedIssuer[msg.sender], "not authorized issuer");
+        require(!isRevoked[ticketCommit], "already revoked");
+
+        bytes32 warrantId = keccak256(abi.encodePacked(
+            ticketCommit,
+            msg.sender,
+            block.timestamp,
+            uint256(reason),
+            evidence
+        ));
+
+        warrants[warrantId] = Warrant({
+            ticketCommit: ticketCommit,
+            reason: _reasonToString(reason),
+            issuer: msg.sender,
+            timestamp: block.timestamp,
+            executed: true
+        });
+
+        isRevoked[ticketCommit] = true;
+
+        emit WarrantIssued(warrantId, ticketCommit, _reasonToString(reason), msg.sender);
+        emit WarrantExecuted(warrantId, ticketCommit, msg.sender);
+    }
+
     /// @notice Emergency revocation by owner
     /// @param ticketCommit Commitment to ticket ID
     /// @param reason Reason for emergency revocation
@@ -136,5 +178,17 @@ contract NullWarrant is Ownable {
 
         emit WarrantIssued(warrantId, ticketCommit, reason, msg.sender);
         emit WarrantExecuted(warrantId, ticketCommit, msg.sender);
+    }
+
+    /// @notice Convert Reason enum to string
+    /// @param reason Reason enum value
+    /// @return String representation of reason
+    function _reasonToString(Reason reason) internal pure returns (string memory) {
+        if (reason == Reason.Fraud) return "fraud";
+        if (reason == Reason.PolicyBreach) return "policy_breach";
+        if (reason == Reason.Duplicate) return "duplicate";
+        if (reason == Reason.InvalidTransfer) return "invalid_transfer";
+        if (reason == Reason.VenueRequest) return "venue_request";
+        return "unknown";
     }
 }
