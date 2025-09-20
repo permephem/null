@@ -64,5 +64,20 @@ export class SBTService {
             throw error;
         }
     }
+    async isReceiptMinted(receiptHash) {
+        try {
+            if (!this.contract) {
+                return false;
+            }
+            return await this.contract.isReceiptMinted(receiptHash);
+        }
+        catch (error) {
+            logger.error('Failed to check if receipt is minted', { receiptHash, error });
+            return false;
+        }
+    }
+    getContract() {
+        return this.contract;
+    }
 }
 //# sourceMappingURL=SBTService.js.map

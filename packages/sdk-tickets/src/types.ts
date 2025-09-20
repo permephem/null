@@ -83,3 +83,5 @@ export interface SdkConfig {
   venueHmacKey: Uint8Array;       // secret per-venue key for HMAC (keep off-client if possible)
   signer?: import("ethers").Signer; // ethers Signer for EIP-712 or on-chain actions (if needed)
 }
+
+

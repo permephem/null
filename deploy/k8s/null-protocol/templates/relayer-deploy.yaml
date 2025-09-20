@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: relayer }
+spec:
+  replicas: {{ .Values.relayer.replicas }}
+  selector: { matchLabels: { app: relayer } }
+  template:
+    metadata: { labels: { app: relayer } }
+    spec:
+      containers:
+        - name: relayer
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.relayer.image }}:{{ .Values.global.imageTag }}"
+          ports: [{ containerPort: {{ .Values.relayer.port }} }]
+          envFrom: [{ configMapRef: { name: relayer-config } }]
+          env:
+            - name: RELAYER_PK
+              valueFrom: { secretKeyRef: { name: relayer-secrets, key: RELAYER_PK } }
+            - name: VENUE_HMAC_KEY
+              valueFrom: { secretKeyRef: { name: relayer-secrets, key: VENUE_HMAC_KEY } }
+            - name: API_KEYS_CSV
+              valueFrom: { secretKeyRef: { name: relayer-secrets, key: API_KEYS_CSV } }
+          readinessProbe:
+            httpGet: { path: /healthz, port: {{ .Values.relayer.port }} }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: {{ .Values.relayer.port }} }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources: {{- toYaml .Values.relayer.resources | nindent 12 }}

@@ -1,0 +1,40 @@
+{
+  "name": "@null/healthcare-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/relayer.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/relayer.js",
+    "indexer": "tsx src/indexer.ts",
+    "test": "jest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "fastify": "^4.27.2",
+    "fastify-cors": "^8.5.0",
+    "fastify-rate-limit": "^9.1.0",
+    "fastify-metrics": "^3.0.0",
+    "zod": "^3.23.8",
+    "ethers": "^6.12.0",
+    "pg": "^8.11.3",
+    "p-retry": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.11.6",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  }
+}

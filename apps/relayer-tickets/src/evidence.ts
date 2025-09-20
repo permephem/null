@@ -20,8 +20,16 @@ export async function signEvidence(pkg: EvidenceIn): Promise<{ signed: any }> {
 }
 
 export async function pinEvidence(signed: any): Promise<string> {
-  // Stub: Replace with IPFS/Arweave client; return a stable URI.
-  // Example: ipfs://Qm... or https://evidence.null/uuid
-  const id = randomUUID();
-  return `https://evidence.null/${id}`;
+  const base = process.env.PINNER_BASE || "http://localhost:8789";
+  const token = process.env.PINNER_TOKEN || "";
+  const res = await fetch(`${base}/pin/json`, {
+    method: "POST",
+    headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(signed)
+  });
+  if (!res.ok) throw new Error(`Pin failed: ${res.status} ${await res.text()}`);
+  const out = await res.json();
+  return out.uri as string;
 }
+
+

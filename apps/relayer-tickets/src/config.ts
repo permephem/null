@@ -13,3 +13,5 @@ export const CONFIG = {
   FEE_WEI_TRANSFER: BigInt(process.env.FEE_WEI_TRANSFER ?? "0"),
   FEE_WEI_REVOKE: BigInt(process.env.FEE_WEI_REVOKE ?? "0")
 };
+
+

@@ -1,0 +1,21 @@
+{{- if .Values.relayer.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: relayer-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.relayer.ingress.className | quote }}
+spec:
+  rules:
+  {{- range .Values.relayer.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: {{ .path | default "/" }}
+            pathType: Prefix
+            backend:
+              service:
+                name: relayer
+                port: { number: 80 }
+  {{- end }}
+{{- end }}

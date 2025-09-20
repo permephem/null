@@ -1,0 +1,604 @@
+openapi: 3.1.0
+info:
+  title: Canon Ticket Verification API
+  version: "0.1.0"
+  description: "Carfax for Tickets" - Complete ticket verification and escrow system for transparent, secure ticket resale
+servers:
+  - url: https://verification.null.xyz
+    description: Production server
+  - url: http://localhost:8787
+    description: Local development server
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      description: Returns the health status of the verification API service
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+  /tickets/{ticketId}/history:
+    get:
+      summary: Get complete ticket history (Carfax-like report)
+      description: Returns the complete ownership history, price analysis, and compliance status of a ticket
+      tags:
+        - Ticket Verification
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ticket ID to get history for
+          example: "123"
+      responses:
+        "200":
+          description: Complete ticket history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                    example: "123"
+                  currentStatus:
+                    type: string
+                    enum: [VALID, REVOKED, USED, EXPIRED, FRAUDULENT]
+                    example: "VALID"
+                  currentOwner:
+                    type: string
+                    example: "0x1234..."
+                  eventInfo:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                        example: "CONCERT-2024-01-15"
+                      seatLocation:
+                        type: string
+                        example: "Section A, Row 5, Seat 12"
+                      originalPrice:
+                        type: number
+                        example: 150.00
+                      validUntil:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T20:00:00Z"
+                  transferRules:
+                    type: object
+                    properties:
+                      maxResaleMarkup:
+                        type: number
+                        example: 110
+                      authorizedExchanges:
+                        type: array
+                        items:
+                          type: string
+                        example: ["StubHub", "Ticketmaster", "Vivid Seats"]
+                  ownershipHistory:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        transferNumber:
+                          type: integer
+                          example: 1
+                        from:
+                          type: string
+                          example: "0x1234..."
+                        to:
+                          type: string
+                          example: "0x5678..."
+                        price:
+                          type: number
+                          example: 150.00
+                        markup:
+                          type: number
+                          example: 0
+                        compliance:
+                          type: string
+                          enum: [COMPLIANT, MARKUP_VIOLATION, UNAUTHORIZED_EXCHANGE, BLACKLISTED_SELLER, RULE_VIOLATION]
+                          example: "COMPLIANT"
+                        exchange:
+                          type: string
+                          example: "Ticketmaster"
+                        timestamp:
+                          type: string
+                          format: date-time
+                          example: "2024-01-01T10:00:00Z"
+                        evidenceUri:
+                          type: string
+                          example: "ipfs://QmX..."
+                  priceAnalysis:
+                    type: object
+                    properties:
+                      currentPrice:
+                        type: number
+                        example: 165.00
+                      totalMarkup:
+                        type: number
+                        example: 10
+                      averagePrice:
+                        type: number
+                        example: 157.50
+                      priceTrend:
+                        type: string
+                        enum: [rising, falling, stable]
+                        example: "rising"
+                      maxPrice:
+                        type: number
+                        example: 180.00
+                      minPrice:
+                        type: number
+                        example: 150.00
+                  complianceStatus:
+                    type: object
+                    properties:
+                      complianceRate:
+                        type: number
+                        example: 95.5
+                      totalViolations:
+                        type: integer
+                        example: 1
+                      violationTypes:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example: {"MARKUP_VIOLATION": 1}
+                  riskAssessment:
+                    type: string
+                    enum: [LOW, MEDIUM, HIGH]
+                    example: "LOW"
+                  generatedAt:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T12:00:00Z"
+        "400":
+          description: Bad request - invalid ticket ID
+        "404":
+          description: Ticket not found
+        "500":
+          description: Internal server error
+  /tickets/{ticketId}/status:
+    get:
+      summary: Get current ticket status
+      description: Returns the current status and basic information of a ticket
+      tags:
+        - Ticket Verification
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ticket ID to check status for
+          example: "123"
+      responses:
+        "200":
+          description: Ticket status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                    example: "123"
+                  status:
+                    type: string
+                    enum: [VALID, REVOKED, USED, EXPIRED, FRAUDULENT]
+                    example: "VALID"
+                  owner:
+                    type: string
+                    example: "0x1234..."
+                  eventId:
+                    type: string
+                    example: "CONCERT-2024-01-15"
+                  seatLocation:
+                    type: string
+                    example: "Section A, Row 5, Seat 12"
+                  originalPrice:
+                    type: number
+                    example: 150.00
+                  validUntil:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T20:00:00Z"
+                  transferCount:
+                    type: integer
+                    example: 3
+                  checkedAt:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T12:00:00Z"
+        "400":
+          description: Bad request
+        "404":
+          description: Ticket not found
+        "500":
+          description: Internal server error
+  /tickets/{ticketId}/verify:
+    post:
+      summary: Verify ticket before purchase
+      description: Performs comprehensive verification of a ticket before purchase
+      tags:
+        - Ticket Verification
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ticket ID to verify
+          example: "123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticketId:
+                  type: string
+                  example: "123"
+                buyerAddress:
+                  type: string
+                  example: "0xBuyerAddress123"
+                sellerAddress:
+                  type: string
+                  example: "0xSellerAddress456"
+      responses:
+        "200":
+          description: Verification completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                    example: "123"
+                  isValid:
+                    type: boolean
+                    example: true
+                  currentOwner:
+                    type: string
+                    example: "0x1234..."
+                  sellerVerified:
+                    type: boolean
+                    example: true
+                  priceCompliant:
+                    type: boolean
+                    example: true
+                  exchangeCompliant:
+                    type: boolean
+                    example: true
+                  riskLevel:
+                    type: string
+                    enum: [LOW, MEDIUM, HIGH]
+                    example: "LOW"
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                    example: ["High transfer count - verify authenticity"]
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Consider using escrow for this purchase"]
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+  /escrow/create:
+    post:
+      summary: Create escrow for ticket purchase
+      description: Creates a secure escrow for ticket purchase with automatic verification
+      tags:
+        - Escrow Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketId, sellerAddress, amount, expiresAt]
+              properties:
+                ticketId:
+                  type: string
+                  example: "123"
+                sellerAddress:
+                  type: string
+                  example: "0xSellerAddress456"
+                amount:
+                  type: string
+                  example: "165000000000000000000"
+                expiresAt:
+                  type: integer
+                  example: 1705334400
+      responses:
+        "200":
+          description: Escrow created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escrowId:
+                    type: string
+                    example: "456"
+                  ticketId:
+                    type: string
+                    example: "123"
+                  canonTx:
+                    type: string
+                    example: "0xabcd..."
+                  evidenceUri:
+                    type: string
+                    example: "ipfs://QmX..."
+                  status:
+                    type: string
+                    example: "created"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+  /escrow/{escrowId}/complete:
+    post:
+      summary: Complete escrow after verification
+      description: Completes escrow and transfers ticket to buyer after verification
+      tags:
+        - Escrow Management
+      parameters:
+        - name: escrowId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Escrow ID to complete
+          example: "456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escrowId, verificationUri]
+              properties:
+                escrowId:
+                  type: string
+                  example: "456"
+                verificationUri:
+                  type: string
+                  example: "ipfs://QmVerificationEvidence123"
+      responses:
+        "200":
+          description: Escrow completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escrowId:
+                    type: string
+                    example: "456"
+                  canonTx:
+                    type: string
+                    example: "0xabcd..."
+                  status:
+                    type: string
+                    example: "completed"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+  /escrow/{escrowId}/cancel:
+    post:
+      summary: Cancel escrow and refund buyer
+      description: Cancels escrow and refunds the buyer
+      tags:
+        - Escrow Management
+      parameters:
+        - name: escrowId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Escrow ID to cancel
+          example: "456"
+      responses:
+        "200":
+          description: Escrow cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escrowId:
+                    type: string
+                    example: "456"
+                  canonTx:
+                    type: string
+                    example: "0xabcd..."
+                  status:
+                    type: string
+                    example: "cancelled"
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+  /tickets/{ticketId}/revoke:
+    post:
+      summary: Revoke ticket (venue only)
+      description: Revokes a ticket due to fraud or policy violation
+      tags:
+        - Venue Management
+      security: [{ ApiKeyAuth: [] }]
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ticket ID to revoke
+          example: "123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketId, reason]
+              properties:
+                ticketId:
+                  type: string
+                  example: "123"
+                reason:
+                  type: string
+                  example: "Fraudulent activity detected"
+      responses:
+        "200":
+          description: Ticket revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                    example: "123"
+                  canonTx:
+                    type: string
+                    example: "0xabcd..."
+                  status:
+                    type: string
+                    example: "revoked"
+                  reason:
+                    type: string
+                    example: "Fraudulent activity detected"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+  /tickets/{ticketId}/scan:
+    post:
+      summary: Mark ticket as used (venue only)
+      description: Marks a ticket as used when scanned at venue
+      tags:
+        - Venue Management
+      security: [{ ApiKeyAuth: [] }]
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Ticket ID to mark as used
+          example: "123"
+      responses:
+        "200":
+          description: Ticket marked as used successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketId:
+                    type: string
+                    example: "123"
+                  canonTx:
+                    type: string
+                    example: "0xabcd..."
+                  status:
+                    type: string
+                    example: "used"
+                  scannedAt:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T20:00:00Z"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+  /stats:
+    get:
+      summary: Get system statistics
+      description: Returns system-wide statistics for ticket verification
+      tags:
+        - Statistics
+      responses:
+        "200":
+          description: Statistics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: integer
+                    description: Total tickets issued
+                    example: 1250
+                  transfers:
+                    type: integer
+                    description: Total transfers
+                    example: 3500
+                  escrows:
+                    type: integer
+                    description: Total escrows created
+                    example: 850
+                  revocations:
+                    type: integer
+                    description: Total revocations
+                    example: 25
+        "500":
+          description: Internal server error
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API key for venue authentication
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - error
+    TicketStatus:
+      type: string
+      enum: [VALID, REVOKED, USED, EXPIRED, FRAUDULENT]
+      description: Current status of a ticket
+    ComplianceStatus:
+      type: string
+      enum: [COMPLIANT, MARKUP_VIOLATION, UNAUTHORIZED_EXCHANGE, BLACKLISTED_SELLER, RULE_VIOLATION]
+      description: Compliance status of a transfer
+    RiskLevel:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+      description: Risk assessment level
+    PriceTrend:
+      type: string
+      enum: [rising, falling, stable]
+      description: Price trend analysis

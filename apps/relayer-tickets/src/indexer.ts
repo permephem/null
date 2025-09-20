@@ -21,3 +21,4 @@ export function setState(s: TicketState) {
 export function getState(ticketIdCommit: string): TicketState | undefined {
   return store.get(ticketIdCommit);
 }
+

@@ -1,0 +1,114 @@
+# Default values for null-protocol
+# This is a YAML-formatted file.
+
+replicaCount: 2
+
+image:
+  registry: ghcr.io
+  repository: your-org/relayer-tickets
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8787
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: relay.null.xyz
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: relay-tls
+      hosts:
+        - relay.null.xyz
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Environment variables
+env:
+  PORT: "8787"
+  NODE_ENV: "production"
+  RPC_URL: "https://mainnet.infura.io/v3/xxx"
+  CANON_ADDRESS: "0xCanonRegistryAddress"
+  FOUNDATION_ADDRESS: "0xFoundation"
+  VENUE_HMAC_KEY: "change-me-super-secret"
+  PINNER_BASE: "http://pinning-adapter:8789"
+  PINNER_TOKEN: "change-me"
+  CORS_ORIGINS: "https://scanner.null.xyz,https://gate.null.xyz"
+
+# Secrets (should be stored in Kubernetes secrets)
+secrets:
+  RELAYER_PK: "0xabcdef..."
+  FEE_WEI_ISSUE: "0"
+  FEE_WEI_TRANSFER: "0"
+  FEE_WEI_REVOKE: "0"
+
+# Database configuration
+database:
+  host: "postgres-service"
+  port: "5432"
+  name: "null_indexer"
+  user: "null_user"
+  password: "change-me"
+
+# Monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      app: relayer-tickets

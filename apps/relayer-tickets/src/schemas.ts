@@ -40,3 +40,4 @@ export type IssueBodyT = z.infer<typeof IssueBody>;
 export type TransferBodyT = z.infer<typeof TransferBody>;
 export type RevokeBodyT = z.infer<typeof RevokeBody>;
 export type VerifyBodyT = z.infer<typeof VerifyBody>;
+

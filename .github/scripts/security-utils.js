@@ -68,3 +68,5 @@ export function reportActionableFindings(findings, toolName) {
 export function reportSuccess(toolName, message = 'analysis passed without unallowlisted high-severity findings.') {
   console.log(`✅ ${toolName} ${message}`);
 }
+
+

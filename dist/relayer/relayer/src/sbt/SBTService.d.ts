@@ -1,3 +1,4 @@
+import type { MaskSBT } from '../../../typechain-types';
 export interface SBTServiceConfig {
     rpcUrl: string;
     privateKey: string;
@@ -11,5 +12,7 @@ export declare class SBTService {
     mintReceipt(to: string, receiptHash: string): Promise<string>;
     isMintingEnabled(): Promise<boolean>;
     setMintingEnabled(enabled: boolean): Promise<string>;
+    isReceiptMinted(receiptHash: string): Promise<boolean>;
+    getContract(): MaskSBT;
 }
 //# sourceMappingURL=SBTService.d.ts.map

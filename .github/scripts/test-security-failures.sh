@@ -92,3 +92,5 @@ rm -f test-snyk-vulnerability.json test-snyk-allowed.json test-slither-vulnerabi
 echo ""
 echo "✅ All security failure detection tests passed!"
 echo "Security workflows will now properly fail the build when vulnerabilities are detected."
+
+

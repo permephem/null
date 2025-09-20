@@ -1,0 +1,20 @@
+{
+  "name": "@null/pinning-adapter",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^4.27.2",
+    "ipfs-http-client": "^60.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}

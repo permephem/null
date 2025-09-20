@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: Null Tickets Relayer API
+  version: "0.1.0"
+  description: Production-ready API for issuing, transferring, revoking, and verifying tickets on the Null Protocol
+servers:
+  - url: https://relay.null.xyz
+    description: Production server
+  - url: http://localhost:8787
+    description: Local development server
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      description: Returns the health status of the relayer service
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      description: Returns Prometheus-formatted metrics for monitoring
+      tags:
+        - Monitoring
+      responses:
+        "200":
+          description: Metrics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests_total:
+                    type: integer
+                  requests_by_endpoint:
+                    type: object
+                  canon_anchors_total:
+                    type: integer
+                  canon_anchor_failures:
+                    type: integer
+                  verification_decisions:
+                    type: object
+                  avg_response_time_ms:
+                    type: number
+                  errors_total:
+                    type: integer
+  /tickets/issue:
+    post:
+      summary: Issue ticket & anchor ISSUANCE
+      description: Creates a new ticket and anchors the issuance event to Canon
+      tags:
+        - Tickets
+      security: [{ ApiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, seat, holderIdentifier, policy]
+              properties:
+                eventId:
+                  type: string
+                  description: Unique identifier for the event
+                  example: "concert-2024-01-15"
+                seat:
+                  type: string
+                  description: Seat or section identifier
+                  example: "A1"
+                holderIdentifier:
+                  type: string
+                  description: Unique identifier for the ticket holder
+                  example: "user123@example.com"
+                policy:
+                  type: object
+                  description: Ticket policy configuration
+                  properties:
+                    maxResalePct:
+                      type: integer
+                      description: Maximum resale price as percentage of face value
+                      example: 120
+                    transferWindowHours:
+                      type: integer
+                      description: Hours before event when transfers are allowed
+                      example: 24
+                    kycLevel:
+                      type: string
+                      enum: [none, light, full]
+                      description: Required KYC level
+                      example: "light"
+                    resaleOnlyVia:
+                      type: array
+                      items:
+                        type: string
+                      description: Allowed resale platforms
+                      example: ["official-marketplace"]
+                assurance:
+                  type: integer
+                  minimum: 0
+                  maximum: 3
+                  description: Assurance level (0=none, 1=basic, 2=verified, 3=attested)
+                  example: 1
+                evidence:
+                  type: object
+                  additionalProperties: true
+                  description: Additional evidence data
+                  example: {"purchaseMethod": "credit_card"}
+      responses:
+        "200":
+          description: Ticket successfully issued and anchored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketIdCommit:
+                    type: string
+                    description: Commitment hash of the ticket ID
+                    example: "0x1234..."
+                  canonTx:
+                    type: string
+                    description: Canon transaction hash
+                    example: "0xabcd..."
+                  credential:
+                    type: object
+                    description: Ticket credential (stub for now)
+                    example: {"stub": true}
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - invalid API key
+        "429":
+          description: Rate limit exceeded
+        "500":
+          description: Internal server error
+  /tickets/transfer:
+    post:
+      summary: Transfer holder & anchor TRANSFER
+      description: Transfers a ticket to a new holder and anchors the transfer event
+      tags:
+        - Tickets
+      security: [{ ApiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketIdCommit, fromIdentifier, toIdentifier]
+              properties:
+                ticketIdCommit:
+                  type: string
+                  description: Commitment hash of the ticket to transfer
+                  example: "0x1234..."
+                fromIdentifier:
+                  type: string
+                  description: Current holder identifier
+                  example: "user123@example.com"
+                toIdentifier:
+                  type: string
+                  description: New holder identifier
+                  example: "user456@example.com"
+                assurance:
+                  type: integer
+                  minimum: 0
+                  maximum: 3
+                  description: Assurance level for the transfer
+                  example: 1
+                evidence:
+                  type: object
+                  additionalProperties: true
+                  description: Additional transfer evidence
+                  example: {"transferReason": "gift"}
+      responses:
+        "200":
+          description: Ticket successfully transferred and anchored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  canonTx:
+                    type: string
+                    description: Canon transaction hash
+                    example: "0xabcd..."
+                  newHolderTag:
+                    type: string
+                    description: HMAC tag for the new holder
+                    example: "0x5678..."
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - not current holder
+        "404":
+          description: Ticket not found
+        "429":
+          description: Rate limit exceeded
+        "500":
+          description: Internal server error
+  /tickets/revoke:
+    post:
+      summary: Revoke ticket & anchor REVOCATION (Null Warrant)
+      description: Revokes a ticket and anchors the revocation event (Null Warrant)
+      tags:
+        - Tickets
+      security: [{ ApiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketIdCommit, reason]
+              properties:
+                ticketIdCommit:
+                  type: string
+                  description: Commitment hash of the ticket to revoke
+                  example: "0x1234..."
+                reason:
+                  type: string
+                  enum: [policy_breach, fraud, chargeback, refund_cancelled, lost_stolen]
+                  description: Reason for revocation
+                  example: "policy_breach"
+                assurance:
+                  type: integer
+                  minimum: 0
+                  maximum: 3
+                  description: Assurance level for the revocation
+                  example: 1
+                evidence:
+                  type: object
+                  additionalProperties: true
+                  description: Additional revocation evidence
+                  example: {"investigationId": "inv-123"}
+      responses:
+        "200":
+          description: Ticket successfully revoked and anchored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  canonTx:
+                    type: string
+                    description: Canon transaction hash
+                    example: "0xabcd..."
+                  tombstoneUri:
+                    type: string
+                    description: IPFS URI of the revocation evidence
+                    example: "ipfs://QmX..."
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Ticket not found
+        "429":
+          description: Rate limit exceeded
+        "500":
+          description: Internal server error
+  /tickets/verify:
+    post:
+      summary: Verify ticket at gate
+      description: Verifies a ticket at the gate/entry point
+      tags:
+        - Verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketQrPayload, holderProof]
+              properties:
+                ticketQrPayload:
+                  type: string
+                  description: QR code payload from the ticket
+                  example: "TICKET:0x1234...:session123"
+                holderProof:
+                  type: string
+                  description: Holder proof (OTP, signature, etc.)
+                  example: "otp123456"
+      responses:
+        "200":
+          description: Verification decision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decision:
+                    type: string
+                    enum: [ALLOW, DENY]
+                    description: Verification decision
+                    example: "ALLOW"
+                  reason:
+                    type: string
+                    description: Reason for the decision
+                    example: "Valid ticket"
+                  canonRef:
+                    type: string
+                    description: Canon transaction reference
+                    example: "0xabcd..."
+        "400":
+          description: Bad request
+        "404":
+          description: Ticket not found
+        "429":
+          description: Rate limit exceeded
+        "500":
+          description: Internal server error
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API key for venue authentication
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - error

@@ -5,6 +5,7 @@ import { holderTagHmac, commitEventId, commitPolicy, commitTicketId } from "./cr
 import { CanonClient } from "./canon.js";
 import { signEvidence, pinEvidence } from "./evidence.js";
 import { setState, getState } from "./indexer.js";
+import { recordCanonAnchor, recordVerificationDecision } from "./metrics.js";
 
 const canon = new CanonClient();
 
@@ -43,6 +44,7 @@ export async function registerRoutes(app: FastifyInstance) {
       uri,
       feeWei: CONFIG.FEE_WEI_ISSUE
     });
+    recordCanonAnchor(true);
 
     setState({
       ticketIdCommit: ticketCommit,
@@ -95,6 +97,7 @@ export async function registerRoutes(app: FastifyInstance) {
       uri,
       feeWei: CONFIG.FEE_WEI_TRANSFER
     });
+    recordCanonAnchor(true);
 
     setState({
       ticketIdCommit: body.ticketIdCommit,
@@ -134,6 +137,7 @@ export async function registerRoutes(app: FastifyInstance) {
       uri,
       feeWei: CONFIG.FEE_WEI_REVOKE
     });
+    recordCanonAnchor(true);
 
     setState({
       ticketIdCommit: body.ticketIdCommit,
@@ -154,11 +158,16 @@ export async function registerRoutes(app: FastifyInstance) {
     const s = getState(ticketIdCommit);
     if (!s) return reply.code(404).send({ decision: "DENY", reason: "UNKNOWN" });
 
-    if (s.state === "REVOKED") return reply.send({ decision: "DENY", reason: "REVOKED", canonRef: s.lastCanonTx });
+    if (s.state === "REVOKED") {
+      recordVerificationDecision("DENY");
+      return reply.send({ decision: "DENY", reason: "REVOKED", canonRef: s.lastCanonTx });
+    }
 
     // Holder proof (OTP/wallet sig) is app-specific; here you'd check that proof belongs to s.holderTag (omitted in stub).
     // If you keep a short-lived session binding, validate it here.
 
+    recordVerificationDecision("ALLOW");
     return reply.send({ decision: "ALLOW", canonRef: s.lastCanonTx });
   });
 }
+

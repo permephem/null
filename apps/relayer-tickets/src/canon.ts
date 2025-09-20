@@ -46,3 +46,4 @@ export class CanonClient {
     return rc?.hash as string;
   }
 }
+

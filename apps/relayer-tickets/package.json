@@ -12,10 +12,13 @@
   "dependencies": {
     "fastify": "^4.27.2",
     "fastify-cors": "^8.5.0",
+    "fastify-rate-limit": "^9.1.0",
+    "fastify-metrics": "^3.0.0",
     "zod": "^3.23.8",
     "ethers": "^6.12.0",
     "cross-fetch": "^4.0.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "prom-client": "^15.1.0"
   },
   "devDependencies": {
     "tsx": "^4.19.1",
@@ -23,3 +26,5 @@
     "@types/node": "^20.11.0"
   }
 }
+
+

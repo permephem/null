@@ -1,0 +1,64 @@
+global:
+  imageRegistry: ghcr.io/your-org
+  imageTag: "latest"   # override via --set global.imageTag=<sha>
+
+relayer:
+  enabled: true
+  replicas: 2
+  image: relayer-tickets
+  port: 8787
+  resources: { requests: { cpu: "200m", memory: "256Mi" }, limits: { cpu: "1", memory: "512Mi" } }
+  env:
+    RPC_URL: "https://your-rpc"
+    CANON_ADDRESS: "0xCanonAddr"
+    FOUNDATION_ADDRESS: "0xFoundation"
+    FEE_WEI_ISSUE: "0"
+    FEE_WEI_TRANSFER: "0"
+    FEE_WEI_REVOKE: "0"
+    PINNER_BASE: "http://pinner:8789"
+  secrets:
+    RELAYER_PK: "0xabc..."            # supply via --set-file or external secret
+    VENUE_HMAC_KEY: "change-me-key"
+    API_KEYS_CSV: "venue-1:secret-1,venue-2:secret-2" # simple seed (replace with DB/KMS)
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: relay.null.xyz
+        path: /
+    tls: []  # manage TLS at ingress or use cert-manager
+
+indexer:
+  enabled: true
+  replicas: 1
+  image: indexer-tickets
+  resources: { requests: { cpu: "200m", memory: "256Mi" }, limits: { cpu: "500m", memory: "512Mi" } }
+  env:
+    RPC_URL: "https://your-rpc"
+    CANON_ADDRESS: "0xCanonAddr"
+    CANON_TOPIC_TICKETS: "4"
+    START_BLOCK: "0"
+    CONFIRMATIONS: "5"
+
+pinner:
+  enabled: true
+  replicas: 1
+  image: pinning-adapter
+  port: 8789
+  env:
+    IPFS_API_URL: "http://ipfs:5001"
+  secrets:
+    PINNING_JWT: "change-me"
+
+postgres:
+  enabled: true
+  storage: 20Gi
+  user: null_user
+  password: "change-me"
+  database: null_indexer
+
+ipfs:
+  enabled: true
+  image: ipfs/kubo:release

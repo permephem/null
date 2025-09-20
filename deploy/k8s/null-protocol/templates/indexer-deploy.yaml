@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: indexer }
+spec:
+  replicas: {{ .Values.indexer.replicas }}
+  selector: { matchLabels: { app: indexer } }
+  template:
+    metadata: { labels: { app: indexer } }
+    spec:
+      containers:
+        - name: indexer
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.indexer.image }}:{{ .Values.global.imageTag }}"
+          envFrom: [{ configMapRef: { name: indexer-config } }]
+          env:
+            - { name: PGHOST, value: "postgres" }
+            - { name: PGPORT, value: "5432" }
+            - { name: PGDATABASE, value: {{ .Values.postgres.database | quote }} }
+            - { name: PGUSER, value: {{ .Values.postgres.user | quote }} }
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: pg-secrets, key: password } }

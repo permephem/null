@@ -10,6 +10,9 @@ export class CanonService {
         this.wallet = new ethers.Wallet(config.privateKey, this.provider);
         this.contract = CanonRegistry__factory.connect(config.contractAddress, this.wallet);
     }
+    getContract() {
+        return this.contract;
+    }
     async anchorWarrant(warrantHash, subjectHandleHash, enterpriseHash, enterpriseId, warrantId, _controllerDidHash, _subjectTag, _assurance) {
         try {
             logger.info('Anchoring warrant to canon registry', { warrantId, enterpriseId });

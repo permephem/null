@@ -1,0 +1,27 @@
+# Global owners
+* @null-protocol/core-team
+
+# Smart contracts require security review
+/contracts/ @null-protocol/security-team @null-protocol/core-team
+
+# Relayer requires core team review
+/apps/relayer-tickets/ @null-protocol/core-team
+
+# Indexer requires core team review
+/apps/indexer-tickets/ @null-protocol/core-team
+
+# Security documentation
+SECURITY.md @null-protocol/security-team
+ops/alerts.yml @null-protocol/security-team
+
+# Infrastructure and deployment
+/deploy/ @null-protocol/infrastructure-team
+ops/Makefile @null-protocol/infrastructure-team
+
+# Documentation
+README.md @null-protocol/docs-team
+CONTRIBUTING.md @null-protocol/docs-team
+OPENAPI.relayer.yaml @null-protocol/docs-team
+
+# CI/CD
+.github/ @null-protocol/infrastructure-team

@@ -79,3 +79,5 @@ npm test
 2. **Evidence**: Relayer should assemble and sign evidence packages
 3. **Offline Gates**: Use signed Merkle snapshots for sub-150ms offline verification
 4. **PII Protection**: Never store personal information on-chain
+
+

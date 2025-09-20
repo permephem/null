@@ -29,3 +29,5 @@ export function commitPolicy(policy: unknown): Hex {
 export function randomSeatSerial(): string {
   return randomBytes(16).toString("hex");
 }
+
+

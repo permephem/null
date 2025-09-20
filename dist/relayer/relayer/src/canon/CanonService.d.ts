@@ -1,3 +1,4 @@
+import type { CanonRegistry } from '../../../typechain-types';
 export interface CanonServiceConfig {
     rpcUrl: string;
     privateKey: string;
@@ -8,6 +9,7 @@ export declare class CanonService {
     private wallet;
     private contract;
     constructor(config: CanonServiceConfig);
+    getContract(): CanonRegistry;
     anchorWarrant(warrantHash: string, subjectHandleHash: string, enterpriseHash: string, enterpriseId: string, warrantId: string, _controllerDidHash: string, _subjectTag: string, _assurance: number): Promise<string>;
     getLastAnchorBlock(hash: string): Promise<number>;
     anchorAttestation(attestationHash: string, warrantHash: string, enterpriseHash: string, enterpriseId: string, attestationId: string, _controllerDidHash: string, _subjectTag: string, _assurance: number): Promise<{

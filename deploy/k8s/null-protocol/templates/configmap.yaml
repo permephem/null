@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: relayer-config
+data:
+  RPC_URL: {{ .Values.relayer.env.RPC_URL | quote }}
+  CANON_ADDRESS: {{ .Values.relayer.env.CANON_ADDRESS | quote }}
+  FOUNDATION_ADDRESS: {{ .Values.relayer.env.FOUNDATION_ADDRESS | quote }}
+  FEE_WEI_ISSUE: {{ .Values.relayer.env.FEE_WEI_ISSUE | quote }}
+  FEE_WEI_TRANSFER: {{ .Values.relayer.env.FEE_WEI_TRANSFER | quote }}
+  FEE_WEI_REVOKE: {{ .Values.relayer.env.FEE_WEI_REVOKE | quote }}
+  PINNER_BASE: {{ .Values.relayer.env.PINNER_BASE | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indexer-config
+data:
+  RPC_URL: {{ .Values.indexer.env.RPC_URL | quote }}
+  CANON_ADDRESS: {{ .Values.indexer.env.CANON_ADDRESS | quote }}
+  CANON_TOPIC_TICKETS: {{ .Values.indexer.env.CANON_TOPIC_TICKETS | quote }}
+  START_BLOCK: {{ .Values.indexer.env.START_BLOCK | quote }}
+  CONFIRMATIONS: {{ .Values.indexer.env.CONFIRMATIONS | quote }}

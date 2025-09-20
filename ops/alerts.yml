@@ -1,0 +1,138 @@
+groups:
+- name: relayer
+  rules:
+  - alert: RelayerHighErrorRate
+    expr: rate(http_requests_total{status=~"5..",job="relayer"}[5m]) / rate(http_requests_total{job="relayer"}[5m]) > 0.05
+    for: 10m
+    labels:
+      severity: page
+      service: relayer
+    annotations:
+      summary: "Relayer 5xx error rate > 5% (10m)"
+      description: "Relayer is experiencing high error rate: {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.null.xyz/runbooks/relayer-errors"
+
+  - alert: RelayerHighLatency
+    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="relayer"}[5m])) by (le)) > 2
+    for: 10m
+    labels:
+      severity: ticket
+      service: relayer
+    annotations:
+      summary: "Relayer 95th percentile latency > 2s (10m)"
+      description: "Relayer latency is high: {{ $value }}s"
+      runbook_url: "https://docs.null.xyz/runbooks/relayer-latency"
+
+  - alert: CanonAnchorLatencyHigh
+    expr: histogram_quantile(0.95, sum(rate(anchor_latency_seconds_bucket[5m])) by (le)) > 2
+    for: 10m
+    labels:
+      severity: ticket
+      service: canon
+    annotations:
+      summary: "95th percentile Canon anchor latency > 2s (10m)"
+      description: "Canon anchoring is slow: {{ $value }}s"
+      runbook_url: "https://docs.null.xyz/runbooks/canon-latency"
+
+  - alert: CanonAnchorFailures
+    expr: rate(canon_anchor_failures_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: page
+      service: canon
+    annotations:
+      summary: "Canon anchor failures > 0.1/s (5m)"
+      description: "Canon anchoring is failing: {{ $value }} failures/sec"
+      runbook_url: "https://docs.null.xyz/runbooks/canon-failures"
+
+  - alert: RelayerDown
+    expr: up{job="relayer"} == 0
+    for: 1m
+    labels:
+      severity: page
+      service: relayer
+    annotations:
+      summary: "Relayer is down"
+      description: "Relayer service is not responding"
+      runbook_url: "https://docs.null.xyz/runbooks/relayer-down"
+
+  - alert: IndexerDown
+    expr: up{job="indexer"} == 0
+    for: 1m
+    labels:
+      severity: page
+      service: indexer
+    annotations:
+      summary: "Indexer is down"
+      description: "Indexer service is not responding"
+      runbook_url: "https://docs.null.xyz/runbooks/indexer-down"
+
+  - alert: IndexerLag
+    expr: (time() - indexer_last_block_timestamp) > 300
+    for: 5m
+    labels:
+      severity: warning
+      service: indexer
+    annotations:
+      summary: "Indexer is lagging behind chain"
+      description: "Indexer is {{ $value }}s behind the latest block"
+      runbook_url: "https://docs.null.xyz/runbooks/indexer-lag"
+
+  - alert: IPFSPinningFailures
+    expr: rate(ipfs_pin_failures_total[5m]) > 0.01
+    for: 5m
+    labels:
+      severity: warning
+      service: ipfs
+    annotations:
+      summary: "IPFS pinning failures > 0.01/s (5m)"
+      description: "IPFS pinning is failing: {{ $value }} failures/sec"
+      runbook_url: "https://docs.null.xyz/runbooks/ipfs-failures"
+
+  - alert: DatabaseConnectionsHigh
+    expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "Database connection usage > 80%"
+      description: "Database has {{ $value | humanizePercentage }} connection usage"
+      runbook_url: "https://docs.null.xyz/runbooks/database-connections"
+
+  - alert: VerificationLatencyHigh
+    expr: histogram_quantile(0.95, sum(rate(verification_duration_seconds_bucket[5m])) by (le)) > 0.3
+    for: 5m
+    labels:
+      severity: ticket
+      service: relayer
+    annotations:
+      summary: "Gate verification latency > 300ms (95th percentile)"
+      description: "Gate verification is slow: {{ $value }}s"
+      runbook_url: "https://docs.null.xyz/runbooks/verification-latency"
+
+- name: slos
+  rules:
+  - alert: SLORelayerAvailability
+    expr: (rate(http_requests_total{status!~"5..",job="relayer"}[30d]) / rate(http_requests_total{job="relayer"}[30d])) < 0.999
+    for: 0m
+    labels:
+      severity: page
+      service: relayer
+      slo: availability
+    annotations:
+      summary: "Relayer availability SLO breach (30d)"
+      description: "Relayer availability is {{ $value | humanizePercentage }}, below 99.9% SLO"
+      runbook_url: "https://docs.null.xyz/runbooks/slo-breach"
+
+  - alert: SLOCanonAnchorSuccess
+    expr: (rate(canon_anchors_total[7d]) / (rate(canon_anchors_total[7d]) + rate(canon_anchor_failures_total[7d]))) < 0.995
+    for: 0m
+    labels:
+      severity: page
+      service: canon
+      slo: success_rate
+    annotations:
+      summary: "Canon anchor success rate SLO breach (7d)"
+      description: "Canon anchor success rate is {{ $value | humanizePercentage }}, below 99.5% SLO"
+      runbook_url: "https://docs.null.xyz/runbooks/slo-breach"

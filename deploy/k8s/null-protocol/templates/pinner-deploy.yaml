@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: pinner }
+spec:
+  replicas: {{ .Values.pinner.replicas }}
+  selector: { matchLabels: { app: pinner } }
+  template:
+    metadata: { labels: { app: pinner } }
+    spec:
+      containers:
+        - name: pinner
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.pinner.image }}:{{ .Values.global.imageTag }}"
+          ports: [{ containerPort: {{ .Values.pinner.port }} }]
+          env:
+            - { name: IPFS_API_URL, value: {{ .Values.pinner.env.IPFS_API_URL | quote }} }
+            - name: PINNING_JWT
+              valueFrom: { secretKeyRef: { name: pinner-secrets, key: PINNING_JWT } }
