@@ -5,6 +5,8 @@ import "forge-std/Script.sol";
 import "../src/CanonRegistry.sol";
 import "../src/MaskSBT.sol";
 import "../contracts/ConsumerProtectionPool.sol";
+import "../contracts/TicketEscrow.sol";
+import "../contracts/NullWarrant.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -42,6 +44,22 @@ contract DeployScript is Script {
         
         console.log("ConsumerProtectionPool deployed at:", address(consumerPool));
 
+        // Deploy NullWarrant
+        NullWarrant nullWarrant = new NullWarrant(deployer);
+        
+        console.log("NullWarrant deployed at:", address(nullWarrant));
+
+        // Deploy TicketEscrow
+        TicketEscrow ticketEscrow = new TicketEscrow(
+            address(canonRegistry),
+            address(nullWarrant),
+            address(consumerPool),
+            payable(foundationTreasury),
+            deployer
+        );
+        
+        console.log("TicketEscrow deployed at:", address(ticketEscrow));
+
         // Grant relayer role to deployer
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), deployer);
         console.log("Granted RELAYER_ROLE to deployer");
@@ -57,6 +75,8 @@ contract DeployScript is Script {
             "CanonRegistry: ", vm.toString(address(canonRegistry)), "\n",
             "MaskSBT: ", vm.toString(address(maskSBT)), "\n",
             "ConsumerProtectionPool: ", vm.toString(address(consumerPool)), "\n",
+            "NullWarrant: ", vm.toString(address(nullWarrant)), "\n",
+            "TicketEscrow: ", vm.toString(address(ticketEscrow)), "\n",
             "Deployer: ", vm.toString(deployer), "\n",
             "Foundation Treasury: ", vm.toString(foundationTreasury), "\n",
             "Implementer Treasury: ", vm.toString(implementerTreasury)
