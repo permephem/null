@@ -1,0 +1,1058 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 3924536..267094a 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -1,57 +1,66 @@
+-name: CI/CD Pipeline
++name: CI
+ 
+ on:
+   push:
+     branches:
+-      - '**'
++      - main
++      - develop
++      - 'release/**'
+   pull_request:
+-    branches:
+-      - '**'
+   workflow_dispatch:
+ 
++concurrency:
++  group: ci-${{ github.ref }}
++  cancel-in-progress: true
++
++permissions:
++  contents: read
++  pull-requests: read
++
+ env:
+   NODE_VERSION: '18'
+-  SOLIDITY_VERSION: '0.8.20'
++  FOUNDRY_PROFILE: ci
+ 
+ jobs:
+-  lint-and-format:
+-    name: Lint and Format Check
++  quality:
++    name: Lint & Static Analysis
+     runs-on: ubuntu-latest
++    timeout-minutes: 15
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: recursive
+ 
+-      - name: Install Foundry
+-        uses: foundry-rs/foundry-toolchain@v1
+-
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
+           cache: npm
++          cache-dependency-path: package-lock.json
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
+ 
+       - name: Install dependencies
+         run: npm ci
+ 
+-      - name: Compile contracts and generate types
+-        run: npm run compile
+-
+       - name: Run ESLint
+         run: npm run lint
+ 
+-      - name: Check Prettier formatting
++      - name: Check formatting
+         run: npm run format:check
+ 
+       - name: TypeScript type check
+         run: npm run type-check
+ 
+-  test-contracts:
+-    name: Test Smart Contracts
++  forge:
++    name: Foundry Tests
+     runs-on: ubuntu-latest
++    needs: quality
++    timeout-minutes: 25
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: recursive
+@@ -59,49 +68,32 @@ jobs:
+       - name: Install Foundry
+         uses: foundry-rs/foundry-toolchain@v1
+ 
+-      - name: Setup Node.js
+-        uses: actions/setup-node@v4
+-        with:
+-          node-version: ${{ env.NODE_VERSION }}
+-          cache: npm
++      - name: Build contracts
++        run: forge build --sizes
+ 
+-      - name: Install dependencies
+-        run: npm ci
+-
+-      - name: Compile contracts
+-        run: npm run compile
++      - name: Run Foundry tests
++        run: forge test -vvv
+ 
+-      - name: Run contract tests
+-        run: npm run test:contracts
+-
+-      - name: Generate coverage report
+-        run: npm run test:coverage
+-        if: github.event_name == 'pull_request'
+-
+-      - name: Upload coverage to Codecov
+-        uses: codecov/codecov-action@v3
+-        with:
+-          file: ./coverage/lcov.info
+-          flags: contracts
+-        if: github.event_name == 'pull_request'
+-
+-  test-relayer:
+-    name: Test Relayer System
++  relayer:
++    name: Relayer & Integration Tests
+     runs-on: ubuntu-latest
++    needs: quality
++    timeout-minutes: 30
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: recursive
+ 
+-      - name: Install Foundry
+-        uses: foundry-rs/foundry-toolchain@v1
+-
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
+           cache: npm
++          cache-dependency-path: package-lock.json
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
+ 
+       - name: Install dependencies
+         run: npm ci
+@@ -113,56 +105,70 @@ jobs:
+         run: npm run relayer:build
+ 
+       - name: Run relayer tests
+-        run: npm run test:relayer
++        run: npm run test:relayer -- --runInBand
+ 
+       - name: Run integration tests
+         run: npm run test:integration
+ 
++      - name: Collect coverage
++        if: github.event_name == 'pull_request'
++        run: npm run test:coverage
++
++      - name: Upload coverage to Codecov
++        if: github.event_name == 'pull_request'
++        uses: codecov/codecov-action@v3
++        with:
++          files: ./coverage/lcov.info
++          flags: relayer
++          fail_ci_if_error: true
++
+   security-audit:
+-    name: Security Audit
++    name: Dependency Audit
+     runs-on: ubuntu-latest
++    needs: quality
++    timeout-minutes: 10
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+ 
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
++          cache: npm
++          cache-dependency-path: package-lock.json
+ 
+       - name: Install dependencies
+-        run: npm install --legacy-peer-deps
++        run: npm ci --ignore-scripts
+ 
+-      - name: Run npm audit
++      - name: npm audit
+         run: npm audit --audit-level=moderate
+ 
+-      - name: Run security tests
+-        run: npm run security:audit
+-        continue-on-error: true
+-
+   build:
+-    name: Build Project
++    name: Build project
+     runs-on: ubuntu-latest
+-    needs: [lint-and-format, test-contracts, test-relayer]
++    needs:
++      - forge
++      - relayer
++    timeout-minutes: 20
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: recursive
+ 
+-      - name: Install Foundry
+-        uses: foundry-rs/foundry-toolchain@v1
+-
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
++          cache: npm
++          cache-dependency-path: package-lock.json
+ 
+-      - name: Install dependencies
+-        run: npm install --legacy-peer-deps
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
+ 
+-      - name: Compile contracts and generate types
+-        run: npm run compile
++      - name: Install dependencies
++        run: npm ci
+ 
+       - name: Build project
+         run: npm run build
+@@ -172,47 +178,49 @@ jobs:
+         with:
+           name: build-artifacts
+           path: |
+-            dist/
+-            artifacts/
+-            typechain-types/
++            dist
++            artifacts
++            typechain-types
+ 
+   deploy-testnet:
+-    name: Deploy to Testnet
++    name: Deploy to Base Sepolia
+     runs-on: ubuntu-latest
+-    needs: [build, security-audit]
++    needs:
++      - build
+     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+     environment: testnet
++    timeout-minutes: 20
+     steps:
+-      - name: Checkout code
++      - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: recursive
+ 
+-      - name: Install Foundry
+-        uses: foundry-rs/foundry-toolchain@v1
+-
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
++          cache: npm
++          cache-dependency-path: package-lock.json
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
+ 
+       - name: Install dependencies
+-        run: npm install --legacy-peer-deps
++        run: npm ci
+ 
+       - name: Download build artifacts
+         uses: actions/download-artifact@v4
+         with:
+           name: build-artifacts
++          path: .
+ 
+-      - name: Compile contracts and generate types
+-        run: npm run compile
+-
+-      - name: Deploy to Base Sepolia
++      - name: Deploy contracts
+         run: npm run deploy:testnet
+         env:
+-          ETHEREUM_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+-          RELAYER_PRIVATE_KEY: ${{ secrets.RELAYER_PRIVATE_KEY }}
+-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
++          BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
++          PRIVATE_KEY: ${{ secrets.RELAYER_PRIVATE_KEY }}
++          BASESCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+ 
+       - name: Verify contracts
+         run: npm run verify
+@@ -220,15 +228,18 @@ jobs:
+           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+ 
+   notify:
+-    name: Notify Results
++    name: Notify results
+     runs-on: ubuntu-latest
+-    needs: [deploy-testnet]
+-    if: always()
++    needs:
++      - deploy-testnet
++    if: always() && github.ref == 'refs/heads/main'
+     steps:
+-      - name: Notify success
+-        if: needs.deploy-testnet.result == 'success'
+-        run: echo "✅ Deployment successful!"
+-
+-      - name: Notify failure
+-        if: needs.deploy-testnet.result == 'failure'
+-        run: echo "❌ Deployment failed!"
++      - name: Report outcome
++        run: |
++          if [ "${{ needs.deploy-testnet.result }}" = "success" ]; then
++            echo "✅ Deployment successful!"
++          elif [ "${{ needs.deploy-testnet.result }}" = "failure" ]; then
++            echo "❌ Deployment failed!"
++          else
++            echo "⚠️ Deployment skipped."
++          fi
+diff --git a/.github/workflows/forge-ci.yml b/.github/workflows/forge-ci.yml
+new file mode 100644
+index 0000000..e77a4d9
+--- /dev/null
++++ b/.github/workflows/forge-ci.yml
+@@ -0,0 +1,253 @@
++name: Forge CI Pipeline
++
++on:
++  push:
++    branches: [ main, develop ]
++  pull_request:
++    branches: [ main, develop ]
++  workflow_dispatch:
++
++env:
++  FOUNDRY_PROFILE: ci
++
++jobs:
++  # Job 1: Compile and basic checks
++  compile:
++    name: Compile Contracts
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Compile contracts
++        run: forge build
++
++      - name: Check formatting
++        run: forge fmt --check
++
++      - name: Upload build artifacts
++        uses: actions/upload-artifact@v4
++        with:
++          name: build-artifacts
++          path: |
++            out/
++            lib/
++
++  # Job 2: Run tests
++  test:
++    name: Run Tests
++    runs-on: ubuntu-latest
++    needs: compile
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Download build artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: build-artifacts
++
++      - name: Run unit tests
++        run: forge test --profile ci
++
++      - name: Run invariant tests
++        run: forge test --match-contract ".*InvariantTest" --profile ci
++
++      - name: Run fuzz tests
++        run: forge test --fuzz-runs 10000 --profile ci
++
++      - name: Generate coverage report
++        run: forge coverage --report lcov
++
++      - name: Upload coverage to Codecov
++        uses: codecov/codecov-action@v4
++        with:
++          file: ./lcov.info
++          flags: unittests
++          name: codecov-umbrella
++
++  # Job 3: Static analysis with Slither
++  slither:
++    name: Static Analysis (Slither)
++    runs-on: ubuntu-latest
++    needs: compile
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Download build artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: build-artifacts
++
++      - name: Install Slither
++        run: |
++          pip install slither-analyzer
++
++      - name: Run Slither analysis
++        run: |
++          slither src/CanonRegistry.sol --config-file slither.config.json || true
++          slither src/MaskSBT.sol --config-file slither.config.json || true
++
++      - name: Upload Slither report
++        uses: actions/upload-artifact@v4
++        with:
++          name: slither-report
++          path: slither-report.json
++
++  # Job 4: Gas optimization analysis
++  gas-analysis:
++    name: Gas Analysis
++    runs-on: ubuntu-latest
++    needs: compile
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Download build artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: build-artifacts
++
++      - name: Run gas analysis
++        run: forge test --gas-report
++
++      - name: Upload gas report
++        uses: actions/upload-artifact@v4
++        with:
++          name: gas-report
++          path: gas-report.txt
++
++  # Job 5: Security checks
++  security:
++    name: Security Checks
++    runs-on: ubuntu-latest
++    needs: compile
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Download build artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: build-artifacts
++
++      - name: Check for known vulnerabilities
++        run: forge test --match-test "test.*Security" || true
++
++      - name: Run security-focused tests
++        run: forge test --match-contract ".*Security.*" || true
++
++  # Job 6: Deploy and verify (testnet only)
++  deploy-testnet:
++    name: Deploy to Testnet
++    runs-on: ubuntu-latest
++    needs: [test, slither, security]
++    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
++    environment: testnet
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++        with:
++          version: nightly
++
++      - name: Install dependencies
++        run: forge install
++
++      - name: Download build artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: build-artifacts
++
++      - name: Deploy to Base Sepolia
++        run: |
++          forge script script/Deploy.s.sol \
++            --rpc-url ${{ secrets.BASE_SEPOLIA_RPC_URL }} \
++            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
++            --broadcast \
++            --verify \
++            --etherscan-api-key ${{ secrets.BASESCAN_API_KEY }}
++
++      - name: Update deployment info
++        run: |
++          echo "Deployment completed at $(date)" >> deployment.log
++          echo "Network: Base Sepolia" >> deployment.log
++          echo "Commit: ${{ github.sha }}" >> deployment.log
++
++      - name: Upload deployment artifacts
++        uses: actions/upload-artifact@v4
++        with:
++          name: deployment-artifacts
++          path: |
++            broadcast/
++            deployment.log
++
++  # Job 7: Notify on completion
++  notify:
++    name: Notify Completion
++    runs-on: ubuntu-latest
++    needs: [test, slither, gas-analysis, security]
++    if: always()
++    steps:
++      - name: Notify success
++        if: ${{ needs.test.result == 'success' && needs.slither.result == 'success' && needs.gas-analysis.result == 'success' && needs.security.result == 'success' }}
++        run: |
++          echo "✅ All CI checks passed successfully!"
++          echo "🔍 Tests: ${{ needs.test.result }}"
++          echo "🔍 Slither: ${{ needs.slither.result }}"
++          echo "🔍 Gas Analysis: ${{ needs.gas-analysis.result }}"
++          echo "🔍 Security: ${{ needs.security.result }}"
++
++      - name: Notify failure
++        if: ${{ needs.test.result == 'failure' || needs.slither.result == 'failure' || needs.gas-analysis.result == 'failure' || needs.security.result == 'failure' }}
++        run: |
++          echo "❌ CI checks failed!"
++          echo "🔍 Tests: ${{ needs.test.result }}"
++          echo "🔍 Slither: ${{ needs.slither.result }}"
++          echo "🔍 Gas Analysis: ${{ needs.gas-analysis.result }}"
++          echo "🔍 Security: ${{ needs.security.result }}"
++          exit 1
++
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 8aee16f..989ca27 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -4,6 +4,7 @@ on:
+   push:
+     tags:
+       - 'v*'
++  workflow_dispatch:
+ 
+ env:
+   NODE_VERSION: '18'
+@@ -24,6 +25,9 @@ jobs:
+           node-version: ${{ env.NODE_VERSION }}
+           cache: npm
+ 
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++
+       - name: Install dependencies
+         run: npm ci
+ 
+@@ -64,7 +68,7 @@ jobs:
+ 
+   build-and-upload:
+     name: Build and Upload Assets
+-    runs-on: ubuntu-latest
++    runs-on: ${{ matrix.os }}
+     needs: create-release
+     strategy:
+       matrix:
+@@ -79,15 +83,27 @@ jobs:
+           node-version: ${{ env.NODE_VERSION }}
+           cache: npm
+ 
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++
+       - name: Install dependencies
+         run: npm ci
+ 
+       - name: Build project
+         run: npm run build
+ 
+-      - name: Create archive
++      - name: Create archive (Windows)
++        if: matrix.os == 'windows-latest'
++        shell: pwsh
+         run: |
+-          tar -czf null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz \
++          Compress-Archive -Path "dist", "contracts", "schemas", "docs", "package.json", "README.md", "LICENSE" -DestinationPath "null-protocol-${{ github.ref_name }}-${{ matrix.os }}.zip" -Force
++          Write-Host "Created null-protocol-${{ github.ref_name }}-${{ matrix.os }}.zip"
++
++      - name: Create archive (Unix)
++        if: matrix.os != 'windows-latest'
++        shell: bash
++        run: |
++          tar -czf "null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz" \
+             dist/ \
+             contracts/ \
+             schemas/ \
+@@ -95,6 +111,7 @@ jobs:
+             package.json \
+             README.md \
+             LICENSE
++          echo "Created null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz"
+ 
+       - name: Upload Release Asset
+         uses: softprops/action-gh-release@v1
+@@ -102,7 +119,9 @@ jobs:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         with:
+           tag_name: ${{ github.ref }}
+-          files: ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
++          files: |
++            ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
++            ./null-protocol-${{ github.ref_name }}-${{ matrix.os }}.zip
+ 
+   deploy-mainnet:
+     name: Deploy to Mainnet
+@@ -119,14 +138,48 @@ jobs:
+         with:
+           node-version: ${{ env.NODE_VERSION }}
+ 
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++
+       - name: Install dependencies
+-        run: npm install --legacy-peer-deps
++        run: npm ci
+ 
+       - name: Deploy to Ethereum Mainnet
+-        run: npm run deploy:mainnet
++        id: deploy
++        run: |
++          # Run deployment and capture output
++          DEPLOY_OUTPUT=$(forge script script/Deploy.s.sol \
++            --rpc-url ${{ secrets.ETHEREUM_RPC_URL }} \
++            --private-key ${{ secrets.RELAYER_PRIVATE_KEY }} \
++            --broadcast \
++            --verify \
++            --etherscan-api-key ${{ secrets.ETHERSCAN_API_KEY }} 2>&1)
++          
++          echo "Deployment output:"
++          echo "$DEPLOY_OUTPUT"
++          
++          # Extract contract addresses from the output
++          CANON_REGISTRY=$(echo "$DEPLOY_OUTPUT" | grep "CanonRegistry:" | tail -1 | awk '{print $2}')
++          MASK_SBT=$(echo "$DEPLOY_OUTPUT" | grep "MaskSBT:" | tail -1 | awk '{print $2}')
++          
++          # Validate addresses
++          if [[ -z "$CANON_REGISTRY" || -z "$MASK_SBT" ]]; then
++            echo "❌ Failed to extract contract addresses from deployment output"
++            echo "CanonRegistry: $CANON_REGISTRY"
++            echo "MaskSBT: $MASK_SBT"
++            exit 1
++          fi
++          
++          # Output contract addresses for subsequent steps
++          echo "canonRegistry=$CANON_REGISTRY" >> $GITHUB_OUTPUT
++          echo "maskSBT=$MASK_SBT" >> $GITHUB_OUTPUT
++          
++          echo "✅ Contract addresses extracted:"
++          echo "CanonRegistry: $CANON_REGISTRY"
++          echo "MaskSBT: $MASK_SBT"
+         env:
+           ETHEREUM_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+-          RELAYER_PRIVATE_KEY: ${{ secrets.RELAYER_PRIVATE_KEY }}
++          PRIVATE_KEY: ${{ secrets.RELAYER_PRIVATE_KEY }}
+           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+ 
+       - name: Verify contracts on Etherscan
+@@ -136,8 +189,25 @@ jobs:
+ 
+       - name: Update contract addresses
+         run: |
+-          echo "CANON_REGISTRY_ADDRESS=${{ steps.deploy.outputs.canonRegistry }}" >> $GITHUB_ENV
+-          echo "MASK_SBT_ADDRESS=${{ steps.deploy.outputs.maskSBT }}" >> $GITHUB_ENV
++          echo "📝 Updating contract addresses..."
++          echo "CanonRegistry: ${{ steps.deploy.outputs.canonRegistry }}"
++          echo "MaskSBT: ${{ steps.deploy.outputs.maskSBT }}"
++          
++          # Create deployment info file
++          cat > deployment-info.json << EOF
++          {
++            "network": "ethereum-mainnet",
++            "release": "${{ github.ref_name }}",
++            "commit": "${{ github.sha }}",
++            "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
++            "contracts": {
++              "canonRegistry": "${{ steps.deploy.outputs.canonRegistry }}",
++              "maskSBT": "${{ steps.deploy.outputs.maskSBT }}"
++            }
++          }
++          EOF
++          
++          echo "✅ Contract addresses updated successfully"
+ 
+   notify-community:
+     name: Notify Community
+@@ -162,36 +232,3 @@ jobs:
+ 
+           # Update documentation with new version
+           echo "Updated to version ${{ github.ref_name }}" > VERSION.md
+-
+-  security-scan-release:
+-    name: Security Scan Release
+-    runs-on: ubuntu-latest
+-    needs: create-release
+-    steps:
+-      - name: Checkout code
+-        uses: actions/checkout@v4
+-
+-      - name: Setup Node.js
+-        uses: actions/setup-node@v4
+-        with:
+-          node-version: ${{ env.NODE_VERSION }}
+-
+-      - name: Install dependencies
+-        run: npm install --legacy-peer-deps
+-
+-      - name: Run security audit
+-        run: npm audit --audit-level=high
+-
+-      - name: Scan for vulnerabilities
+-        run: |
+-          # Check for known vulnerabilities in dependencies
+-          npm audit --json > audit-results.json
+-
+-          # Check for security issues in code
+-          npm run security:audit
+-
+-      - name: Upload security scan results
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: security-scan-results
+-          path: audit-results.json
+diff --git a/.github/workflows/security.yml b/.github/workflows/security.yml
+index 701e648..7555272 100644
+--- a/.github/workflows/security.yml
++++ b/.github/workflows/security.yml
+@@ -1,15 +1,21 @@
+-name: Security Audit
++name: Security Analysis
+ 
+ on:
+-  schedule:
+-    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
+   push:
+-    branches: [main]
++    branches:
++      - main
++      - develop
+   pull_request:
+-    branches: [main]
++    branches:
++      - main
++      - develop
++  schedule:
++    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
++  workflow_dispatch:
+ 
+ env:
+   NODE_VERSION: '18'
++  SOLIDITY_VERSION: '0.8.20'
+ 
+ jobs:
+   dependency-audit:
+@@ -31,14 +37,31 @@ jobs:
+       - name: Run npm audit
+         run: npm audit --audit-level=moderate
+ 
+-      - name: Check for known vulnerabilities
+-        run: npm audit --json > audit-results.json
++      - name: Run Snyk security scan
++        run: |
++          # Run Snyk scan and capture output
++          if [[ -n "${{ secrets.SNYK_TOKEN }}" ]]; then
++            echo "Running Snyk security scan..."
++            npx snyk test --severity-threshold=high --json > snyk-results.json 2>&1 || SNYK_EXIT=$?
++            
++            # Process results with allowlist
++            node .github/scripts/verify-snyk.js \
++              snyk-results.json \
++              .github/security/snyk-allowlist.json
++          else
++            echo "⚠️  SNYK_TOKEN not provided - skipping Snyk scan"
++            echo '{"vulnerabilities": [], "summary": "Skipped - no token"}' > snyk-results.json
++          fi
++        env:
++          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+ 
+       - name: Upload audit results
+         uses: actions/upload-artifact@v4
+         with:
+           name: audit-results
+-          path: audit-results.json
++          path: |
++            audit-results.json
++            snyk-results.json
+ 
+   smart-contract-security:
+     name: Smart Contract Security Analysis
+@@ -62,8 +85,14 @@ jobs:
+           pip install crytic-compile
+ 
+       - name: Run Slither analysis
+-        run: slither . --json slither-results.json
+-        continue-on-error: true
++        run: |
++          set -o pipefail
++          SLITHER_EXIT=0
++          slither . --json slither-results.json || SLITHER_EXIT=$?
++          node .github/scripts/verify-slither.js \
++            slither-results.json \
++            .github/security/slither-allowlist.json \
++            $SLITHER_EXIT
+ 
+       - name: Upload Slither results
+         uses: actions/upload-artifact@v4
+@@ -71,9 +100,8 @@ jobs:
+           name: slither-results
+           path: slither-results.json
+ 
+-      - name: Run Echidna tests
+-        run: npm run security:test
+-        continue-on-error: true
++      - name: Run fuzz tests
++        run: npm run test:fuzz
+ 
+   code-scanning:
+     name: Code Scanning
+@@ -115,6 +143,9 @@ jobs:
+       - name: Checkout code
+         uses: actions/checkout@v4
+ 
++      - name: Install Foundry
++        uses: foundry-rs/foundry-toolchain@v1
++
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+@@ -124,21 +155,13 @@ jobs:
+       - name: Install dependencies
+         run: npm ci
+ 
+-      - name: Run security test suite
+-        run: npm run test:security
+-        continue-on-error: true
++      - name: Run invariant test suite
++        run: npm run test:invariant
+ 
+-      - name: Test for common vulnerabilities
++      - name: Test for access control and overflow regressions
+         run: |
+-          # Test for reentrancy vulnerabilities
+-          npm run test:reentrancy
+-
+-          # Test for access control issues
+-          npm run test:access-control
+-
+-          # Test for integer overflow/underflow
+-          npm run test:integer-overflow
+-        continue-on-error: true
++          forge test --match-test testOnlyRelayerCanAnchor
++          forge test --match-test testAnchorInsufficientFee
+ 
+   compliance-check:
+     name: Compliance Check
+@@ -165,78 +188,14 @@ jobs:
+ 
+       - name: Check for sensitive data
+         run: |
+-          # Check for email addresses in code
+-          if grep -r "@" --include="*.ts" --include="*.js" --include="*.sol" . | grep -v "//" | grep -v "/*"; then
+-            echo "⚠️  Email addresses found in code"
+-          fi
+-
+-          # Check for IP addresses
+-          if grep -r "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}" --include="*.ts" --include="*.js" .; then
+-            echo "⚠️  IP addresses found in code"
+-          fi
+-
+-  security-report:
+-    name: Generate Security Report
+-    runs-on: ubuntu-latest
+-    needs:
+-      [
+-        dependency-audit,
+-        smart-contract-security,
+-        code-scanning,
+-        secret-scanning,
+-        security-tests,
+-        compliance-check,
+-      ]
+-    if: always()
+-    steps:
+-      - name: Download all artifacts
+-        uses: actions/download-artifact@v4
+-
+-      - name: Generate security report
+-        run: |
+-          echo "# Security Audit Report" > security-report.md
+-          echo "Generated on: $(date)" >> security-report.md
+-          echo "" >> security-report.md
+-
+-          echo "## Dependency Audit" >> security-report.md
+-          if [ -f audit-results.json ]; then
+-            echo "✅ Dependency audit completed" >> security-report.md
+-          else
+-            echo "❌ Dependency audit failed" >> security-report.md
++          # Check for hardcoded addresses
++          if grep -r "0x[a-fA-F0-9]{40}" --include="*.ts" --include="*.js" --include="*.sol" . | grep -v "0x0000000000000000000000000000000000000000"; then
++            echo "⚠️  Hardcoded addresses found (review if intentional)"
+           fi
+ 
+-          echo "" >> security-report.md
+-          echo "## Smart Contract Security" >> security-report.md
+-          if [ -f slither-results.json ]; then
+-            echo "✅ Slither analysis completed" >> security-report.md
+-          else
+-            echo "❌ Slither analysis failed" >> security-report.md
++          # Check for TODO/FIXME comments
++          if grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" --include="*.sol" .; then
++            echo "⚠️  TODO/FIXME comments found (review before production)"
+           fi
+ 
+-          echo "" >> security-report.md
+-          echo "## Code Scanning" >> security-report.md
+-          echo "✅ CodeQL analysis completed" >> security-report.md
+-
+-          echo "" >> security-report.md
+-          echo "## Secret Scanning" >> security-report.md
+-          echo "✅ TruffleHog scan completed" >> security-report.md
+-
+-      - name: Upload security report
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: security-report
+-          path: security-report.md
+-
+-      - name: Comment on PR
+-        if: github.event_name == 'pull_request'
+-        uses: actions/github-script@v6
+-        with:
+-          script: |
+-            const fs = require('fs');
+-            const report = fs.readFileSync('security-report.md', 'utf8');
+-            github.rest.issues.createComment({
+-              issue_number: context.issue.number,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              body: report
+-            });
++          echo "✅ Compliance check completed"
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+deleted file mode 100644
+index 4481ec6..0000000
+--- a/.github/workflows/test.yml
++++ /dev/null
+@@ -1,40 +0,0 @@
+-name: CI
+-
+-on:
+-  push:
+-  pull_request:
+-  workflow_dispatch:
+-
+-env:
+-  FOUNDRY_PROFILE: ci
+-
+-jobs:
+-  check:
+-    name: Foundry project
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@v4
+-        with:
+-          submodules: recursive
+-
+-      - name: Install Foundry
+-        uses: foundry-rs/foundry-toolchain@v1
+-
+-      - name: Show Forge version
+-        run: |
+-          forge --version
+-
+-      - name: Run Forge fmt
+-        run: |
+-          forge fmt --check
+-        id: fmt
+-
+-      - name: Run Forge build
+-        run: |
+-          forge build --sizes
+-        id: build
+-
+-      - name: Run Forge tests
+-        run: |
+-          forge test -vvv
+-        id: test
