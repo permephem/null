@@ -194,6 +194,13 @@ npm run dev
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
+## 🎟️ Consumer Protection
+
+- **[Canon Ticket Consumer Bill of Rights](../../docs/canon-ticket-consumer-bill-of-rights.md)** - Your rights as a ticket buyer
+- **Built-in Escrow Protection** - Funds held until verification passes
+- **Automatic Refunds** - Money back if verification fails
+- **Fraud Protection** - Protection against counterfeits and scams
+
 ## 🆘 Support
 
 - **Documentation**: [docs.nullprotocol.org/tickets](https://docs.nullprotocol.org/tickets)

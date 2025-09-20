@@ -316,6 +316,9 @@ forge test
 - [Contributing Guide](CONTRIBUTING.md)
 - [Production Deployment](README-PRODUCTION.md)
 
+### Consumer Protection
+- [Canon Ticket Consumer Bill of Rights](docs/canon-ticket-consumer-bill-of-rights.md)
+
 ## 🤝 Contributing
 
 1. Fork the repository
