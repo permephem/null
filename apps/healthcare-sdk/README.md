@@ -107,6 +107,13 @@ npm test
 npm run dev
 ```
 
+## 📚 Documentation
+
+### User Guides
+- **[Healthcare System User Guide](../../docs/healthcare-system-user-guide.md)** - Complete guide for patients, providers, researchers, and administrators
+- **[Healthcare System Developer Guide](../../docs/healthcare-system-developer-guide.md)** - Technical integration guide for healthcare developers
+- **[Healthcare System Quick Reference](../../docs/healthcare-system-quick-reference.md)** - Essential commands and patterns for healthcare
+
 ## 📚 API Documentation
 
 ### Core Endpoints

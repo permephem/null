@@ -236,6 +236,9 @@ See [SECURITY.md](SECURITY.md) for comprehensive threat analysis and controls.
 - **[Ticketing System User Guide](docs/ticketing-system-user-guide.md)** - Complete guide for buyers, sellers, venues, and marketplaces
 - **[Ticketing System Developer Guide](docs/ticketing-system-developer-guide.md)** - Technical integration guide for developers
 - **[Ticketing System Quick Reference](docs/ticketing-system-quick-reference.md)** - Essential commands and patterns
+- **[Healthcare System User Guide](docs/healthcare-system-user-guide.md)** - Complete guide for patients, providers, researchers, and administrators
+- **[Healthcare System Developer Guide](docs/healthcare-system-developer-guide.md)** - Technical integration guide for healthcare developers
+- **[Healthcare System Quick Reference](docs/healthcare-system-quick-reference.md)** - Essential commands and patterns for healthcare
 
 ### API Documentation
 
