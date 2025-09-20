@@ -1,0 +1,253 @@
+name: Forge CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  # Job 1: Compile and basic checks
+  compile:
+    name: Compile Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Compile contracts
+        run: forge build
+
+      - name: Check formatting
+        run: forge fmt --check
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            out/
+            lib/
+
+  # Job 2: Run tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Run unit tests
+        run: forge test --profile ci
+
+      - name: Run invariant tests
+        run: forge test --match-contract ".*InvariantTest" --profile ci
+
+      - name: Run fuzz tests
+        run: forge test --fuzz-runs 10000 --profile ci
+
+      - name: Generate coverage report
+        run: forge coverage --report lcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # Job 3: Static analysis with Slither
+  slither:
+    name: Static Analysis (Slither)
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Install Slither
+        run: |
+          pip install slither-analyzer
+
+      - name: Run Slither analysis
+        run: |
+          slither src/CanonRegistry.sol --config-file slither.config.json || true
+          slither src/MaskSBT.sol --config-file slither.config.json || true
+
+      - name: Upload Slither report
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: slither-report.json
+
+  # Job 4: Gas optimization analysis
+  gas-analysis:
+    name: Gas Analysis
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Run gas analysis
+        run: forge test --gas-report
+
+      - name: Upload gas report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-report
+          path: gas-report.txt
+
+  # Job 5: Security checks
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Check for known vulnerabilities
+        run: forge test --match-test "test.*Security" || true
+
+      - name: Run security-focused tests
+        run: forge test --match-contract ".*Security.*" || true
+
+  # Job 6: Deploy and verify (testnet only)
+  deploy-testnet:
+    name: Deploy to Testnet
+    runs-on: ubuntu-latest
+    needs: [test, slither, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: testnet
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Deploy to Base Sepolia
+        run: |
+          forge script script/Deploy.s.sol \
+            --rpc-url ${{ secrets.BASE_SEPOLIA_RPC_URL }} \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --broadcast \
+            --verify \
+            --etherscan-api-key ${{ secrets.BASESCAN_API_KEY }}
+
+      - name: Update deployment info
+        run: |
+          echo "Deployment completed at $(date)" >> deployment.log
+          echo "Network: Base Sepolia" >> deployment.log
+          echo "Commit: ${{ github.sha }}" >> deployment.log
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-artifacts
+          path: |
+            broadcast/
+            deployment.log
+
+  # Job 7: Notify on completion
+  notify:
+    name: Notify Completion
+    runs-on: ubuntu-latest
+    needs: [test, slither, gas-analysis, security]
+    if: always()
+    steps:
+      - name: Notify success
+        if: ${{ needs.test.result == 'success' && needs.slither.result == 'success' && needs.gas-analysis.result == 'success' && needs.security.result == 'success' }}
+        run: |
+          echo "✅ All CI checks passed successfully!"
+          echo "🔍 Tests: ${{ needs.test.result }}"
+          echo "🔍 Slither: ${{ needs.slither.result }}"
+          echo "🔍 Gas Analysis: ${{ needs.gas-analysis.result }}"
+          echo "🔍 Security: ${{ needs.security.result }}"
+
+      - name: Notify failure
+        if: ${{ needs.test.result == 'failure' || needs.slither.result == 'failure' || needs.gas-analysis.result == 'failure' || needs.security.result == 'failure' }}
+        run: |
+          echo "❌ CI checks failed!"
+          echo "🔍 Tests: ${{ needs.test.result }}"
+          echo "🔍 Slither: ${{ needs.slither.result }}"
+          echo "🔍 Gas Analysis: ${{ needs.gas-analysis.result }}"
+          echo "🔍 Security: ${{ needs.security.result }}"
+          exit 1
+

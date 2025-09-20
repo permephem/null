@@ -1,0 +1,201 @@
+name: Security Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  SOLIDITY_VERSION: '0.8.20'
+
+jobs:
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: Run Snyk security scan
+        run: |
+          # Run Snyk scan and capture output
+          if [[ -n "${{ secrets.SNYK_TOKEN }}" ]]; then
+            echo "Running Snyk security scan..."
+            npx snyk test --severity-threshold=high --json > snyk-results.json 2>&1 || SNYK_EXIT=$?
+            
+            # Process results with allowlist
+            node .github/scripts/verify-snyk.js \
+              snyk-results.json \
+              .github/security/snyk-allowlist.json
+          else
+            echo "⚠️  SNYK_TOKEN not provided - skipping Snyk scan"
+            echo '{"vulnerabilities": [], "summary": "Skipped - no token"}' > snyk-results.json
+          fi
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-results
+          path: |
+            audit-results.json
+            snyk-results.json
+
+  smart-contract-security:
+    name: Smart Contract Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Slither
+        run: |
+          pip install slither-analyzer
+          pip install crytic-compile
+
+      - name: Run Slither analysis
+        run: |
+          set -o pipefail
+          SLITHER_EXIT=0
+          slither . --json slither-results.json || SLITHER_EXIT=$?
+          node .github/scripts/verify-slither.js \
+            slither-results.json \
+            .github/security/slither-allowlist.json \
+            $SLITHER_EXIT
+
+      - name: Upload Slither results
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-results
+          path: slither-results.json
+
+      - name: Run fuzz tests
+        run: npm run test:fuzz
+
+  code-scanning:
+    name: Code Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, typescript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run invariant test suite
+        run: npm run test:invariant
+
+      - name: Test for access control and overflow regressions
+        run: |
+          forge test --match-test testOnlyRelayerCanAnchor
+          forge test --match-test testAnchorInsufficientFee
+
+  compliance-check:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Check for private keys
+          if grep -r "0x[a-fA-F0-9]{64}" --include="*.ts" --include="*.js" --include="*.sol" .; then
+            echo "❌ Potential private key found!"
+            exit 1
+          fi
+
+          # Check for API keys
+          if grep -r "sk-[a-zA-Z0-9]" --include="*.ts" --include="*.js" .; then
+            echo "❌ Potential API key found!"
+            exit 1
+          fi
+
+          echo "✅ No hardcoded secrets found"
+
+      - name: Check for sensitive data
+        run: |
+          # Check for hardcoded addresses
+          if grep -r "0x[a-fA-F0-9]{40}" --include="*.ts" --include="*.js" --include="*.sol" . | grep -v "0x0000000000000000000000000000000000000000"; then
+            echo "⚠️  Hardcoded addresses found (review if intentional)"
+          fi
+
+          # Check for TODO/FIXME comments
+          if grep -r "TODO\|FIXME" --include="*.ts" --include="*.js" --include="*.sol" .; then
+            echo "⚠️  TODO/FIXME comments found (review before production)"
+          fi
+
+          echo "✅ Compliance check completed"

@@ -1,0 +1,19 @@
+{
+  "allowedVulnerabilities": [
+    {
+      "id": "SNYK-JS-*",
+      "reason": "Development dependencies with known low-risk vulnerabilities",
+      "severity": "low"
+    }
+  ],
+  "ignoredVulnerabilities": [
+    {
+      "id": "SNYK-JS-LODASH-567746",
+      "reason": "Lodash vulnerability in dev dependencies only",
+      "package": "lodash"
+    }
+  ],
+  "failOnSeverity": ["critical", "high"],
+  "allowDevDependencies": true,
+  "allowOptionalDependencies": true
+}
