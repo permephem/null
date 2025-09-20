@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "forge-std/Script.sol";
 import "../src/CanonRegistry.sol";
 import "../src/MaskSBT.sol";
+import "../contracts/ConsumerProtectionPool.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -36,6 +37,11 @@ contract DeployScript is Script {
         
         console.log("MaskSBT deployed at:", address(maskSBT));
 
+        // Deploy ConsumerProtectionPool
+        ConsumerProtectionPool consumerPool = new ConsumerProtectionPool();
+        
+        console.log("ConsumerProtectionPool deployed at:", address(consumerPool));
+
         // Grant relayer role to deployer
         canonRegistry.grantRole(canonRegistry.RELAYER_ROLE(), deployer);
         console.log("Granted RELAYER_ROLE to deployer");
@@ -50,6 +56,7 @@ contract DeployScript is Script {
         string memory deploymentInfo = string(abi.encodePacked(
             "CanonRegistry: ", vm.toString(address(canonRegistry)), "\n",
             "MaskSBT: ", vm.toString(address(maskSBT)), "\n",
+            "ConsumerProtectionPool: ", vm.toString(address(consumerPool)), "\n",
             "Deployer: ", vm.toString(deployer), "\n",
             "Foundation Treasury: ", vm.toString(foundationTreasury), "\n",
             "Implementer Treasury: ", vm.toString(implementerTreasury)
