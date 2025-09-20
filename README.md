@@ -319,6 +319,7 @@ forge test
 ### Consumer Protection
 - [Canon Ticket Consumer Bill of Rights](docs/canon-ticket-consumer-bill-of-rights.md)
 - [Canon Code of Conduct for Sellers & Venues](docs/canon-code-of-conduct-sellers-venues.md)
+- [Canon Ticketing Addendum: Escrow & Consumer Protection](docs/canon-ticketing-addendum-escrow-consumer-protection.md)
 
 ## 🤝 Contributing
 

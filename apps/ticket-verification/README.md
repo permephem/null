@@ -198,6 +198,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - **[Canon Ticket Consumer Bill of Rights](../../docs/canon-ticket-consumer-bill-of-rights.md)** - Your rights as a ticket buyer
 - **[Canon Code of Conduct for Sellers & Venues](../../docs/canon-code-of-conduct-sellers-venues.md)** - Seller and venue commitments
+- **[Canon Ticketing Addendum: Escrow & Consumer Protection](../../docs/canon-ticketing-addendum-escrow-consumer-protection.md)** - Technical implementation details
 - **Built-in Escrow Protection** - Funds held until verification passes
 - **Automatic Refunds** - Money back if verification fails
 - **Fraud Protection** - Protection against counterfeits and scams
