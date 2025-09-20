@@ -7,6 +7,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @notice Pooled reserve that auto-refunds buyers harmed by fraud/revocation.
 /// Funds are topped up by tiny fees collected during sales/transfers.
 contract ConsumerProtectionPool is ReentrancyGuard, Ownable {
+    constructor() Ownable(msg.sender) {}
     event ToppedUp(address indexed from, uint256 amount);
     event Refunded(bytes32 indexed saleId, address indexed to, uint256 amount, string reason);
     event ResolverSet(address indexed resolver, bool allowed);

@@ -100,12 +100,6 @@ contract NullWarrant is Ownable {
         emit WarrantExecuted(warrantId, warrant.ticketCommit, msg.sender);
     }
 
-    /// @notice Check if a ticket is revoked
-    /// @param ticketCommit Commitment to ticket ID
-    /// @return revoked True if ticket is revoked
-    function isRevoked(bytes32 ticketCommit) external view returns (bool) {
-        return isRevoked[ticketCommit];
-    }
 
     /// @notice Get warrant information
     /// @param warrantId Warrant identifier
@@ -183,7 +177,7 @@ contract NullWarrant is Ownable {
     /// @notice Convert Reason enum to string
     /// @param reason Reason enum value
     /// @return String representation of reason
-    function _reasonToString(Reason reason) internal pure returns (string memory) {
+    function _reasonToString(Reason reason) public pure returns (string memory) {
         if (reason == Reason.Fraud) return "fraud";
         if (reason == Reason.PolicyBreach) return "policy_breach";
         if (reason == Reason.Duplicate) return "duplicate";
