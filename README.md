@@ -230,22 +230,29 @@ Configure `ops/alerts.yml` for automated alerting on:
 ### Threat Model
 See [SECURITY.md](SECURITY.md) for comprehensive threat analysis and controls.
 
-## 📚 API Documentation
+## 📚 Documentation
 
-### OpenAPI Specification
+### User Guides
+- **[Ticketing System User Guide](docs/ticketing-system-user-guide.md)** - Complete guide for buyers, sellers, venues, and marketplaces
+- **[Ticketing System Developer Guide](docs/ticketing-system-developer-guide.md)** - Technical integration guide for developers
+- **[Ticketing System Quick Reference](docs/ticketing-system-quick-reference.md)** - Essential commands and patterns
+
+### API Documentation
+
+#### OpenAPI Specification
 - **File**: `OPENAPI.relayer.yaml`
 - **Interactive**: Import into Postman/Insomnia
 - **Generation**: Auto-generated from code annotations
 
-### Key Endpoints
+#### Key Endpoints
 
-#### Ticket Verification SDK
+##### Ticket Verification SDK
 - `GET /tickets/{id}/history` - Complete Carfax-like ticket history
 - `POST /tickets/{id}/verify` - Pre-purchase verification
 - `POST /escrow/create` - Create secure escrow
 - `POST /escrow/{id}/complete` - Complete escrow after verification
 
-#### Healthcare SDK
+##### Healthcare SDK
 - `POST /consent/grant` - Grant patient consent
 - `POST /consent/revoke` - Revoke patient consent
 - `POST /records/anchor` - Anchor medical record

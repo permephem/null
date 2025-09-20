@@ -194,6 +194,13 @@ npm run dev
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
+## 📚 Documentation
+
+### User Guides
+- **[Ticketing System User Guide](../../docs/ticketing-system-user-guide.md)** - Complete guide for buyers, sellers, venues, and marketplaces
+- **[Ticketing System Developer Guide](../../docs/ticketing-system-developer-guide.md)** - Technical integration guide for developers
+- **[Ticketing System Quick Reference](../../docs/ticketing-system-quick-reference.md)** - Essential commands and patterns
+
 ## 🎟️ Consumer Protection
 
 - **[Canon Ticket Consumer Bill of Rights](../../docs/canon-ticket-consumer-bill-of-rights.md)** - Your rights as a ticket buyer
