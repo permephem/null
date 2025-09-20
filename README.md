@@ -239,6 +239,7 @@ See [SECURITY.md](SECURITY.md) for comprehensive threat analysis and controls.
 - **[Healthcare System User Guide](docs/healthcare-system-user-guide.md)** - Complete guide for patients, providers, researchers, and administrators
 - **[Healthcare System Developer Guide](docs/healthcare-system-developer-guide.md)** - Technical integration guide for healthcare developers
 - **[Healthcare System Quick Reference](docs/healthcare-system-quick-reference.md)** - Essential commands and patterns for healthcare
+- **[Credit Repair Solution](docs/credit-repair-solution.md)** - Blockchain-based credit repair with permanent deletion
 
 ### API Documentation
 
