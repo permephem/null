@@ -612,6 +612,84 @@ Null Protocol offers a path forward: a neutral, verifiable system that aligns in
 
 The time for change is now. The tools exist. The market is ready. The only question is whether we have the will to build a better future for digital advertising.
 
+## 📡 AdTech + Registry Integration
+
+### 1. The Core Premise
+
+In programmatic advertising, every bid request contains identifiers: cookies, MAIDs (mobile ad IDs), hashed emails, IPs, contextual metadata.
+
+Regulators already want more control over whether those identifiers can be traded.
+
+Under a null protocol world: each identifier must be checked against the negative registry before it can be used in targeting, enrichment, or resale.
+
+The registry provides a binary answer (allowed / opted-out).
+
+This is the "Do Not Call" list for AdTech.
+
+### 2. Workflow in AdTech Ecosystem
+
+SSPs / DSPs / Ad Exchanges integrate a registry lookup API at the point of bid processing.
+
+Data Management Platforms (DMPs) and Customer Data Platforms (CDPs) must scrub their ID graphs through the registry.
+
+Advertisers & Agencies can only activate audiences cleared by the registry.
+
+In short: every impression-level identifier must be scrubbed before use.
+
+### 3. Monetization Models
+
+#### (a) Per-Check Fees (like brokers)
+
+Each impression's identifier → registry check.
+
+With trillions of ad impressions/year, even a sub-microcent fee scales into billions of dollars.
+
+Example: 5T impressions/year × $0.000001/check = $5B ARR.
+
+#### (b) Monthly Access Licenses
+
+Platforms (Google DV360, The Trade Desk, Magnite, etc.) pay a flat monthly subscription based on volume tier.
+
+Predictable revenue, easier to administer, regulators like "fixed costs."
+
+#### (c) Hybrid Model
+
+Baseline license fee + per-check overage.
+
+Mirrors how ad fraud verification companies (IAS, DoubleVerify, Moat) charge today.
+
+### 4. Strategic Benefits
+
+**For Regulators:**
+- A single compliance choke point, no fragmented enforcement.
+- Easy audit trail — registry logs prove opt-out compliance.
+
+**For Platforms:**
+- Legal safe harbor: "We scrub every ID against the registry."
+- No need to build their own compliance systems.
+
+**For Registry Operator:**
+- Near-perfect network effects: once required, every impression flows through you.
+- Trillions of queries → scale economics unmatched by deletion SaaS.
+
+### 5. Analogy
+
+Think of ad fraud verification (IAS, DoubleVerify, Moat) — every ad impression is scored for fraud/viewability.
+
+They built billion-dollar businesses on top of a voluntary compliance pressure.
+
+A registry would be mandatory, with even clearer revenue visibility.
+
+### ✅ Takeaway
+
+On the AdTech side, the registry's premise is:
+
+Every identifier in every impression → must be registry-checked before activation.
+
+Monetization: per-check micro-fees or volume-based licenses, at AdTech scale.
+
+Outcome: multi-billion ARR utility, as compliance becomes inseparable from the ad supply chain.
+
 ---
 
 *Null Protocol: Distributed Enforcement of Privacy and Adtech Compliance*  
