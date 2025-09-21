@@ -8,7 +8,6 @@ import { hash } from 'blake3';
 // import { createHash } from 'crypto';
 import logger from '../utils/logger';
 import { CanonService } from '../canon/CanonService';
-import { CryptoService } from '../crypto/crypto';
 import { SBTService } from '../sbt/SBTService';
 import { EmailService } from '../email/EmailService';
 import type {
@@ -24,10 +23,21 @@ import { CryptoService } from '../crypto/crypto.js';
 export class RelayerService {
   private canonService: CanonService;
   private sbtService: SBTService;
+  private readonly controllerSecret: string;
 
-  constructor(canonService: CanonService, sbtService: SBTService, _emailService: EmailService) {
+  constructor(
+    canonService: CanonService,
+    sbtService: SBTService,
+    _emailService: EmailService,
+    controllerSecret?: string
+  ) {
     this.canonService = canonService;
     this.sbtService = sbtService;
+    const resolvedSecret = controllerSecret ?? process.env['RELAYER_CONTROLLER_SECRET'];
+    if (!resolvedSecret) {
+      throw new Error('Relayer controller secret must be provided');
+    }
+    this.controllerSecret = resolvedSecret;
   }
 
   /**
@@ -55,10 +65,11 @@ export class RelayerService {
       }
 
       // Generate privacy-preserving subject tag using HMAC-Blake3
+      const contextIdentifier = `${warrant.enterprise_id}:${warrant.warrant_id}`;
       const subjectTag = CryptoService.generateSubjectTag(
+        this.controllerSecret,
         warrant.subject.subject_handle,
-        warrant.enterprise_id,
-        warrant.warrant_id
+        contextIdentifier
       );
 
       // Compute distinct hashes for proper referential information
