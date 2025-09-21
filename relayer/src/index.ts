@@ -48,7 +48,13 @@ async function main() {
       smtpPass: process.env['SMTP_PASS'] || '',
       fromEmail: process.env['FROM_EMAIL'] || '',
     });
-    const _relayerService = new RelayerService(canonService, sbtService, emailService);
+    const controllerSecret = process.env['RELAYER_CONTROLLER_SECRET'];
+    const _relayerService = new RelayerService(
+      canonService,
+      sbtService,
+      emailService,
+      controllerSecret
+    );
 
     // Set the relayer service for routes
     setRelayerService(_relayerService);
