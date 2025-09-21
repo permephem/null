@@ -157,6 +157,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
      * @param subjectTag HMAC-based privacy-preserving tag
      * @param controllerDidHash Hash of controller DID
      * @param assurance Assurance level (0-2)
+     * @param nonce Signer's nonce for this transaction
      * @param deadline Meta-transaction deadline
      * @param v Signature recovery ID
      * @param r Signature r value
@@ -168,6 +169,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         bytes32 subjectTag,
         bytes32 controllerDidHash,
         uint8 assurance,
+        uint256 nonce,
         uint256 deadline,
         uint8 v,
         bytes32 r,
@@ -189,6 +191,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             subjectTag,
             controllerDidHash,
             assurance,
+            nonce,
             deadline,
             v,
             r,
@@ -250,6 +253,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
 
     /**
      * @dev Verify EIP-712 meta-transaction signature
+     * @notice Uses the provided nonce instead of msg.sender's nonce to prevent cross-relayer replays
      */
     function _verifyMetaTransaction(
         bytes32 warrantDigest,
@@ -257,12 +261,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         bytes32 subjectTag,
         bytes32 controllerDidHash,
         uint8 assurance,
+        uint256 nonce,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) internal returns (address) {
-        // First, recover the signer using the caller's nonce (for backward compatibility)
+        // Recover the signer using the provided nonce
         address signer = ECDSA.recover(
             _hashTypedDataV4(
                 keccak256(
@@ -273,7 +278,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
                         subjectTag,
                         controllerDidHash,
                         assurance,
-                        nonces[msg.sender],
+                        nonce, // Use the provided nonce
                         deadline
                     )
                 )
@@ -283,10 +288,10 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             s
         );
 
-        // Critical security fix: Verify that the caller's nonce matches the signer's nonce
-        // This ensures the signature was created with the signer's nonce, preventing replay attacks
-        if (nonces[msg.sender] != nonces[signer]) {
-            revert("Nonce mismatch: caller and signer nonces must match");
+        // Verify that the provided nonce matches the signer's current nonce
+        // This prevents cross-relayer replays and ensures nonce synchronization
+        if (nonce != nonces[signer]) {
+            revert("Invalid nonce: provided nonce does not match signer's current nonce");
         }
 
         // Increment the signer's nonce to prevent replay
