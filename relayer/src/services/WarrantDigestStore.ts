@@ -1,154 +1,108 @@
-/**
- * WarrantDigestStore
- * Interface and implementations for storing and retrieving warrant digests
- * @author Null Foundation
- */
-
-import { promises as fs } from 'fs';
-import path from 'path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import logger from '../utils/logger.js';
 
-/**
- * Interface for warrant digest storage
- */
 export interface WarrantDigestStore {
-  /**
-   * Store a warrant digest
-   * @param warrantId The warrant ID
-   * @param digest The warrant digest
-   */
-  set(warrantId: string, digest: string): Promise<void>;
-
-  /**
-   * Retrieve a warrant digest
-   * @param warrantId The warrant ID
-   * @returns The warrant digest or undefined if not found
-   */
   get(warrantId: string): Promise<string | undefined>;
-
-  /**
-   * Check if a warrant digest exists
-   * @param warrantId The warrant ID
-   * @returns True if the digest exists
-   */
-  has(warrantId: string): Promise<boolean>;
-
-  /**
-   * Delete a warrant digest
-   * @param warrantId The warrant ID
-   */
-  delete(warrantId: string): Promise<void>;
-
-  /**
-   * Clear all warrant digests
-   */
-  clear(): Promise<void>;
+  set(warrantId: string, digest: string): Promise<void>;
 }
 
-/**
- * In-memory implementation of WarrantDigestStore
- */
-export class MemoryWarrantDigestStore implements WarrantDigestStore {
-  private store: Map<string, string> = new Map();
+type StoreContents = Record<string, string>;
+
+export interface FileWarrantDigestStoreOptions {
+  filePath?: string;
+}
+
+export class FileWarrantDigestStore implements WarrantDigestStore {
+  private readonly filePath: string;
+  private cache: StoreContents | null = null;
+  private loadPromise?: Promise<void>;
+
+  constructor(options?: FileWarrantDigestStoreOptions) {
+    const defaultPath =
+      process.env['WARRANT_DIGEST_STORE_PATH'] ??
+      join(process.cwd(), '.relayer', 'warrant-digests.json');
+    this.filePath = options?.filePath ?? defaultPath;
+  }
+
+  async get(warrantId: string): Promise<string | undefined> {
+    await this.load();
+    return this.cache?.[warrantId];
+  }
 
   async set(warrantId: string, digest: string): Promise<void> {
-    this.store.set(warrantId, digest);
+    await this.load();
+    if (!this.cache) {
+      this.cache = {};
+    }
+    this.cache[warrantId] = digest;
+    await this.persist();
   }
+
+  private async load(): Promise<void> {
+    if (this.cache) {
+      return;
+    }
+
+    if (!this.loadPromise) {
+      this.loadPromise = (async () => {
+        try {
+          await mkdir(dirname(this.filePath), { recursive: true });
+          const fileContents = await readFile(this.filePath, 'utf-8');
+          const parsed = JSON.parse(fileContents) as StoreContents;
+          if (parsed && typeof parsed === 'object') {
+            this.cache = parsed;
+          } else {
+            this.cache = {};
+          }
+        } catch (error) {
+          const err = error as NodeJS.ErrnoException;
+          if (err.code === 'ENOENT') {
+            this.cache = {};
+            return;
+          }
+          logger.warn('Failed to load warrant digest store, initializing empty store', {
+            filePath: this.filePath,
+            error: err.message,
+          });
+          this.cache = {};
+        }
+      })();
+    }
+
+    await this.loadPromise;
+  }
+
+  private async persist(): Promise<void> {
+    if (!this.cache) {
+      return;
+    }
+
+    try {
+      await writeFile(this.filePath, JSON.stringify(this.cache, null, 2), 'utf-8');
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      logger.error('Failed to persist warrant digest to durable store', {
+        filePath: this.filePath,
+        error: err.message,
+      });
+      throw error;
+    }
+  }
+}
+
+export class InMemoryWarrantDigestStore implements WarrantDigestStore {
+  private readonly store = new Map<string, string>();
 
   async get(warrantId: string): Promise<string | undefined> {
     return this.store.get(warrantId);
   }
 
-  async has(warrantId: string): Promise<boolean> {
-    return this.store.has(warrantId);
-  }
-
-  async delete(warrantId: string): Promise<void> {
-    this.store.delete(warrantId);
+  async set(warrantId: string, digest: string): Promise<void> {
+    this.store.set(warrantId, digest);
   }
 
   async clear(): Promise<void> {
     this.store.clear();
-  }
-}
-
-/**
- * File-based implementation of WarrantDigestStore
- */
-export class FileWarrantDigestStore implements WarrantDigestStore {
-  private readonly filePath: string;
-  private cache: Map<string, string> = new Map();
-  private cacheLoaded = false;
-
-  constructor(filePath?: string) {
-    this.filePath = filePath || path.join(process.cwd(), 'data', 'warrant-digests.json');
-  }
-
-  private async ensureDirectory(): Promise<void> {
-    const dir = path.dirname(this.filePath);
-    try {
-      await fs.mkdir(dir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist
-    }
-  }
-
-  private async loadCache(): Promise<void> {
-    if (this.cacheLoaded) {
-      return;
-    }
-
-    try {
-      await this.ensureDirectory();
-      const data = await fs.readFile(this.filePath, 'utf-8');
-      const parsed = JSON.parse(data);
-      this.cache = new Map(Object.entries(parsed));
-      this.cacheLoaded = true;
-      logger.info('Loaded warrant digest cache', { count: this.cache.size });
-    } catch (error) {
-      // File doesn't exist or is invalid, start with empty cache
-      this.cache = new Map();
-      this.cacheLoaded = true;
-      logger.info('Initialized empty warrant digest cache');
-    }
-  }
-
-  private async saveCache(): Promise<void> {
-    try {
-      await this.ensureDirectory();
-      const data = Object.fromEntries(this.cache);
-      await fs.writeFile(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (error) {
-      logger.error('Failed to save warrant digest cache', { error });
-      throw error;
-    }
-  }
-
-  async set(warrantId: string, digest: string): Promise<void> {
-    await this.loadCache();
-    this.cache.set(warrantId, digest);
-    await this.saveCache();
-  }
-
-  async get(warrantId: string): Promise<string | undefined> {
-    await this.loadCache();
-    return this.cache.get(warrantId);
-  }
-
-  async has(warrantId: string): Promise<boolean> {
-    await this.loadCache();
-    return this.cache.has(warrantId);
-  }
-
-  async delete(warrantId: string): Promise<void> {
-    await this.loadCache();
-    this.cache.delete(warrantId);
-    await this.saveCache();
-  }
-
-  async clear(): Promise<void> {
-    await this.loadCache();
-    this.cache.clear();
-    await this.saveCache();
   }
 }

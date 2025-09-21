@@ -21,6 +21,7 @@ import { validateWarrant, validateAttestation } from '../schemas/validators.js';
 import { CryptoService } from '../crypto/crypto.js';
 import {
   FileWarrantDigestStore,
+  InMemoryWarrantDigestStore,
   type WarrantDigestStore,
 } from './WarrantDigestStore.js';
 
