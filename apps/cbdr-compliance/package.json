@@ -1,0 +1,67 @@
+{
+  "name": "@nullprotocol/cbdr-compliance",
+  "version": "1.0.0",
+  "description": "Cross-Border Data Regulation Compliance API for GDPR international transfers",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "db:migrate": "psql -f sql/001_init.sql",
+    "db:seed": "node scripts/seed.js"
+  },
+  "keywords": [
+    "gdpr",
+    "compliance",
+    "data-protection",
+    "cross-border",
+    "scc",
+    "adequacy",
+    "derogation",
+    "null-protocol"
+  ],
+  "author": "Null Foundation",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "pg": "^8.11.3",
+    "redis": "^4.6.10",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/pg": "^8.10.9",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.4",
+    "@types/jest": "^29.5.8",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nullprotocol/cbdr-compliance.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nullprotocol/cbdr-compliance/issues"
+  },
+  "homepage": "https://nullprotocol.org/cbdr"
+}

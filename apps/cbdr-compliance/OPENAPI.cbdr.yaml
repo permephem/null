@@ -1,0 +1,983 @@
+openapi: 3.0.3
+info:
+  title: CBDR Compliance API
+  description: |
+    Cross-Border Data Regulation Compliance API for GDPR international data transfers.
+    
+    This API provides real-time decisioning for cross-border data transfers under:
+    - GDPR Article 45 (Adequacy Decisions)
+    - GDPR Article 46 (Standard Contractual Clauses & Binding Corporate Rules)
+    - GDPR Article 49 (Derogations)
+    
+    All responses are cryptographically signed for regulatory compliance and audit trails.
+  version: 1.0.0
+  contact:
+    name: Null Foundation
+    url: https://nullprotocol.org
+    email: support@nullprotocol.org
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://cbdr.nullprotocol.org/api/v1
+    description: Production server
+  - url: https://cbdr-staging.nullprotocol.org/api/v1
+    description: Staging server
+  - url: http://localhost:8787/api/v1
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /transfer/check:
+    post:
+      summary: Check transfer compliance
+      description: |
+        Evaluate whether a cross-border data transfer complies with GDPR requirements.
+        
+        The API will check the transfer against adequacy decisions, SCCs, BCRs, or derogations
+        based on the claimed legal basis and return a decision with rationale and conditions.
+      operationId: checkTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            examples:
+              adequacy_example:
+                summary: EU to US transfer (adequacy)
+                value:
+                  origin_country: "DE"
+                  destination_country: "US"
+                  vendor_id: "aws"
+                  processing_context:
+                    controller: "Acme Corp GmbH"
+                    purpose: "Cloud Storage"
+                    data_categories: ["personal_data"]
+                    special_categories: false
+                  claimed_legal_basis: "ART45_ADEQUACY"
+                  transfer_date: "2025-09-21T16:00:00Z"
+                  client_ref: "transfer-12345"
+              scc_example:
+                summary: EU to US transfer (SCC)
+                value:
+                  origin_country: "FR"
+                  destination_country: "US"
+                  vendor_id: "aws"
+                  processing_context:
+                    controller: "Acme Pharma SAS"
+                    purpose: "Support Ticketing"
+                    data_categories: ["personal_data", "contact_details"]
+                    special_categories: false
+                  claimed_legal_basis: "ART46_SCC"
+                  transfer_date: "2025-09-21T16:15:00Z"
+                  client_ref: "st-88421"
+              derogation_example:
+                summary: EU to India transfer (derogation)
+                value:
+                  origin_country: "IT"
+                  destination_country: "IN"
+                  vendor_id: "custom_processor_xyz"
+                  processing_context:
+                    controller: "Acme Health S.p.A."
+                    purpose: "Urgent patient care"
+                    data_categories: ["personal_data", "health_data"]
+                    special_categories: true
+                  claimed_legal_basis: "ART49_DEROGATION"
+                  transfer_date: "2025-09-21T16:20:00Z"
+                  client_ref: "urgent-pt-5520"
+      responses:
+        '200':
+          description: Transfer compliance decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+              examples:
+                allow_response:
+                  summary: Transfer allowed (adequacy)
+                  value:
+                    request_id: "cbdr_01JES5Q2R6E2A6PH6A3VQ6TS1D"
+                    decision: "ALLOW"
+                    legal_basis_resolved: "ART45_ADEQUACY"
+                    rationale: "US has adequacy decision under EU-US Data Privacy Framework."
+                    machine_rationale:
+                      rules: ["adequacy(US)==true"]
+                      evidence: ["eu_us_dpf_adequacy_2023"]
+                    references:
+                      - title: "EU-US Data Privacy Framework"
+                        url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023D1025"
+                    audit:
+                      audit_token: "aud_01JES5Q3M5V9N4C"
+                      timestamp: "2025-09-21T16:00:01Z"
+                      client_ref: "transfer-12345"
+                    cache_ttl_seconds: 86400
+                    signature: "jws_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                conditional_allow_response:
+                  summary: Transfer conditionally allowed (SCC)
+                  value:
+                    request_id: "cbdr_01JES5Q2R6E2A6PH6A3VQ6TS1D"
+                    decision: "CONDITIONAL_ALLOW"
+                    legal_basis_resolved: "ART46_SCC"
+                    rationale: "No adequacy decision for US. Vendor registered SCC Modules 2 & 3 and TIA controls; transfer permitted subject to SCC/TIA enforcement."
+                    machine_rationale:
+                      rules:
+                        - "adequacy(US)==false"
+                        - "vendor_attestation(aws,SCC_Mod2_Mod3)==active"
+                        - "tia_required==true"
+                      evidence:
+                        - "aws_attestation:att_aws_scc_m2m3_active"
+                        - "tia_profile:tia_2025_v2"
+                    references:
+                      - title: "GDPR Art. 46 (SCCs)"
+                        url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021D0914"
+                    vendor_attestations:
+                      - vendor_id: "aws"
+                        program: "SCC_Mod2_Mod3"
+                        status: "active"
+                        attestation_id: "att_aws_scc_m2m3_active"
+                    conditions:
+                      - type: "SCC_ENFORCEMENT"
+                        status: "required"
+                      - type: "TIA_PROFILE"
+                        name: "TIA-Standard-2025"
+                        status: "required"
+                    audit:
+                      audit_token: "aud_01JES5Q3M5V9N4C"
+                      timestamp: "2025-09-21T16:15:01Z"
+                      client_ref: "st-88421"
+                    cache_ttl_seconds: 3600
+                    signature: "jws_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                deny_response:
+                  summary: Transfer denied
+                  value:
+                    request_id: "cbdr_01JES6A1NM3G8..."
+                    decision: "DENY"
+                    legal_basis_resolved: "N/A"
+                    rationale: "Adequacy status changed: destination no longer adequate as of 2025-09-15."
+                    machine_rationale:
+                      rules: ["adequacy(US)==false"]
+                      evidence: ["adequacy_withdrawal_2025_09_15"]
+                    references:
+                      - title: "EC Adequacy Withdrawal Notice"
+                        url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32025D0915"
+                    audit:
+                      audit_token: "aud_01JES6A2..."
+                      timestamp: "2025-09-21T16:30:01Z"
+                    cache_ttl_seconds: 0
+                    signature: "jws_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transfer/{requestId}:
+    get:
+      summary: Get transfer result
+      description: Retrieve the result of a previous transfer check by request ID
+      operationId: getTransferResult
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The request ID from a previous transfer check
+      responses:
+        '200':
+          description: Transfer result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferLog'
+        '404':
+          description: Transfer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /audit/{auditToken}:
+    get:
+      summary: Get audit trail
+      description: Retrieve the complete audit trail for a transfer decision
+      operationId: getAuditTrail
+      parameters:
+        - name: auditToken
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The audit token from a transfer decision
+      responses:
+        '200':
+          description: Audit trail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditTrail'
+        '404':
+          description: Audit trail not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vendors:
+    get:
+      summary: List vendors
+      description: Get a list of registered vendors
+      operationId: getVendors
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of vendors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vendors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vendor'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+  /vendors/{vendorId}:
+    get:
+      summary: Get vendor details
+      description: Get detailed information about a specific vendor
+      operationId: getVendor
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vendor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+        '404':
+          description: Vendor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vendors/{vendorId}/attestations:
+    get:
+      summary: Get vendor attestations
+      description: Get all attestations for a specific vendor
+      operationId: getVendorAttestations
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vendor attestations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VendorAttestation'
+    post:
+      summary: Create vendor attestation
+      description: Create a new attestation for a vendor
+      operationId: createVendorAttestation
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorAttestationInput'
+      responses:
+        '201':
+          description: Attestation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorAttestation'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regulatory/adequacy-decisions:
+    get:
+      summary: Get adequacy decisions
+      description: Get all current adequacy decisions
+      operationId: getAdequacyDecisions
+      responses:
+        '200':
+          description: List of adequacy decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdequacyDecision'
+
+  /regulatory/adequacy-decisions/{countryCode}:
+    get:
+      summary: Get adequacy decision for country
+      description: Get the adequacy decision for a specific country
+      operationId: getAdequacyDecision
+      parameters:
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+      responses:
+        '200':
+          description: Adequacy decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdequacyDecision'
+        '404':
+          description: No adequacy decision found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /regulatory/scc-updates:
+    get:
+      summary: Get SCC updates
+      description: Get all Standard Contractual Clause updates
+      operationId: getSCCUpdates
+      responses:
+        '200':
+          description: List of SCC updates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SCCUpdate'
+
+  /stats/transfers:
+    get:
+      summary: Get transfer statistics
+      description: Get statistics about transfer decisions
+      operationId: getTransferStats
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Transfer statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    decision:
+                      type: string
+                    legal_basis_resolved:
+                      type: string
+                    count:
+                      type: integer
+                    origin_countries:
+                      type: integer
+                    destination_countries:
+                      type: integer
+                    vendors:
+                      type: integer
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    TransferRequest:
+      type: object
+      required:
+        - origin_country
+        - destination_country
+        - vendor_id
+        - processing_context
+        - claimed_legal_basis
+        - transfer_date
+      properties:
+        origin_country:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2 country code of origin
+          example: "DE"
+        destination_country:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2 country code of destination
+          example: "US"
+        vendor_id:
+          type: string
+          description: Vendor identifier
+          example: "aws"
+        processing_context:
+          $ref: '#/components/schemas/ProcessingContext'
+        claimed_legal_basis:
+          $ref: '#/components/schemas/LegalBasis'
+        transfer_date:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the transfer
+          example: "2025-09-21T16:00:00Z"
+        client_ref:
+          type: string
+          description: Client reference for tracking
+          example: "transfer-12345"
+
+    ProcessingContext:
+      type: object
+      required:
+        - controller
+        - purpose
+        - data_categories
+        - special_categories
+      properties:
+        controller:
+          type: string
+          description: Data controller name
+          example: "Acme Corp GmbH"
+        purpose:
+          type: string
+          description: Processing purpose
+          example: "Cloud Storage"
+        data_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataCategory'
+          description: Categories of data being transferred
+        special_categories:
+          type: boolean
+          description: Whether special category data is involved (Art. 9 GDPR)
+          example: false
+
+    TransferResponse:
+      type: object
+      required:
+        - request_id
+        - decision
+        - legal_basis_resolved
+        - rationale
+        - machine_rationale
+        - audit
+        - cache_ttl_seconds
+        - signature
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+          example: "cbdr_01JES5Q2R6E2A6PH6A3VQ6TS1D"
+        decision:
+          $ref: '#/components/schemas/TransferDecision'
+        legal_basis_resolved:
+          $ref: '#/components/schemas/LegalBasis'
+        rationale:
+          type: string
+          description: Human-readable explanation of the decision
+        machine_rationale:
+          $ref: '#/components/schemas/MachineRationale'
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegulatoryReference'
+          description: Regulatory references supporting the decision
+        vendor_attestations:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorAttestation'
+          description: Relevant vendor attestations
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferCondition'
+          description: Conditions that must be met for conditional approval
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferConstraint'
+          description: Constraints on the transfer
+        audit:
+          $ref: '#/components/schemas/AuditInfo'
+        cache_ttl_seconds:
+          type: integer
+          description: Cache TTL in seconds
+          example: 86400
+        signature:
+          type: string
+          description: JWS signature for non-repudiation
+          example: "jws_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    LegalBasis:
+      type: string
+      enum:
+        - ART45_ADEQUACY
+        - ART46_SCC
+        - ART46_BCR
+        - ART49_DEROGATION
+        - ART49_VITAL_INTERESTS
+        - ART49_PUBLIC_INTEREST
+        - ART49_LEGITIMATE_INTERESTS
+        - ART49_CONSENT
+        - ART49_CONTRACT
+
+    TransferDecision:
+      type: string
+      enum:
+        - ALLOW
+        - CONDITIONAL_ALLOW
+        - DENY
+
+    DataCategory:
+      type: string
+      enum:
+        - personal_data
+        - contact_details
+        - health_data
+        - financial_data
+        - biometric_data
+        - location_data
+        - behavioral_data
+
+    MachineRationale:
+      type: object
+      required:
+        - rules
+        - evidence
+      properties:
+        rules:
+          type: array
+          items:
+            type: string
+          description: Applied decision rules
+        evidence:
+          type: array
+          items:
+            type: string
+          description: Evidence references
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Decision confidence score
+
+    RegulatoryReference:
+      type: object
+      required:
+        - title
+        - url
+      properties:
+        title:
+          type: string
+          description: Reference title
+        url:
+          type: string
+          format: uri
+          description: Reference URL
+        type:
+          type: string
+          enum:
+            - adequacy
+            - scc
+            - derogation
+            - guidance
+        effective_date:
+          type: string
+          format: date-time
+        expiry_date:
+          type: string
+          format: date-time
+
+    VendorAttestation:
+      type: object
+      required:
+        - vendor_id
+        - program
+        - status
+        - attestation_id
+        - issued_date
+      properties:
+        vendor_id:
+          type: string
+          description: Vendor identifier
+        program:
+          type: string
+          enum:
+            - SCC_Mod1
+            - SCC_Mod2
+            - SCC_Mod3
+            - SCC_Mod4
+            - BCR
+            - DPF
+            - PRIVACY_SHIELD
+        status:
+          type: string
+          enum:
+            - active
+            - expired
+            - suspended
+            - revoked
+        attestation_id:
+          type: string
+          description: Unique attestation identifier
+        issued_date:
+          type: string
+          format: date-time
+        expiry_date:
+          type: string
+          format: date-time
+        modules:
+          type: array
+          items:
+            type: string
+        certifications:
+          type: array
+          items:
+            type: string
+
+    TransferCondition:
+      type: object
+      required:
+        - type
+        - status
+      properties:
+        type:
+          type: string
+          enum:
+            - SCC_ENFORCEMENT
+            - TIA_PROFILE
+            - ADDITIONAL_SAFEGUARDS
+            - DATA_SUBJECT_RIGHTS
+            - SUPERVISORY_AUTHORITY
+        status:
+          type: string
+          enum:
+            - required
+            - optional
+            - satisfied
+        name:
+          type: string
+        description:
+          type: string
+
+    TransferConstraint:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - SCOPE_LIMITATION
+            - RETENTION_LIMIT
+            - LOG_REQUIREMENT
+            - NOTIFICATION_REQUIREMENT
+            - CONSENT_REQUIREMENT
+        note:
+          type: string
+        days:
+          type: integer
+          description: For retention limits
+        scope:
+          type: string
+          description: For scope limitations
+
+    AuditInfo:
+      type: object
+      required:
+        - audit_token
+        - timestamp
+      properties:
+        audit_token:
+          type: string
+          description: Unique audit identifier
+        timestamp:
+          type: string
+          format: date-time
+        client_ref:
+          type: string
+        regulatory_jurisdiction:
+          type: string
+
+    TransferLog:
+      type: object
+      properties:
+        id:
+          type: string
+        request_id:
+          type: string
+        origin_country:
+          type: string
+        destination_country:
+          type: string
+        vendor_id:
+          type: string
+        controller:
+          type: string
+        decision:
+          type: string
+        legal_basis:
+          type: string
+        rationale:
+          type: string
+        audit_token:
+          type: string
+        client_ref:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        signature:
+          type: string
+
+    AuditTrail:
+      type: object
+      required:
+        - audit_token
+        - audit_hash
+        - transfers
+        - timeline
+        - regulatory_references
+      properties:
+        audit_token:
+          type: string
+        audit_hash:
+          type: string
+        transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferLog'
+        timeline:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              event:
+                type: string
+              decision:
+                type: string
+              legal_basis:
+                type: string
+              rationale:
+                type: string
+              signature:
+                type: string
+        regulatory_references:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegulatoryReference'
+
+    Vendor:
+      type: object
+      properties:
+        vendor_id:
+          type: string
+        name:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+            - revoked
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VendorAttestationInput:
+      type: object
+      required:
+        - program
+        - status
+        - attestation_id
+        - issued_date
+      properties:
+        program:
+          type: string
+        status:
+          type: string
+        attestation_id:
+          type: string
+        issued_date:
+          type: string
+          format: date-time
+        expiry_date:
+          type: string
+          format: date-time
+        modules:
+          type: array
+          items:
+            type: string
+        certifications:
+          type: array
+          items:
+            type: string
+
+    AdequacyDecision:
+      type: object
+      required:
+        - country_code
+        - status
+        - decision_date
+        - reference
+        - url
+      properties:
+        country_code:
+          type: string
+          pattern: '^[A-Z]{2}$'
+        status:
+          type: string
+          enum:
+            - adequate
+            - inadequate
+            - pending
+        decision_date:
+          type: string
+          format: date-time
+        reference:
+          type: string
+        url:
+          type: string
+          format: uri
+        notes:
+          type: string
+
+    SCCUpdate:
+      type: object
+      required:
+        - version
+        - effective_date
+        - modules
+        - reference
+        - url
+      properties:
+        version:
+          type: string
+        effective_date:
+          type: string
+          format: date-time
+        modules:
+          type: array
+          items:
+            type: string
+        changes:
+          type: array
+          items:
+            type: string
+        reference:
+          type: string
+        url:
+          type: string
+          format: uri
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+tags:
+  - name: Transfer Compliance
+    description: Cross-border data transfer compliance checking
+  - name: Vendor Management
+    description: Vendor attestation and certification management
+  - name: Regulatory Data
+    description: Regulatory data sources and updates
+  - name: Audit & Monitoring
+    description: Audit trails and monitoring endpoints

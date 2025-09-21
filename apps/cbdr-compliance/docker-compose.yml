@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  cbdr-api:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      - NODE_ENV=production
+      - PORT=8787
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=cbdr_compliance
+      - DB_USER=cbdr_app
+      - DB_PASSWORD=secure_password_change_me
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWS_SECRET=your-jws-secret-key-change-in-production
+      - API_KEY_REQUIRED=false
+      - WEBHOOKS_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8787/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=cbdr_compliance
+      - POSTGRES_USER=cbdr_app
+      - POSTGRES_PASSWORD=secure_password_change_me
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cbdr_app -d cbdr_compliance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - cbdr-api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

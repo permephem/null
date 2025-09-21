@@ -43,7 +43,61 @@ The protocol operates through three core components: **Null Warrants** (enforcea
 
 ## 1. System Architecture
 
-### 1.1 Current Implementation Overview
+### 1.1 High-Level Global Architecture
+
+The Null Protocol implements a multi-tier, globally distributed architecture designed for trillion-scale compliance checking with sub-10ms latency:
+
+```
++-------------------+        +-------------------+        +------------------------+
+|  Callers (DSPs,   |  mTLS  |  Null Edge Gateways|  gRPC |   Policy/Decision      |
+|  SSPs, Brokers,   +------->+  (Anycast/API)    +------->+   Engine (Stateless)   |
+|  Clouds, AI labs) |        |  WAF, Rate-limit  |        |   (K/V lookups, rules) |
++---------+---------+        +---------+---------+        +-----------+------------+
+          |                             |                              |
+          |                             |                              |
+          |                             v                              v
+          |                    +--------+---------+         +----------+-----------+
+          |                    | Privacy-Preserving|        |   Rules & Attestation|
+          |                    | Token Service     |        |   Stores (RDBMS/Doc) |
+          |                    | (HMAC/KDF, salts) |        |   (versioned)        |
+          |                    +--------+----------+        +----------+-----------+
+          |                              \                          /
+          |                               \                        /
+          |                                v                      v
+          |                      +---------+------------------------+
+          |                      |  Hot Path KV Store (Sharded)    |
+          |                      |  (Spanner/Dynamo/Scylla)         |
+          |                      |  TTL caches for allow/deny        |
+          |                      +---------+------------------------+
+          |                                |
+          |                                v
+          |                    +-----------+------------+
+          |                    |  Append-only Decision  |
+          |                    |  Log (WORM, CT-style)  |
+          |                    +-----------+------------+
+          |                                |
+          |                                v
+          |                 +--------------+------------------+
+          |                 |  Merkle Batchers & Committers  |
+          |                 |  (build roots every N seconds) |
+          |                 +--------------+------------------+
+          |                                |
+          |                                v
+          |                 +--------------+------------------+
+          |                 |   L1/L2 Chain Anchors           |
+          |                 |   (post Merkle roots, rule      |
+          |                 |    version hashes, revocations) |
+          |                 +--------------+------------------+
+          |                                ^
+          v                                |
++---------+---------+             +--------+---------+
+| Client Audit Store|<------------+ Regulator Portal |
+| (receipts, proofs)|   verify    | (read-only,      |
++-------------------+             |  proofs/queries) |
+                                  +------------------+
+```
+
+### 1.2 Current Implementation Overview
 
 The Null Protocol implements a three-tier architecture with role-based access control:
 
@@ -67,7 +121,78 @@ The Null Protocol implements a three-tier architecture with role-based access co
                     └─────────────────┘
 ```
 
-### 1.2 Component Responsibilities
+### 1.3 Hot Path Architecture (Sub-10ms Performance)
+
+The hot path is optimized for trillion-scale compliance checking with strict latency requirements:
+
+**Caller Token Generation:**
+- Callers compute privacy-preserving tokens locally using published KDF (HMAC-SHA-256 with purpose-scoped salt)
+- No PII transmitted - only hashed identifiers for compliance checking
+
+**Edge Gateway Processing:**
+- mTLS authentication and rate limiting
+- Anycast routing for global low-latency access
+- WAF protection and request validation
+- gRPC forwarding to decision engines
+
+**Decision Engine Evaluation:**
+- Stateless microservices with K/V lookups
+- Rules evaluation (jurisdiction matrix, adequacy, SCC/BCR requirements)
+- Attestation verification (vendor self-attestations, certifications, data-residency)
+- Negative/closure set membership checking (opt-out/closure KV stores)
+
+**Response Generation:**
+- Result: ALLOW | CONDITIONAL_ALLOW | DENY
+- JWS-signed receipt with audit token
+- Cache TTL hint for client-side optimization
+- Write-behind: decision metadata appended to WORM log asynchronously
+
+**Scale Optimization:**
+- Anycast endpoints for global distribution
+- Per-region shards for data locality
+- Read-through caches (Redis/KeyDB) with strict TTLs
+- Client-side caching with regulatory change invalidation
+
+### 1.4 Audit & On-Chain Anchoring System
+
+**Merkle Batching Process:**
+- Batchers roll up new WORM-log entries into Merkle trees (per shard/region/time-slice)
+- Commit only Merkle roots and rule/attestation version hashes to L1/L2 chains
+- Store full batches in cold storage with erasure coding for durability
+
+**Proof Verification Flow:**
+- Callers and regulators verify receipts by checking inclusion proofs against on-chain roots
+- Cryptographic assurance without hot-path blockchain writes
+- Trillions of off-chain events → thousands of on-chain anchors per year
+
+**Transparency & Monitoring:**
+- CT-style log gossip for external monitoring
+- Detection of equivocation or missing entries
+- Public immutability without performance impact
+
+### 1.5 Data Model (Privacy-Preserving, Regulator-Friendly)
+
+**Rules Registry (Versioned):**
+- Machine-readable policies (GDPR Arts. 45–49, CCPA scopes, HIPAA/SEC lifecycles)
+- Versioned updates with cryptographic hashes
+- Governance workflow for policy changes
+
+**Attestations:**
+- Vendor programs (SCC modules, DPF, ISO/SOC, data-at-rest locales)
+- Cryptographically signed and revocable
+- Self-attestation system for major cloud providers
+
+**Negative/Lifecycle Sets:**
+- Hashed tokens only (HMAC with rotating, purpose-scoped salts)
+- No raw PII stored in compliance systems
+- Privacy-preserving opt-out and closure registries
+
+**Decision Log:**
+- Minimal metadata (token class, purpose, jurisdiction, decision code, receipt hash)
+- No PII in audit trails
+- Cryptographic receipts for court-grade evidence
+
+### 1.6 Component Responsibilities
 
 **User Layer:**
 
@@ -92,6 +217,124 @@ The Null Protocol implements a three-tier architecture with role-based access co
 - Cryptographic validation (JWS/DID signatures)
 - Workflow orchestration between layers
 - Real-time monitoring and compliance tracking
+
+### 1.7 Security & Integrity Framework
+
+**Cryptographic Security:**
+- Keys managed in HSM/KMS with automated rotation
+- Short-lived salts with purpose-scoped isolation
+- JWS receipts with detached payload hashes for non-repudiation
+- Court-grade evidence generation for regulatory investigations
+
+**Transparency & Monitoring:**
+- CT-style log gossip for external monitoring
+- Detection of equivocation or missing entries
+- Public auditability without performance impact
+- Zero-trust architecture with per-caller scopes
+
+**Access Control:**
+- Mutual TLS for all communications
+- Attribute-Based Access Control (ABAC) on endpoints
+- Per-purpose salts to prevent cross-linking attacks
+- Emergency revocation lists (CRL) pushed to edges within seconds
+
+### 1.8 Reliability & Latency SLOs
+
+**Performance Targets:**
+- p99 ≤ 10ms per check (in-region)
+- Availability ≥ 99.99%
+- Global anycast distribution for sub-100ms worldwide latency
+
+**Resilience Tactics:**
+- Multi-region active-active deployment
+- Request hedging with circuit breakers
+- Graceful degradation to cached policy snapshots
+- Last-known-good signed policy bundles during control-plane outages
+
+**Monitoring & Alerting:**
+- Real-time latency and error rate monitoring
+- Automated failover and recovery procedures
+- Performance regression detection and alerting
+
+### 1.9 Operations & Governance
+
+**Change Management:**
+- Rules and attestations updated via governance workflow
+- Every version hash anchored on-chain for verifiability
+- Emergency revocation lists (CRL) pushed to edges within seconds
+- Responses include CRL version for client verification
+
+**Regulator Console:**
+- Read-only access for supervisory authorities
+- Search by receipt ID with cryptographic verification
+- Export chain-verified audit slices for investigations
+- Proof verification against on-chain Merkle roots
+
+**Enterprise Console:**
+- Receipt search and dispute resolution
+- Opt-out lifecycle management
+- Compliance dashboard and reporting
+- Integration with existing DLP/SIEM systems
+
+### 1.10 Cost Profile & Economics
+
+**Operational Costs (Order of Magnitude):**
+- Hot path: KV reads + cache hits dominate (fractions of a cent per 1000 checks)
+- Storage: WORM log ~ tens of PB/year at trillion-scale with aggressive compaction
+- Chain costs: anchoring only (hourly roots) → low five figures/year on major L1/L2s
+
+**Revenue Model:**
+- Per-check fees for high-volume users (adtech, data brokers)
+- Enterprise subscriptions for comprehensive compliance
+- Premium services for advanced features and support
+- Regulatory partnerships for enforcement capabilities
+
+### 1.11 Failure & Abuse Considerations
+
+**Security Measures:**
+- Replay/forgery protection: receipts are time-boxed and signed
+- Inclusion proofs tied to specific batch roots
+- Enumeration resistance: tokens are HMACed with no oracle for reversing identifiers
+- Privacy incident mitigation: no PII in registry; compromised logs reveal nothing useful
+
+**Abuse Prevention:**
+- SSP/DSP must attach receipt IDs with bids
+- SSP rejects bids without fresh receipts
+- Rate limiting and authentication requirements
+- Automated abuse detection and response
+
+**Business Continuity:**
+- Multi-region redundancy with automatic failover
+- Emergency procedures for regulatory changes
+- Disaster recovery with RTO < 1 hour, RPO < 5 minutes
+- Compliance with SOC 2, HIPAA, and FedRAMP requirements
+
+### 1.12 Architecture Evolution Path
+
+**Phase 1: Foundation (Current)**
+- Current three-tier architecture with Canon Registry and Mask SBT
+- Relayer system with JWS/DID validation
+- Basic compliance checking for deletion warrants
+
+**Phase 2: Global Scale (Next 12 months)**
+- Deploy edge gateway infrastructure with anycast routing
+- Implement hot path KV stores (Spanner/Dynamo/Scylla)
+- Launch privacy-preserving token service
+- Deploy Merkle batching and on-chain anchoring
+
+**Phase 3: Universal Compliance (12-24 months)**
+- Full global distribution with sub-10ms latency
+- Integration with major cloud providers and adtech platforms
+- Regulatory console deployment for supervisory authorities
+- Advanced features: ZK proofs, TEE integration
+
+**Phase 4: Internet Infrastructure (24+ months)**
+- Become the de facto compliance layer for the internet
+- Integration with all major platforms and services
+- Regulatory mandate adoption across jurisdictions
+- Foundation for AI governance and synthetic media compliance
+
+This architecture represents the evolution from the current MVP implementation to a global-scale compliance infrastructure that can handle trillions of checks per day while maintaining privacy, security, and regulatory compliance.
 
 ---
 
