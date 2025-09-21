@@ -1,4 +1,0 @@
-.github/workflows/ci.yml
-.github/workflows/forge-ci.yml
-.github/workflows/release.yml
-.github/workflows/security.yml
