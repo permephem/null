@@ -760,6 +760,87 @@ Your regulator-ready compliance scorecard should show:
 
 This creates the narrative: "The current system is broken. A null protocol registry fixes it."
 
+## 📊 Volume Assumptions & Market Analysis
+
+### 1️⃣ Volume Assumptions — Impression Counts
+
+#### How to Frame It
+
+Global digital ad spend in 2023: ~$600B (eMarketer).
+
+Average CPM: $2–3 for programmatic display/video.
+
+That translates into 200–300 trillion annual impressions.
+
+#### Tier Breakdown
+
+- **Tier 1 (Google, Meta, Amazon)**: ~50T impressions (20–25% of market).
+- **Tier 2 (major SSPs/DSPs)**: ~20T impressions (10–15%).
+- **Tier 3 (regional networks)**: ~5T impressions (2–3%).
+- **Tier 4 (long tail publishers)**: ~1T impressions (<1%).
+
+#### Investor-Safe Line:
+
+"At today's $600B ad spend and ~$3 CPM, the world sees ~200 trillion programmatic impressions annually. Our model assumes ~75T checks — <40% of total volume. Even if we're off by half, the registry is still a multi-billion ARR business."
+
+### 2️⃣ Conversion of Impressions → Registry Checks
+
+#### Objection You'll Hear: "Won't caching/deduplication mean fewer checks?"
+
+#### Your Answer:
+
+Yes, not every impression will need a registry hit. But even at 50% of impressions, scale is massive.
+
+#### Build a sensitivity table:
+
+| % of Impressions Checked | Annual Impressions (75T baseline) | Revenue @ $0.0001/check |
+|-------------------------|-----------------------------------|------------------------|
+| 100% | 75T | $7.5B |
+| 75% | 56T | $5.6B |
+| 50% | 38T | $3.8B |
+| 25% | 19T | $1.9B |
+
+#### Investor-Safe Line:
+
+"Even if only half of impressions are checked, the registry clears ~$4B ARR. Our economics don't depend on perfect enforcement — they work at any reasonable adoption level."
+
+### 3️⃣ Competitive Dynamics — Why IAS/DV/Moat Can't Run This
+
+#### Slide Headline: "Why existing verification players can't own the registry."
+
+#### Talking Points:
+
+**Conflict of Interest**: IAS/DV/Moat are tied to Google, Meta, TikTok — companies that profit from ignoring opt-outs. A neutral registry must be regulator-endorsed and industry-agnostic.
+
+**Mandate Gap**: These firms monetize voluntary brand safety. A registry is statutory compliance infrastructure. They don't have the trust or charter to operate one.
+
+**Pricing Misfit**: IAS/DV's pricing is based on discretionary ad spend. A registry is a regulated micro-tax. Different economics, different buyer.
+
+**Regulatory Positioning**: You're building a public-utility narrative — not another SaaS vendor.
+
+#### Investor-Safe Line:
+
+"IAS, DoubleVerify, and Moat prove that per-impression compliance can be monetized. But they cannot operate a government-backed negative registry — they're conflicted, voluntary, and advertiser-facing. This must be a neutral, regulator-blessed utility."
+
+### 4️⃣ Regulatory Timeline Risk
+
+#### Objection You'll Hear: "What if regulators drag their feet?"
+
+#### Your Answer:
+
+In the near term, the registry can monetize as a compliance analytics layer:
+
+- **Dashboards for brands**: % of impressions violating GPC/CCPA.
+- **Reporting for publishers/SSPs**: leakage maps, audit readiness.
+
+That builds revenue now and data gravity while you lobby for mandates.
+
+When mandates land (state-level first, then EU/US federal), you're already the default operator with datasets no one else has.
+
+#### Investor-Safe Line:
+
+"We don't need to wait for regulation to make money. Compliance metrics alone are a $50–100M ARR wedge. The mandate just flips the switch from tens of millions → billions."
+
 ---
 
 *Null Protocol: Distributed Enforcement of Privacy and Adtech Compliance*  
