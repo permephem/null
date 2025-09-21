@@ -1,6 +1,6 @@
 # Null Protocol Production Stack
 
-A complete, containerized production stack for the Null Protocol SDK ecosystem with IPFS pinning, security hardening, and observability. This includes the Ticket Verification SDK ("Carfax for Tickets") and Healthcare SDK (HIPAA-compliant medical data management).
+A complete, containerized production stack for the Null Protocol SDK ecosystem with IPFS pinning, security hardening, and observability. This includes the Ticket Verification SDK ("Carfax for Tickets"), Healthcare SDK (HIPAA-compliant medical data management), Credit Repair SDK (permanent deletion with consumer protection), Digital Estate SDK (guaranteed account closure and post-mortem data management), and Adtech Opt-Out SDK (unified opt-out enforcement with violation detection).
 
 ## Architecture
 
@@ -22,16 +22,16 @@ The Null Protocol production stack supports multiple specialized SDKs built on a
 
 ### SDK Ecosystem
 ```
-┌─────────────────┐    ┌─────────────────┐
-│  Ticket SDK     │    │ Healthcare SDK  │
-│  (Verification) │    │  (HIPAA)        │
-│                 │    │                 │
-│ • Carfax-like   │    │ • Consent Mgmt  │
-│   History       │    │ • Medical       │
-│ • Escrow        │    │   Records       │
-│ • Compliance    │    │ • Clinical      │
-│                 │    │   Trials        │
-└─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Ticket SDK     │    │ Healthcare SDK  │    │  Credit SDK     │    │  Digital        │    │  Adtech         │
+│  (Verification) │    │  (HIPAA)        │    │  (Repair &      │    │  Estate SDK     │    │  Opt-Out SDK    │
+│                 │    │                 │    │   Identity)     │    │  (Post-Mortem)  │    │  (Do Not Track) │
+│ • Carfax-like   │    │ • Consent Mgmt  │    │ • Credit Repair │    │ • Account       │    │ • Unified       │
+│   History       │    │ • Medical       │    │ • Identity      │    │   Closure       │    │   Opt-Outs      │
+│ • Escrow        │    │   Records       │    │   Protection    │    │ • Fraud         │    │ • Violation     │
+│ • Compliance    │    │ • Clinical      │    │ • Permanent     │    │   Prevention    │    │   Detection     │
+│                 │    │   Trials        │    │   Deletion      │    │ • Estate        │    │ • Consumer      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## Quick Start
@@ -48,6 +48,15 @@ The Null Protocol production stack supports multiple specialized SDKs built on a
    
    # Configure Healthcare SDK
    cp apps/healthcare-sdk/env.example apps/healthcare-sdk/.env
+   
+   # Configure Credit Repair SDK
+   cp apps/credit-repair/env.example apps/credit-repair/.env
+   
+   # Configure Digital Estate SDK
+   cp apps/digital-estate/env.example apps/digital-estate/.env
+   
+   # Configure Adtech Opt-Out SDK
+   cp apps/adtech-optout/env.example apps/adtech-optout/.env
    ```
 
 2. **Configure environment:**

@@ -34,6 +34,8 @@ export class CanonMaskIntegration {
   private autoMintEnabled: boolean;
   private mintingDelay: number;
   private eventListeners: Map<string, (event: AnchoredEvent) => Promise<void>> = new Map();
+  private isListening: boolean = false;
+  private anchoredEventListener?: (event: any) => Promise<void>;
 
   constructor(config: CanonMaskIntegrationConfig) {
     this.canonService = config.canonService;
@@ -47,11 +49,55 @@ export class CanonMaskIntegration {
    */
   public async startEventListening(): Promise<void> {
     try {
+      if (this.isListening) {
+        logger.warn('Event listening is already active');
+        return;
+      }
+
       logger.info('Starting Canon Registry event listening...');
 
-      // For now, we'll implement a polling mechanism instead of event listening
-      // This avoids the complex TypeChain event handling issues
-      logger.info('Event listening will be implemented via polling mechanism');
+      const contract = this.canonService.getContract();
+      if (!contract) {
+        throw new Error('CanonRegistry contract not available');
+      }
+
+      // Create the event listener function
+      this.anchoredEventListener = async (event: any) => {
+        try {
+          logger.info('Received Anchored event from CanonRegistry:', {
+            transactionHash: event.transactionHash,
+            blockNumber: event.blockNumber,
+            warrantDigest: event.args?.warrantDigest,
+            attestationDigest: event.args?.attestationDigest,
+            relayer: event.args?.relayer,
+            assurance: event.args?.assurance,
+          });
+
+          // Transform the raw event into our AnchoredEvent interface
+          const anchoredEvent: AnchoredEvent = {
+            warrantDigest: event.args?.warrantDigest || '',
+            attestationDigest: event.args?.attestationDigest || '',
+            relayer: event.args?.relayer || '',
+            subjectTag: event.args?.subjectTag || '',
+            controllerDidHash: event.args?.controllerDidHash || '',
+            assurance: event.args?.assurance || 0,
+            timestamp: event.args?.timestamp || 0,
+            blockNumber: event.blockNumber || 0,
+            transactionHash: event.transactionHash || '',
+          };
+
+          // Handle the event
+          await this.handleAnchoredEvent(anchoredEvent);
+        } catch (error) {
+          logger.error('Error processing Anchored event:', error);
+          // Don't throw to prevent event listener from crashing
+        }
+      };
+
+      // Set up the event listener
+      contract.on('Anchored', this.anchoredEventListener);
+
+      this.isListening = true;
       logger.info('Canon Registry event listening started successfully');
     } catch (error) {
       logger.error('Failed to start event listening:', error);
@@ -64,7 +110,22 @@ export class CanonMaskIntegration {
    */
   public async stopEventListening(): Promise<void> {
     try {
-      logger.info('Stopped Canon Registry event listening');
+      if (!this.isListening) {
+        logger.warn('Event listening is not active');
+        return;
+      }
+
+      logger.info('Stopping Canon Registry event listening...');
+
+      const contract = this.canonService.getContract();
+      if (contract && this.anchoredEventListener) {
+        // Remove the specific event listener
+        contract.off('Anchored', this.anchoredEventListener);
+        this.anchoredEventListener = undefined;
+      }
+
+      this.isListening = false;
+      logger.info('Canon Registry event listening stopped successfully');
     } catch (error) {
       logger.error('Failed to stop event listening:', error);
       throw error;
@@ -209,11 +270,13 @@ export class CanonMaskIntegration {
     autoMintEnabled: boolean;
     mintingDelay: number;
     eventListenersCount: number;
+    isListening: boolean;
   } {
     return {
       autoMintEnabled: this.autoMintEnabled,
       mintingDelay: this.mintingDelay,
       eventListenersCount: this.eventListeners.size,
+      isListening: this.isListening,
     };
   }
 

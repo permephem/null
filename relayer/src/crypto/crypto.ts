@@ -49,7 +49,7 @@ export class CryptoService {
    * Generate a canonical hash for a warrant
    */
   static generateWarrantHash(warrant: any): string {
-    const canonical = JSON.stringify(warrant, Object.keys(warrant).sort());
+    const canonical = this.canonicalizeJSON(warrant);
     return this.hashBlake3(canonical);
   }
 
@@ -57,7 +57,7 @@ export class CryptoService {
    * Generate a canonical hash for an attestation
    */
   static generateAttestationHash(attestation: any): string {
-    const canonical = JSON.stringify(attestation, Object.keys(attestation).sort());
+    const canonical = this.canonicalizeJSON(attestation);
     return this.hashBlake3(canonical);
   }
 
@@ -65,7 +65,31 @@ export class CryptoService {
    * Generate a canonical hash for a receipt
    */
   static generateReceiptHash(receipt: any): string {
-    const canonical = JSON.stringify(receipt, Object.keys(receipt).sort());
+    const canonical = this.canonicalizeJSON(receipt);
+    return this.hashBlake3(canonical);
+  }
+
+  /**
+   * Generate a distinct hash for subject handle
+   */
+  static generateSubjectHandleHash(subjectHandle: string): string {
+    const canonical = this.canonicalizeJSON({ subject_handle: subjectHandle });
+    return this.hashBlake3(canonical);
+  }
+
+  /**
+   * Generate a distinct hash for enterprise identifier
+   */
+  static generateEnterpriseHash(enterpriseId: string): string {
+    const canonical = this.canonicalizeJSON({ enterprise_id: enterpriseId });
+    return this.hashBlake3(canonical);
+  }
+
+  /**
+   * Generate a distinct hash for controller DID
+   */
+  static generateControllerDidHash(controllerDid: string): string {
+    const canonical = this.canonicalizeJSON({ controller_did: controllerDid });
     return this.hashBlake3(canonical);
   }
 
@@ -194,9 +218,33 @@ export class CryptoService {
 
   /**
    * Canonicalize JSON data according to JCS (JSON Canonicalization Scheme)
+   * This implements true recursive canonicalization as specified in RFC 8785
    */
   static canonicalizeJSON(data: any): string {
-    // Simple canonicalization - sort keys recursively
-    return JSON.stringify(data, Object.keys(data).sort());
+    return JSON.stringify(this.canonicalizeObject(data));
+  }
+
+  /**
+   * Recursively canonicalize an object according to JCS
+   * This ensures all nested objects have their keys sorted consistently
+   */
+  private static canonicalizeObject(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.canonicalizeObject(item));
+    }
+
+    // For objects, sort keys and recursively canonicalize values
+    const sortedKeys = Object.keys(obj).sort();
+    const canonicalized: any = {};
+    
+    for (const key of sortedKeys) {
+      canonicalized[key] = this.canonicalizeObject(obj[key]);
+    }
+    
+    return canonicalized;
   }
 }

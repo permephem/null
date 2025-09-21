@@ -127,6 +127,42 @@ This paper outlines the technical design, trust framework, and business case for
 - **Supply chain mapping (schain)**: Complete ad path analysis
 - **Confidence tiers**: High/Medium/Low attribution levels
 
+### 🧩 Putting it together (Null's "Compliance Map")
+
+**Step 1: Send a DNT/GPC signal.**
+
+**Step 2: Capture all network traffic (HAR logs).**
+
+**Step 3: Classify events by layer:**
+
+- **Publisher** → cookies, tags
+- **Vendors** → adtech domains, bid requests, syncs
+- **Creative** → trackers inside the payload
+
+**Step 4: Compare with control (no signal).**
+
+**Step 5: Attribute failures:**
+
+- "Publisher ignored signal"
+- "Vendor X cookie-synced despite signal"
+- "Creative from DSP Y fingerprinted user"
+
+### 📊 Deliverable: Evidence Bundles
+
+For each tested site, Null generates:
+
+- **Compliance scorecard** (publisher/vendor/creative layers)
+- **Screenshots + HAR traces** for regulator-proof evidence
+- **Attribution table**: "Non-compliance observed: Vendor=AppNexus, Creative from Brand=Ford, Publisher=BuzzFeed"
+
+### ✅ Why this is powerful:
+
+Most current privacy tools stop at "this site tracks you."
+
+Null goes further: "This site's publisher is fine, but DSP X and Creative Y are breaking the law."
+
+That makes it actionable for enterprises (fire the vendor) and regulators (enforce directly).
+
 ### Trust Model
 
 **Zero PII exposure:**
@@ -327,39 +363,126 @@ This paper outlines the technical design, trust framework, and business case for
 - Increased trust and transparency
 - Market efficiency improvements
 
-## 7. Roadmap
+## 7. Go-to-Market Strategy
 
-### Phase 1: Foundation (Months 1-6)
-**Build MFA registry, pilot consumer extension, publish inaugural compliance report:**
-- Develop browser extension MVP
-- Create MFA site registry
-- Launch consumer beta program
-- Publish first compliance report
-- Build public awareness
+### Phase 0 — Guardrails & Rubric (Week 0–1)
 
-### Phase 2: Enterprise Launch (Months 7-12)
-**Launch enterprise dashboards, secure 3–5 pilot enterprise clients:**
-- Develop enterprise dashboard
-- Create investigation services
-- Secure pilot enterprise clients
-- Build certification program
-- Establish revenue model
+**Scope:** Public pages only; no auth walls; honor robots/excluded paths.
 
-### Phase 3: Scale (Months 13-24)
-**Scale consumer adoption, expand to 5k–50k domains, launch certification program:**
-- Scale consumer adoption
-- Expand domain coverage
-- Launch certification program
-- Build market intelligence
-- Establish industry partnerships
+**Signals tested:** GPC (header + JS), DNT, site-level "Do Not Sell/Share" UX, IAB U.S. Privacy string.
 
-### Phase 4: Global Expansion (Months 25-36)
-**Global expansion, integrate with regulator and NGO enforcement frameworks:**
-- International expansion
-- Regulatory integration
-- NGO partnerships
-- Industry standards
-- Market transformation
+**Rubric (per site):**
+
+- **Publisher:** first-party cookies/IDs under GPC, fingerprinting APIs, CMP behavior
+- **Vendors:** cookie syncs, bid requests with IDs, honoring uSPrivacy/GPC, sellers.json alignment
+- **Creatives:** pixels/scripts in ad payload, fingerprinting, beaconing
+
+**Scores:** Green (0 violations), Yellow (non-material or isolated), Red (systemic). Weight: Publisher 40%, Vendors 40%, Creatives 20%.
+
+**Evidence standard:** HAR + screenshots + DOM snippet + extracted RTB fields + ads.txt/sellers.json; all artifacts hashed and timestamped.
+
+### Phase 1 — Minimal System (Week 1–4)
+
+**Architecture:**
+
+- **Edge orchestrator:** Cloudflare Workers/Durable Objects queue target URLs and test variants
+- **Runner pool:** Playwright in containerized workers (Browserless API or a tiny VM pool). Warm instances to avoid cold starts
+- **Network capture:** mitmproxy (or Playwright's HAR) per run; redact/strip PII at capture
+- **Storage:** Cloudflare R2 (hot 30 days) → Deep archive thereafter
+- **Parser:** Lightweight service extracts: cookies set under GPC, fingerprinting calls, vendor domains, OpenRTB fields (adomain, crid, nurl), sync endpoints
+
+**Test Matrix (per site):**
+
+- **Variants:** Control (no signals) vs. Treatment (GPC+DNT enabled)
+- **Geo:** At least 2 U.S. states (CA + non-CA), optional EU
+- **Runs:** 3 passes/variant/day to smooth flukes
+- **Timing:** Cold start + warm navigation; scroll to trigger lazy ads
+
+**Output Schema (per run):**
+```json
+{
+  "site": "example.com",
+  "ts_utc": "2025-09-20T18:15:00Z",
+  "variant": "GPC_ON_CA",
+  "publisher": {"cookies_set": ["user_id"], "fingerprinting": ["canvas","audio"], "cmp_behavior": "optout_ignored"},
+  "vendors": [{"domain":"adnxs.com","cookie_sync":true,"id_in_bid":true,"gpc_honored":false}],
+  "creative": [{"served_by":"adnxs.com","pixels":["pixel.criteo.com"],"fp_calls":[]}],
+  "ads_txt": {"authorized":["..."], "anomalies":[]},
+  "sellers_json": [{"vendor":"...","sid":"..."}],
+  "evidence": {"har":"r2://.../run.har","screenshot":"r2://.../shot.png","hash":"sha256:..."},
+  "score": {"publisher":"red","vendors":"yellow","creative":"green","overall":"red"}
+}
+```
+
+### Phase 2 — Coverage & QA (Week 4–8)
+
+- **Site set:** Start with Top 500 U.S. content/commerce/news domains (Tranco/Alexa-like list)
+- **Daily cadence:** 1–2 runs/site/day/variant ⇒ ~2–4k runs/day (cheap under Cloudflare+Browserless)
+- **Anti-evasion:** Randomize UA within realistic families, rotate residential exit IPs (legally), vary scroll/view timings
+- **Determinism:** Fix seeds, version the runner image, emit "tester build hash" in every record
+- **QC:** 2% human spot-check/day; auto-flag improbable diffs (e.g., identical cookie sets across variants)
+
+### Phase 3 — The Report (Week 8–10)
+
+**Deliverables:**
+
+- **Public microsite:** "Null Protocol – Adtech Compliance Index (Q4 2025)"
+- **Leaderboards** (Best/Worst), sector breakdowns (news, retail, health), vendor heatmap
+- **Each site gets a public card** (green/yellow/red) with non-PII evidence links (hashed artifacts)
+- **Methodology PDF:** EXACT test matrix, versions, scoring rubric, limitations
+- **Press kit:** 1-page summary, top 10 violations, quotes, and a data dictionary
+- **Regulator annex:** ZIP with reproducible samples (HARs + hashes + code version)
+
+**KPIs to publish:**
+
+- % sites honoring GPC fully, partially, not at all
+- % vendor calls with cookie sync under GPC
+- Δ trackers between control vs treatment
+- Remediation time (tracked post-disclosure)
+
+### Phase 4 — Outreach to Browsers (Week 10–14)
+
+**Targets:** Mozilla (Policy + Fx engineering), DuckDuckGo, Brave, EFF.
+
+**Pitch:** "We already run independent tests at scale. Integrate Null's signal-checking and evidence hooks to display live compliance flags. Co-brand the index; we operate the auditor back-end."
+
+**What they get:** Credibility + user value; no PII flows; lightweight integration (a header checker + beacon for aggregate results).
+
+**What you ask:** Distribution, co-marketing, and (optionally) grant/equity to the Null Foundation/Engine split.
+
+### Legal & Ethics (baked in)
+
+- **PII:** None collected; only behavioral outcomes. We hash and publish artifact fingerprints so third parties can verify integrity without personal data
+- **ToS/robots:** Respect crawl etiquette; no bypassing auth or paywalls; public pages only
+- **Right of reply:** Pre-publication notice to the worst offenders (7–10 days) with a remediation path; publish deltas if fixed
+
+### Enterprise Upsell (parallel)
+
+- **Private site packs:** Weekly sweeps, deep vendor traces, regulator-grade bundles
+- **Vendor scorecards:** Which SSP/DSP ignores signals most often on your properties
+- **Contract hooks:** Template clauses requiring GPC honoring; we provide the ongoing attestation
+
+### Cost & Timelines (lean)
+
+- **Infra (pilot):** Cloudflare-first + Browserless ⇒ $50–$150/mo; 2–4k runs/day is still comfortably sub-$1k/mo
+- **Build:** 3–4 weeks to MVP runner + parser + microsite; another 3–4 for scale/QA and first public report
+
+### Go/No-Go milestones
+
+- **M1 (Week 2):** 50 sites, stable evidence bundles, reproducible diffs
+- **M2 (Week 6):** 500 sites, daily cadence, QC dashboards, first internal index
+- **M3 (Week 10):** Public report + press; inbound from at least one browser/NGO
+- **M4 (Week 14):** Two paid enterprise pilots or a browser integration LOI
+
+### Immediate next steps (checklist)
+
+- Lock the scoring rubric weights and violations catalog
+- Stand up Cloudflare Worker + R2 and a Browserless namespace
+- Ship the Playwright runner (GPC/DNT toggles, HAR capture, scroll script)
+- Implement the parser/extractor with PII-safe rules
+- Draft the methodology doc and "right of reply" comms template
+- Assemble the first Top-100 dry run; validate scoring manually on 10 sites
+- Build the public microsite shell and a CSV/JSON export
 
 ## 8. Technical Implementation
 

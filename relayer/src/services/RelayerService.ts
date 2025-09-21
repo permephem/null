@@ -8,6 +8,7 @@ import { hash } from 'blake3';
 // import { createHash } from 'crypto';
 import logger from '../utils/logger';
 import { CanonService } from '../canon/CanonService';
+import { CryptoService } from '../crypto/crypto';
 import { SBTService } from '../sbt/SBTService';
 import { EmailService } from '../email/EmailService';
 import type {
@@ -60,8 +61,11 @@ export class RelayerService {
         warrant.warrant_id
       );
 
-      // Compute warrant digest
+      // Compute distinct hashes for proper referential information
       const warrantDigest = this.computeWarrantDigest(warrant);
+      const subjectHandleHash = CryptoService.generateSubjectHandleHash(warrant.subject.subject_handle);
+      const enterpriseHash = CryptoService.generateEnterpriseHash(warrant.enterprise_id);
+      const controllerDidHash = CryptoService.generateControllerDidHash(warrant.aud);
 
       // Anchor warrant to Canon Registry with retry logic
       let anchorTxHash: string = '';
@@ -72,11 +76,11 @@ export class RelayerService {
         try {
           anchorTxHash = await this.canonService.anchorWarrant(
             warrantDigest,
-            warrantDigest, // subjectHandleHash placeholder
-            warrantDigest, // enterpriseHash placeholder
+            subjectHandleHash,
+            enterpriseHash,
             warrant.enterprise_id,
             warrant.warrant_id,
-            warrantDigest, // controllerDidHash placeholder
+            controllerDidHash,
             subjectTag,
             this.determineAssuranceLevel(warrant)
           );
@@ -111,6 +115,9 @@ export class RelayerService {
         success: true,
         data: {
           warrantDigest,
+          subjectHandleHash,
+          enterpriseHash,
+          controllerDidHash,
           subjectTag,
           anchorTxHash,
           enterpriseResponse: enterpriseResult,
@@ -152,18 +159,21 @@ export class RelayerService {
         };
       }
 
-      // Compute attestation digest
+      // Compute distinct hashes for proper referential information
       const attestationDigest = this.computeAttestationDigest(attestation);
+      const warrantHash = CryptoService.generateWarrantHash({ warrant_id: attestation.warrant_id });
+      const enterpriseHash = CryptoService.generateEnterpriseHash(attestation.enterprise_id);
+      const controllerDidHash = CryptoService.generateControllerDidHash(attestation.aud);
 
       // Anchor attestation to Canon Registry
       const anchorResult = await this.canonService.anchorAttestation(
         attestationDigest,
-        attestationDigest, // warrantHash placeholder
-        attestationDigest, // enterpriseHash placeholder
+        warrantHash,
+        enterpriseHash,
         attestation.enterprise_id,
         attestation.attestation_id,
-        attestationDigest, // controllerDidHash placeholder
-        attestationDigest, // subjectTag placeholder
+        controllerDidHash,
+        attestation.subject_handle,
         this.determineAssuranceLevel({ evidence_requested: [] } as any)
       );
 
@@ -359,7 +369,7 @@ export class RelayerService {
   private canonicalizeWarrant(warrant: NullWarrant): string {
     // Remove signature for canonicalization
     const { signature: _signature, ...canonicalWarrant } = warrant;
-    return JSON.stringify(canonicalWarrant, Object.keys(canonicalWarrant).sort());
+    return CryptoService.canonicalizeJSON(canonicalWarrant);
   }
 
   /**
@@ -370,7 +380,7 @@ export class RelayerService {
   private canonicalizeAttestation(attestation: DeletionAttestation): string {
     // Remove signature for canonicalization
     const { signature: _signature, ...canonicalAttestation } = attestation;
-    return JSON.stringify(canonicalAttestation, Object.keys(canonicalAttestation).sort());
+    return CryptoService.canonicalizeJSON(canonicalAttestation);
   }
 
   /**
@@ -381,7 +391,7 @@ export class RelayerService {
   private canonicalizeReceipt(receipt: MaskReceipt): string {
     // Remove signature for canonicalization
     const { signature: _signature, ...canonicalReceipt } = receipt;
-    return JSON.stringify(canonicalReceipt, Object.keys(canonicalReceipt).sort());
+    return CryptoService.canonicalizeJSON(canonicalReceipt);
   }
 
   /**

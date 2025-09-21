@@ -46,16 +46,16 @@ The Null Protocol ecosystem consists of multiple specialized SDKs, each built on
 
 ### SDK Ecosystem
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Ticket SDK     │    │ Healthcare SDK  │    │  Future SDKs    │
-│  (Verification) │    │  (HIPAA)        │    │  (Supply Chain) │
-│                 │    │                 │    │                 │
-│ • Carfax-like   │    │ • Consent Mgmt  │    │ • Provenance    │
-│   History       │    │ • Medical       │    │ • Compliance    │
-│ • Escrow        │    │   Records       │    │ • Tracking      │
-│ • Compliance    │    │ • Clinical      │    │                 │
-│                 │    │   Trials        │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Ticket SDK     │    │ Healthcare SDK  │    │  Credit SDK     │    │  Digital        │    │  Adtech         │
+│  (Verification) │    │  (HIPAA)        │    │  (Repair &      │    │  Estate SDK     │    │  Opt-Out SDK    │
+│                 │    │                 │    │   Identity)     │    │  (Post-Mortem)  │    │  (Do Not Track) │
+│ • Carfax-like   │    │ • Consent Mgmt  │    │ • Credit Repair │    │ • Account       │    │ • Unified       │
+│   History       │    │ • Medical       │    │ • Identity      │    │   Closure       │    │   Opt-Outs      │
+│ • Escrow        │    │   Records       │    │   Protection    │    │ • Fraud         │    │ • Violation     │
+│ • Compliance    │    │ • Clinical      │    │ • Permanent     │    │   Prevention    │    │   Detection     │
+│                 │    │   Trials        │    │   Deletion      │    │ • Estate        │    │ • Consumer      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## 🛠️ SDK Components
@@ -74,11 +74,35 @@ The Null Protocol ecosystem consists of multiple specialized SDKs, each built on
 - **Clinical Trials**: Participant tracking and data provenance
 - **API**: `/consent/grant`, `/records/anchor`, `/access/log`
 
+### 💳 Credit Repair SDK (`apps/credit-repair/`)
+- **Permanent Deletion**: Verifiable, permanent credit item deletion
+- **Consumer Protection**: Automatic refunds for unresolved disputes
+- **Pay-for-Results**: Only pay for successful, permanent deletions
+- **Privacy-Preserving**: Cryptographic commitments for identity protection
+- **API**: `/disputes/initiate`, `/deletion/attest`, `/consumer/refund`
+
+### 🏠 Digital Estate SDK (`apps/digital-estate/`)
+- **Guaranteed Closure**: Verifiable, permanent account closure
+- **Professional Execution**: Certified executors with proven track records
+- **Comprehensive Coverage**: All digital accounts with cross-jurisdiction compliance
+- **Fraud Prevention**: Protection of deceased identities from ongoing fraud
+- **API**: `/estate/create`, `/verification/request`, `/execution/start`
+
+### 🚫 Adtech Opt-Out SDK (`apps/adtech-optout/`)
+- **Unified Opt-Outs**: Single platform for all opt-out preferences
+- **Violation Detection**: Automated detection of opt-out violations
+- **Consumer Protection**: Automatic compensation for violations
+- **Network Compliance**: Tools and incentives for compliance
+- **API**: `/optout/register`, `/violation/report`, `/monitoring/start`
+
 ### 🔧 Core Infrastructure
 
 #### Relayer APIs
 - **Ticket Relayer** (`apps/relayer-tickets/`): Port 8787
 - **Healthcare Relayer** (`apps/healthcare-sdk/`): Port 8787
+- **Credit Repair Relayer** (`apps/credit-repair/`): Port 8787
+- **Digital Estate Relayer** (`apps/digital-estate/`): Port 8787
+- **Adtech Opt-Out Relayer** (`apps/adtech-optout/`): Port 8787
 - **Features**: Issue, transfer, revoke, and verify operations
 - **Security**: API key auth, rate limiting, replay protection
 - **Monitoring**: Prometheus metrics, health checks
@@ -86,6 +110,9 @@ The Null Protocol ecosystem consists of multiple specialized SDKs, each built on
 #### Indexers
 - **Ticket Indexer** (`apps/indexer-tickets/`): Canon ticket events
 - **Healthcare Indexer** (`apps/healthcare-sdk/`): Medical records & consent
+- **Credit Repair Indexer** (`apps/credit-repair/`): Dispute tracking & deletion
+- **Digital Estate Indexer** (`apps/digital-estate/`): Estate execution & closure
+- **Adtech Opt-Out Indexer** (`apps/adtech-optout/`): Opt-out tracking & violations
 - **Database**: PostgreSQL with event log and current state
 - **Function**: Tails Canon events in real-time
 - **Recovery**: Backfill scripts for crash recovery
@@ -94,6 +121,9 @@ The Null Protocol ecosystem consists of multiple specialized SDKs, each built on
 - **Scanner PWA** (`apps/scanner-pwa/`): Mobile ticket verification
 - **Patient Portal** (`apps/healthcare-sdk/`): Healthcare consent management
 - **Buyer App** (`apps/ticket-verification/`): Ticket verification interface
+- **Consumer App** (`apps/credit-repair/`): Credit repair dispute management
+- **Estate App** (`apps/digital-estate/`): Digital estate management interface
+- **Opt-Out App** (`apps/adtech-optout/`): Adtech opt-out management interface
 - **Features**: QR scanning, holder proof validation, consent management
 
 #### Pinning Adapter (`apps/pinning-adapter/`)
@@ -132,6 +162,15 @@ bash apps/ticket-verification/ops/curl-examples.sh
 # Run healthcare smoke tests
 bash apps/healthcare-sdk/ops/curl-examples.sh
 
+# Run credit repair smoke tests
+bash apps/credit-repair/ops/curl-examples.sh
+
+# Run digital estate smoke tests
+bash apps/digital-estate/ops/curl-examples.sh
+
+# Run adtech opt-out smoke tests
+bash apps/adtech-optout/ops/curl-examples.sh
+
 # Manual ticket testing
 curl -X POST http://localhost:8787/tickets/issue \
   -H "Content-Type: application/json" \
@@ -143,6 +182,24 @@ curl -X POST http://localhost:8787/consent/grant \
   -H "Content-Type: application/json" \
   -H "X-API-Key: demo-api-key-123" \
   -d '{"patientId":"patient123","purpose":"treatment","dataTypes":["medical_records"]}'
+
+# Manual credit repair testing
+curl -X POST http://localhost:8787/disputes/initiate \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: demo-api-key-123" \
+  -d '{"consumerId":"consumer123","creditItemDetails":"item123","evidenceUri":"ipfs://Qm..."}'
+
+# Manual digital estate testing
+curl -X POST http://localhost:8787/estate/create \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: demo-api-key-123" \
+  -d '{"deceasedInfo":{"firstName":"John","lastName":"Doe"},"executorInfo":{"firstName":"Jane","lastName":"Doe"}}'
+
+# Manual adtech opt-out testing
+curl -X POST http://localhost:8787/optout/register \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: demo-api-key-123" \
+  -d '{"consumerInfo":{"email":"user@example.com"},"optOutType":"gpc","evidence":{"timestamp":"2024-01-01T00:00:00Z","userAgent":"Mozilla/5.0"}}'
 ```
 
 ## 🚀 Deployment
@@ -241,6 +298,9 @@ See [SECURITY.md](SECURITY.md) for comprehensive threat analysis and controls.
 - **[Healthcare System Quick Reference](docs/healthcare-system-quick-reference.md)** - Essential commands and patterns for healthcare
 - **[Credit Repair Solution](docs/credit-repair-solution.md)** - Blockchain-based credit repair with permanent deletion
 - **[Identity Theft Protection Solution](docs/identity-theft-protection-solution.md)** - Proactive fraud prevention with guaranteed resolution
+- **[Digital Estate Management Solution](docs/digital-estate-solution.md)** - Guaranteed account closure and post-mortem data management
+- **[Adtech Opt-Out & Do Not Track Solution](docs/adtech-optout-solution.md)** - Unified opt-out enforcement with violation detection
+- **[Null Protocol Adtech Whitepaper](docs/null-protocol-adtech-whitepaper.md)** - Distributed enforcement of privacy and adtech compliance
 
 ### API Documentation
 

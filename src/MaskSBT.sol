@@ -199,10 +199,18 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Get total supply
-     * @return supply The total number of minted tokens
+     * @dev Get total supply of live SBTs
+     * @return supply The total number of live (non-burned) tokens
      */
     function totalSupply() external view returns (uint256) {
+        return totalMinted - totalBurned;
+    }
+
+    /**
+     * @dev Get the highest token ID ever minted
+     * @return highestId The highest token ID counter
+     */
+    function getHighestTokenId() external view returns (uint256) {
         return _tokenIdCounter;
     }
 

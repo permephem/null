@@ -262,6 +262,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         bytes32 r,
         bytes32 s
     ) internal returns (address) {
+        // First, recover the signer using the caller's nonce (for backward compatibility)
         address signer = ECDSA.recover(
             _hashTypedDataV4(
                 keccak256(
@@ -272,7 +273,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
                         subjectTag,
                         controllerDidHash,
                         assurance,
-                        nonces[msg.sender]++,
+                        nonces[msg.sender],
                         deadline
                     )
                 )
@@ -281,6 +282,15 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             r,
             s
         );
+
+        // Critical security fix: Verify that the caller's nonce matches the signer's nonce
+        // This ensures the signature was created with the signer's nonce, preventing replay attacks
+        if (nonces[msg.sender] != nonces[signer]) {
+            revert("Nonce mismatch: caller and signer nonces must match");
+        }
+
+        // Increment the signer's nonce to prevent replay
+        nonces[signer]++;
 
         return signer;
     }

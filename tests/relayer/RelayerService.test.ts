@@ -83,8 +83,12 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject',
-          anchors: [],
+          subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
+          anchors: [{
+            namespace: 'email',
+            hash: '0xabcdef1234567890abcdef1234567890abcdef12',
+            hint: 'test@example.com'
+          }],
         },
         scope: ['delete_all'],
         jurisdiction: 'GDPR',
@@ -165,8 +169,12 @@ describe('RelayerService', () => {
         warrant_id: 'test-warrant-1',
         enterprise_id: 'test-enterprise',
         subject: {
-          subject_handle: 'test-subject',
-          anchors: [],
+          subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
+          anchors: [{
+            namespace: 'email',
+            hash: '0xabcdef1234567890abcdef1234567890abcdef12',
+            hint: 'test@example.com'
+          }],
         },
         scope: ['delete_all'],
         jurisdiction: 'GDPR',
