@@ -19,6 +19,7 @@ import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
+import { createMockAttestation, createMockWarrant } from './fixtures';
 
 // Mock the services
 jest.mock('../../relayer/src/canon/CanonService');
@@ -78,52 +79,13 @@ describe('RelayerService', () => {
       mockCanonService,
       mockSBTService,
       mockEmailService,
-      controllerSecret
+      'test-controller-secret'
     );
   });
 
   describe('processWarrant', () => {
-    const buildMockWarrant = () => ({
-      type: 'NullWarrant@v0.2' as const,
-      warrant_id: 'test-warrant-1',
-      enterprise_id: 'test-enterprise',
-      subject: {
-        subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
-        anchors: [
-          {
-            namespace: 'email',
-            hash: '0xabcdef1234567890abcdef1234567890abcdef12',
-            hint: 'test@example.com',
-          },
-        ],
-      },
-      scope: ['delete_all'],
-      jurisdiction: 'GDPR',
-      legal_basis: 'GDPR',
-      issued_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 3600000).toISOString(),
-      return_channels: {
-        email: 'test@example.com',
-        callback_url: 'https://example.com/callback',
-      },
-      nonce: 'test-nonce',
-      signature: {
-        sig: 'test-signature',
-        kid: 'test-key-id',
-        alg: 'ed25519' as const,
-      },
-      aud: 'test-controller',
-      jti: 'test-jti',
-      nbf: Math.floor(Date.now() / 1000) - 3600,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-      audience_bindings: ['test-enterprise.com'],
-      version: 'v0.2',
-      evidence_requested: ['API_LOG'],
-      sla_seconds: 3600,
-    });
-
     it('should process a valid warrant successfully', async () => {
-      const mockWarrant = buildMockWarrant();
+      const mockWarrant = createMockWarrant();
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
@@ -146,8 +108,8 @@ describe('RelayerService', () => {
     });
 
     it('should generate stable subject tags for the same secret and subject', async () => {
-      const firstWarrant = buildMockWarrant();
-      const secondWarrant = buildMockWarrant();
+      const firstWarrant = createMockWarrant();
+      const secondWarrant = createMockWarrant();
 
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
@@ -170,8 +132,8 @@ describe('RelayerService', () => {
     });
 
     it('should generate different subject tags when the controller secret changes', async () => {
-      const firstWarrant = buildMockWarrant();
-      const secondWarrant = buildMockWarrant();
+      const firstWarrant = createMockWarrant();
+      const secondWarrant = createMockWarrant();
 
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
@@ -255,42 +217,7 @@ describe('RelayerService', () => {
         Promise.reject(new Error('Network error'))
       );
 
-      const mockWarrant = {
-        type: 'NullWarrant@v0.2' as const,
-        warrant_id: 'test-warrant-1',
-        enterprise_id: 'test-enterprise',
-        subject: {
-          subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
-          anchors: [{
-            namespace: 'email',
-            hash: '0xabcdef1234567890abcdef1234567890abcdef12',
-            hint: 'test@example.com'
-          }],
-        },
-        scope: ['delete_all'],
-        jurisdiction: 'GDPR',
-        legal_basis: 'GDPR',
-        issued_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: {
-          email: 'test@example.com',
-          callback_url: 'https://example.com/callback',
-        },
-        nonce: 'test-nonce',
-        signature: {
-          sig: 'test-signature',
-          kid: 'test-key-id',
-          alg: 'ed25519' as const,
-        },
-        aud: 'test-controller',
-        jti: 'test-jti',
-        nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        audience_bindings: ['test-enterprise.com'],
-        version: 'v0.2',
-        evidence_requested: ['API_LOG'],
-        sla_seconds: 3600,
-      };
+      const mockWarrant = createMockWarrant();
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
@@ -306,40 +233,61 @@ describe('RelayerService', () => {
     }, 10000); // 10 second timeout for retry logic
   });
 
+  describe('processAttestation', () => {
+    it('should anchor attestations and receipts using the canonical warrant digest', async () => {
+      const mockWarrant = createMockWarrant();
+      const mockAttestation = createMockAttestation({
+        warrant_id: mockWarrant.warrant_id,
+        enterprise_id: mockWarrant.enterprise_id,
+        subject_handle: mockWarrant.subject.subject_handle,
+      });
+
+      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
+      jest.spyOn(relayerService as any, 'validateAttestation').mockResolvedValue({ valid: true });
+
+      mockCanonService.anchorWarrant.mockResolvedValue('0xwarrant');
+      mockCanonService.anchorAttestation.mockResolvedValue({ success: true, blockNumber: 123 });
+
+      jest
+        .spyOn(relayerService as any, 'sendWarrantToEnterprise')
+        .mockResolvedValue({ status: 'sent' });
+
+      const warrantResult = await relayerService.processWarrant(mockWarrant);
+      expect(warrantResult.success).toBe(true);
+      const canonicalDigest = warrantResult.data.warrantDigest;
+
+      const attestationResult = await relayerService.processAttestation(mockAttestation);
+
+      expect(attestationResult.success).toBe(true);
+      expect(attestationResult.data.warrantDigest).toBe(canonicalDigest);
+
+      expect(mockCanonService.anchorAttestation).toHaveBeenCalledWith(
+        attestationResult.data.attestationDigest,
+        canonicalDigest,
+        expect.any(String),
+        mockAttestation.enterprise_id,
+        mockAttestation.attestation_id,
+        expect.any(String),
+        mockAttestation.subject_handle,
+        expect.any(Number)
+      );
+
+      const receipt = attestationResult.data.receipt.receipt;
+      expect(receipt.warrant_hash).toBe(canonicalDigest);
+      expect(receipt.attestation_hash).toBe(attestationResult.data.attestationDigest);
+    });
+  });
+
   describe('cryptographic validation', () => {
     it('should validate signatures correctly', async () => {
-      const mockWarrant = {
-        type: 'NullWarrant@v0.2' as const,
+      const mockWarrant = createMockWarrant({
         warrant_id: '12345678-1234-1234-1234-123456789012',
-        enterprise_id: 'test-enterprise',
-        subject: {
-          subject_handle: '0x1234567890abcdef',
-          anchors: [],
-        },
-        scope: ['delete_all'],
-        jurisdiction: 'GDPR',
-        legal_basis: 'GDPR',
-        issued_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: {
-          email: 'test@example.com',
-          callback_url: 'https://example.com/callback',
-        },
-        nonce: 'test-nonce',
         signature: {
           sig: 'valid-signature',
           kid: 'test-key-id',
-          alg: 'ed25519' as const,
+          alg: 'ed25519',
         },
-        aud: 'test-controller',
-        jti: 'test-jti',
-        nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        audience_bindings: ['test-enterprise.com'],
-        version: 'v0.2',
-        evidence_requested: ['API_LOG'],
-        sla_seconds: 3600,
-      };
+      });
 
       // Mock the validateWarrant method to return success
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
@@ -350,38 +298,14 @@ describe('RelayerService', () => {
     });
 
     it('should reject invalid signatures', async () => {
-      const mockWarrant = {
-        type: 'NullWarrant@v0.2' as const,
+      const mockWarrant = createMockWarrant({
         warrant_id: '12345678-1234-1234-1234-123456789012',
-        enterprise_id: 'test-enterprise',
-        subject: {
-          subject_handle: '0x1234567890abcdef',
-          anchors: [],
-        },
-        scope: ['delete_all'],
-        jurisdiction: 'GDPR',
-        legal_basis: 'GDPR',
-        issued_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: {
-          email: 'test@example.com',
-          callback_url: 'https://example.com/callback',
-        },
-        nonce: 'test-nonce',
         signature: {
           sig: 'invalid-signature',
           kid: 'test-key-id',
-          alg: 'ed25519' as const,
+          alg: 'ed25519',
         },
-        aud: 'test-controller',
-        jti: 'test-jti',
-        nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        audience_bindings: ['test-enterprise.com'],
-        version: 'v0.2',
-        evidence_requested: ['API_LOG'],
-        sla_seconds: 3600,
-      };
+      });
 
       // Mock failed signature verification
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(false);
@@ -407,38 +331,9 @@ describe('RelayerService', () => {
         Promise.reject(new Error('Request timeout'))
       );
 
-      const mockWarrant = {
-        type: 'NullWarrant@v0.2' as const,
+      const mockWarrant = createMockWarrant({
         warrant_id: '12345678-1234-1234-1234-123456789012',
-        enterprise_id: 'test-enterprise',
-        subject: {
-          subject_handle: '0x1234567890abcdef',
-          anchors: [],
-        },
-        scope: ['delete_all'],
-        jurisdiction: 'GDPR',
-        legal_basis: 'GDPR',
-        issued_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: {
-          email: 'test@example.com',
-          callback_url: 'https://example.com/callback',
-        },
-        nonce: 'test-nonce',
-        signature: {
-          sig: 'test-signature',
-          kid: 'test-key-id',
-          alg: 'ed25519' as const,
-        },
-        aud: 'test-controller',
-        jti: 'test-jti',
-        nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        audience_bindings: ['test-enterprise.com'],
-        version: 'v0.2',
-        evidence_requested: ['API_LOG'],
-        sla_seconds: 3600,
-      };
+      });
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
