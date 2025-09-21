@@ -690,6 +690,76 @@ Monetization: per-check micro-fees or volume-based licenses, at AdTech scale.
 
 Outcome: multi-billion ARR utility, as compliance becomes inseparable from the ad supply chain.
 
+## 📊 Compliance Metrics to Capture Now
+
+### 1. Global Privacy Control (GPC) Honor Rates
+
+**What to measure:**
+- % of bid requests containing identifiers (cookies, MAIDs, hashed emails) despite a GPC signal being present.
+- Breakdown by SSP, DSP, exchange, and publisher.
+
+**Why it matters:**
+- California AG already requires GPC to be honored.
+- If you show a 30–50% failure rate, regulators can't ignore it.
+
+### 2. Opt-Out Signal Persistence
+
+**What to measure:**
+- After a user opts out on a site, how long before identifiers reappear in programmatic traffic?
+- Does opt-out "stick" across exchanges, or does it leak back in within hours/days?
+
+**Why it matters:**
+- GDPR/CCPA require continuous enforcement, not one-time.
+- Regulators know this is a gray area but don't have empirical evidence.
+
+### 3. Cross-Chain Leakage
+
+**What to measure:**
+- When an identifier is suppressed in one SSP, does it reappear via another downstream partner?
+- Compare data broker and AdTech enrichment flows.
+
+**Why it matters:**
+- Proves that fragmented compliance = systemic leakage.
+- Shows that voluntary siloed enforcement cannot scale.
+
+### 4. Geographic Variance
+
+**What to measure:**
+- % of non-compliance in California vs. Texas vs. EU vs. Brazil.
+
+**Why it matters:**
+- Exposes how companies selectively enforce rights depending on geography.
+- Regulatory gold: "Californians have half the protection of Europeans."
+
+### 5. Latency / Cost of Compliance
+
+**What to measure:**
+- Average time + cost for a consumer deletion request to propagate through AdTech.
+- Compare "manual deletion requests" vs. "instant registry lookups" in a pilot.
+
+**Why it matters:**
+- If you show 99% cost reduction + instant enforcement, regulators will want the registry.
+
+### 🧠 How to Present to Regulators
+
+**Visuals matter:** heatmaps of failure rates by platform, waterfall charts showing signal loss across hops.
+
+**Simplicity wins:** "45% of opt-out signals are ignored in AdTech today" is all it takes to make headlines.
+
+**Safe harbor framing:** "A central registry reduces failure rates from 45% → <1%, while lowering costs for brokers/SSPs."
+
+### ✅ Takeaway
+
+Your regulator-ready compliance scorecard should show:
+
+- % of ignored GPC signals (today's failure rate).
+- Opt-out persistence breakdown (how long it sticks).
+- Leakage across the chain (how identifiers reappear).
+- Geo bias (compliance is uneven).
+- Cost/time comparisons (manual vs. registry).
+
+This creates the narrative: "The current system is broken. A null protocol registry fixes it."
+
 ---
 
 *Null Protocol: Distributed Enforcement of Privacy and Adtech Compliance*  
