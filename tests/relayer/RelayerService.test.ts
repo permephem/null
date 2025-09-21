@@ -19,6 +19,7 @@ import { CanonService } from '../../relayer/src/canon/CanonService';
 import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
+import * as validators from '../../relayer/src/schemas/validators';
 import { createMockAttestation, createMockWarrant } from './fixtures';
 
 // Mock the services
@@ -81,6 +82,10 @@ describe('RelayerService', () => {
       mockEmailService,
       'test-controller-secret'
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('processWarrant', () => {
@@ -241,6 +246,10 @@ describe('RelayerService', () => {
         enterprise_id: mockWarrant.enterprise_id,
         subject_handle: mockWarrant.subject.subject_handle,
       });
+      mockAttestation.signature = {
+        ...mockAttestation.signature,
+        alg: 'EdDSA',
+      };
 
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(relayerService as any, 'validateAttestation').mockResolvedValue({ valid: true });
@@ -275,6 +284,60 @@ describe('RelayerService', () => {
       const receipt = attestationResult.data.receipt.receipt;
       expect(receipt.warrant_hash).toBe(canonicalDigest);
       expect(receipt.attestation_hash).toBe(attestationResult.data.attestationDigest);
+    });
+  });
+
+  describe('validateAttestation', () => {
+    it('validates attestations referencing an anchored warrant digest', async () => {
+      const mockWarrant = createMockWarrant();
+      const mockAttestation = createMockAttestation({
+        warrant_id: mockWarrant.warrant_id,
+        enterprise_id: mockWarrant.enterprise_id,
+        subject_handle: mockWarrant.subject.subject_handle,
+      });
+      mockAttestation.signature = {
+        ...mockAttestation.signature,
+        alg: 'EdDSA',
+      };
+
+      jest.spyOn(validators, 'validateAttestation').mockReturnValue({ valid: true });
+      const warrantDigest = (relayerService as any).computeWarrantDigest(mockWarrant);
+      (relayerService as any).storeWarrantDigest(mockWarrant.warrant_id, warrantDigest);
+
+      jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
+      mockCanonService.warrantExists.mockResolvedValue(true);
+
+      const validation = await (relayerService as any).validateAttestation(mockAttestation);
+
+      expect(validation.valid).toBe(true);
+      expect(mockCanonService.warrantExists).toHaveBeenCalledWith(warrantDigest);
+    });
+
+    it('rejects attestations when the canonical warrant digest is unknown', async () => {
+      const mockWarrant = createMockWarrant();
+      const mockAttestation = createMockAttestation({
+        warrant_id: mockWarrant.warrant_id,
+        enterprise_id: mockWarrant.enterprise_id,
+        subject_handle: mockWarrant.subject.subject_handle,
+      });
+      mockAttestation.signature = {
+        ...mockAttestation.signature,
+        alg: 'EdDSA',
+      };
+
+      jest.spyOn(validators, 'validateAttestation').mockReturnValue({ valid: true });
+
+      const warrantDigest = (relayerService as any).computeWarrantDigest(mockWarrant);
+      (relayerService as any).storeWarrantDigest(mockWarrant.warrant_id, warrantDigest);
+
+      jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
+      mockCanonService.warrantExists.mockResolvedValue(false);
+
+      const validation = await (relayerService as any).validateAttestation(mockAttestation);
+
+      expect(validation.valid).toBe(false);
+      expect(validation.error).toBe('Referenced warrant has not been anchored');
+      expect(mockCanonService.warrantExists).toHaveBeenCalledWith(warrantDigest);
     });
   });
 
