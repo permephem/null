@@ -117,6 +117,32 @@ export class CanonService {
     }
   }
 
+  async getWarrantDigestById(warrantId: string): Promise<string | undefined> {
+    try {
+      logger.info('Fetching warrant digest from canon registry', { warrantId });
+      const filter = this.contract.filters.WarrantAnchored(
+        null,
+        null,
+        null,
+        null,
+        warrantId
+      );
+      const events = await this.contract.queryFilter(filter);
+      if (!events.length) {
+        return undefined;
+      }
+      const latestEvent = events[events.length - 1];
+      const digest = latestEvent.args?.warrantHash;
+      if (!digest) {
+        return undefined;
+      }
+      return digest.replace(/^0x/, '').toLowerCase();
+    } catch (error) {
+      logger.error('Failed to fetch warrant digest from blockchain', { warrantId, error });
+      return undefined;
+    }
+  }
+
   async isAnchored(hash: string): Promise<boolean> {
     try {
       logger.info('Checking if hash is anchored', { hash });
