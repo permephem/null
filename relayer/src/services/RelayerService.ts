@@ -343,22 +343,19 @@ export class RelayerService {
       }
 
       const storedDigest = this.getStoredWarrantDigest(attestation.warrant_id);
-      if (storedDigest) {
-        const isAnchored = await this.canonService.isAnchored(storedDigest);
-        if (!isAnchored) {
-          return {
-            valid: false,
-            error: 'Referenced warrant has not been anchored',
-          };
-        }
-      } else {
-        const warrantExists = await this.canonService.warrantExists(attestation.warrant_id);
-        if (!warrantExists) {
-          return {
-            valid: false,
-            error: 'Referenced warrant does not exist',
-          };
-        }
+      if (!storedDigest) {
+        return {
+          valid: false,
+          error: 'Canonical warrant digest not found for attestation',
+        };
+      }
+
+      const warrantExists = await this.canonService.warrantExists(storedDigest);
+      if (!warrantExists) {
+        return {
+          valid: false,
+          error: 'Referenced warrant has not been anchored',
+        };
       }
 
       return { valid: true };
