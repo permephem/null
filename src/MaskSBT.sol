@@ -23,6 +23,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     error SBTMintingDisabled();
     error MintToZeroAddress();
     error InvalidReceiptHash();
+    error ReceiptAlreadyMinted(bytes32 receiptHash);
     error NonexistentToken(uint256 tokenId);
     error TransfersDisabled();
     error ApprovalsDisabled();
@@ -37,6 +38,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
     mapping(uint256 => bytes32) public receiptHashes;
     mapping(uint256 => uint256) public mintTimestamps;
     mapping(uint256 => address) public originalMinter;
+    mapping(bytes32 => uint256) private _receiptToTokenId;
 
     // Statistics
     uint256 public totalMinted;
@@ -89,6 +91,9 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         if (receiptHash == bytes32(0)) {
             revert InvalidReceiptHash();
         }
+        if (_receiptToTokenId[receiptHash] != 0) {
+            revert ReceiptAlreadyMinted(receiptHash);
+        }
 
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
@@ -98,6 +103,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         receiptHashes[tokenId] = receiptHash;
         mintTimestamps[tokenId] = block.timestamp;
         originalMinter[tokenId] = msg.sender;
+        _receiptToTokenId[receiptHash] = tokenId;
 
         totalMinted++;
 
@@ -123,6 +129,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
         delete receiptHashes[tokenId];
         delete mintTimestamps[tokenId];
         delete originalMinter[tokenId];
+        delete _receiptToTokenId[receiptHash];
 
         totalBurned++;
 
@@ -189,13 +196,7 @@ contract MaskSBT is ERC721, AccessControl, ReentrancyGuard, Pausable {
      * @return exists Whether the hash has been minted
      */
     function isReceiptMinted(bytes32 receiptHash) external view returns (bool) {
-        for (uint256 i = 1; i <= _tokenIdCounter; i++) {
-            address owner = _ownerOf(i);
-            if (owner != address(0) && receiptHashes[i] == receiptHash) {
-                return true;
-            }
-        }
-        return false;
+        return _receiptToTokenId[receiptHash] != 0;
     }
 
     /**
