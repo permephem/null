@@ -24,6 +24,7 @@ export class RelayerService {
   private canonService: CanonService;
   private sbtService: SBTService;
   private readonly controllerSecret: string;
+  private warrantDigestStore: Map<string, string>;
 
   constructor(
     canonService: CanonService,
@@ -38,6 +39,7 @@ export class RelayerService {
       throw new Error('Relayer controller secret must be provided');
     }
     this.controllerSecret = resolvedSecret;
+    this.warrantDigestStore = new Map();
   }
 
   /**
@@ -112,6 +114,8 @@ export class RelayerService {
         }
       }
 
+      this.storeWarrantDigest(warrant.warrant_id, warrantDigest);
+
       // Send warrant to enterprise endpoint with timeout
       const enterpriseResult = await this.sendWarrantToEnterprise(warrant);
 
@@ -172,14 +176,26 @@ export class RelayerService {
 
       // Compute distinct hashes for proper referential information
       const attestationDigest = this.computeAttestationDigest(attestation);
-      const warrantHash = CryptoService.generateWarrantHash({ warrant_id: attestation.warrant_id });
+      const warrantDigest = this.getStoredWarrantDigest(attestation.warrant_id);
+      if (!warrantDigest) {
+        const errorMessage = 'Canonical warrant digest not found for attestation';
+        logger.error(errorMessage, {
+          warrantId: attestation.warrant_id,
+          attestationId: attestation.attestation_id,
+        });
+        return {
+          success: false,
+          error: errorMessage,
+          code: 'WARRANT_DIGEST_NOT_FOUND',
+        };
+      }
       const enterpriseHash = CryptoService.generateEnterpriseHash(attestation.enterprise_id);
       const controllerDidHash = CryptoService.generateControllerDidHash(attestation.aud);
 
       // Anchor attestation to Canon Registry
       const anchorResult = await this.canonService.anchorAttestation(
         attestationDigest,
-        warrantHash,
+        warrantDigest,
         enterpriseHash,
         attestation.enterprise_id,
         attestation.attestation_id,
@@ -198,11 +214,12 @@ export class RelayerService {
 
       // Generate receipt if deletion was successful
       if (attestation.status === 'deleted') {
-        const receiptResult = await this.generateReceipt(attestation);
+        const receiptResult = await this.generateReceipt(attestation, warrantDigest, attestationDigest);
         return {
           success: true,
           data: {
             attestationDigest,
+            warrantDigest,
             receipt: receiptResult,
             anchorBlock: anchorResult.blockNumber,
           },
@@ -213,6 +230,7 @@ export class RelayerService {
         success: true,
         data: {
           attestationDigest,
+          warrantDigest,
           anchorBlock: anchorResult.blockNumber,
         },
       };
@@ -324,13 +342,23 @@ export class RelayerService {
         };
       }
 
-      // Verify warrant exists
-      const warrantExists = await this.canonService.warrantExists(attestation.warrant_id);
-      if (!warrantExists) {
-        return {
-          valid: false,
-          error: 'Referenced warrant does not exist',
-        };
+      const storedDigest = this.getStoredWarrantDigest(attestation.warrant_id);
+      if (storedDigest) {
+        const isAnchored = await this.canonService.isAnchored(storedDigest);
+        if (!isAnchored) {
+          return {
+            valid: false,
+            error: 'Referenced warrant has not been anchored',
+          };
+        }
+      } else {
+        const warrantExists = await this.canonService.warrantExists(attestation.warrant_id);
+        if (!warrantExists) {
+          return {
+            valid: false,
+            error: 'Referenced warrant does not exist',
+          };
+        }
       }
 
       return { valid: true };
@@ -453,13 +481,17 @@ export class RelayerService {
    * @param attestation The attestation
    * @returns Receipt generation result
    */
-  private async generateReceipt(attestation: DeletionAttestation): Promise<any> {
+  private async generateReceipt(
+    attestation: DeletionAttestation,
+    warrantDigest: string,
+    attestationDigest: string
+  ): Promise<any> {
     try {
       const receipt: MaskReceipt = {
         type: 'MaskReceipt@v0.2',
         receipt_id: `receipt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        warrant_hash: this.computeWarrantDigest({ warrant_id: attestation.warrant_id } as any),
-        attestation_hash: this.computeAttestationDigest(attestation),
+        warrant_hash: warrantDigest,
+        attestation_hash: attestationDigest,
         subject_handle: attestation.subject_handle,
         status: 'deleted',
         completed_at: attestation.completed_at,
@@ -511,5 +543,13 @@ export class RelayerService {
       logger.error('Error getting status:', error);
       throw error;
     }
+  }
+
+  private storeWarrantDigest(warrantId: string, digest: string): void {
+    this.warrantDigestStore.set(warrantId, digest);
+  }
+
+  private getStoredWarrantDigest(warrantId: string): string | undefined {
+    return this.warrantDigestStore.get(warrantId);
   }
 }
