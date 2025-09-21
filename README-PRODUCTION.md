@@ -196,6 +196,19 @@ PINNER_BASE=http://pinning-adapter:8789
 PINNER_TOKEN=change-me
 ```
 
+**JWS Signing Keys (controller evidence tokens):**
+
+- Supported algorithms: **EdDSA (Ed25519)** and **ES256 (P-256)**
+- Provide private keys as PKCS#8 PEM-encoded strings
+- Provide public keys as SPKI PEM-encoded strings for verification
+- Inject the PEM contents from your secret manager when calling `CryptoService.createJWS`/`verifyJWS`
+
+```bash
+# Example secret injection
+CONTROLLER_JWS_PRIVATE_KEY="$(cat /secrets/controller-ed25519-private.pem)"  # PKCS#8 PEM
+CONTROLLER_JWS_PUBLIC_KEY="$(cat /secrets/controller-ed25519-public.pem)"    # SPKI PEM
+```
+
 **Ticket SDK:**
 ```bash
 PORT=8787
