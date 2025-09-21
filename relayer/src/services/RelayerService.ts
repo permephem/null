@@ -19,18 +19,23 @@ import type {
 } from '../types/index.js';
 import { validateWarrant, validateAttestation } from '../schemas/validators.js';
 import { CryptoService } from '../crypto/crypto.js';
+import {
+  FileWarrantDigestStore,
+  type WarrantDigestStore,
+} from './WarrantDigestStore.js';
 
 export class RelayerService {
   private canonService: CanonService;
   private sbtService: SBTService;
   private readonly controllerSecret: string;
-  private warrantDigestStore: Map<string, string>;
+  private warrantDigestStore: WarrantDigestStore;
 
   constructor(
     canonService: CanonService,
     sbtService: SBTService,
     _emailService: EmailService,
-    controllerSecret?: string
+    controllerSecret?: string,
+    warrantDigestStore?: WarrantDigestStore
   ) {
     this.canonService = canonService;
     this.sbtService = sbtService;
@@ -39,7 +44,7 @@ export class RelayerService {
       throw new Error('Relayer controller secret must be provided');
     }
     this.controllerSecret = resolvedSecret;
-    this.warrantDigestStore = new Map();
+    this.warrantDigestStore = warrantDigestStore ?? new FileWarrantDigestStore();
   }
 
   /**
@@ -114,7 +119,7 @@ export class RelayerService {
         }
       }
 
-      this.storeWarrantDigest(warrant.warrant_id, warrantDigest);
+      await this.storeWarrantDigest(warrant.warrant_id, warrantDigest);
 
       // Send warrant to enterprise endpoint with timeout
       const enterpriseResult = await this.sendWarrantToEnterprise(warrant);
@@ -176,7 +181,7 @@ export class RelayerService {
 
       // Compute distinct hashes for proper referential information
       const attestationDigest = this.computeAttestationDigest(attestation);
-      const warrantDigest = this.getStoredWarrantDigest(attestation.warrant_id);
+      const warrantDigest = await this.getCanonicalWarrantDigest(attestation.warrant_id);
       if (!warrantDigest) {
         const errorMessage = 'Canonical warrant digest not found for attestation';
         logger.error(errorMessage, {
@@ -342,7 +347,7 @@ export class RelayerService {
         };
       }
 
-      const storedDigest = this.getStoredWarrantDigest(attestation.warrant_id);
+      const storedDigest = await this.getCanonicalWarrantDigest(attestation.warrant_id);
       if (!storedDigest) {
         return {
           valid: false,
@@ -542,11 +547,29 @@ export class RelayerService {
     }
   }
 
-  private storeWarrantDigest(warrantId: string, digest: string): void {
-    this.warrantDigestStore.set(warrantId, digest);
+  private async storeWarrantDigest(warrantId: string, digest: string): Promise<void> {
+    await this.warrantDigestStore.set(warrantId, digest);
   }
 
-  private getStoredWarrantDigest(warrantId: string): string | undefined {
+  private async getStoredWarrantDigest(warrantId: string): Promise<string | undefined> {
     return this.warrantDigestStore.get(warrantId);
+  }
+
+  private async getCanonicalWarrantDigest(warrantId: string): Promise<string | undefined> {
+    const stored = await this.getStoredWarrantDigest(warrantId);
+    if (stored) {
+      return stored;
+    }
+
+    logger.info('Warrant digest not found in local store, attempting blockchain lookup', {
+      warrantId,
+    });
+
+    const onChainDigest = await this.canonService.getWarrantDigestById(warrantId);
+    if (onChainDigest) {
+      await this.storeWarrantDigest(warrantId, onChainDigest);
+    }
+
+    return onChainDigest;
   }
 }
