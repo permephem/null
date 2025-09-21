@@ -20,10 +20,10 @@ artifacts/
 cache/
 typechain/
 
-# Hardhat
-.hardhat/
-deployments/
-.openzeppelin/
+# Hardhat (removed - using Foundry)
+# .hardhat/
+# deployments/
+# .openzeppelin/
 
 # Coverage reports
 coverage/

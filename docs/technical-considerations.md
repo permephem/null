@@ -125,7 +125,7 @@ The Null Protocol MVP represents a **production-ready technical implementation**
 
 ```bash
 # Deploy to testnet
-npx hardhat deploy --network base-sepolia
+forge script script/Deploy.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast
 # Security audit
 npx slither contracts/
 # Foundry fuzzing
