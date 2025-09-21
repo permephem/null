@@ -24,7 +24,6 @@ import { CryptoService } from '../../relayer/src/crypto/crypto';
 jest.mock('../../relayer/src/canon/CanonService');
 jest.mock('../../relayer/src/sbt/SBTService');
 jest.mock('../../relayer/src/email/EmailService');
-jest.mock('../../relayer/src/crypto/crypto');
 
 // Mock crypto dependencies
 jest.mock('@noble/ed25519', () => ({
@@ -51,8 +50,10 @@ describe('RelayerService', () => {
   let mockCanonService: jest.Mocked<CanonService>;
   let mockSBTService: jest.Mocked<SBTService>;
   let mockEmailService: jest.Mocked<EmailService>;
+  const controllerSecret = 'test-controller-secret';
 
   beforeEach(() => {
+    jest.clearAllMocks();
     mockCanonService = new CanonService({
       rpcUrl: 'http://localhost:8545',
       privateKey: '0x123',
@@ -73,47 +74,56 @@ describe('RelayerService', () => {
       fromEmail: 'test@example.com',
     }) as jest.Mocked<EmailService>;
 
-    relayerService = new RelayerService(mockCanonService, mockSBTService, mockEmailService);
+    relayerService = new RelayerService(
+      mockCanonService,
+      mockSBTService,
+      mockEmailService,
+      controllerSecret
+    );
   });
 
   describe('processWarrant', () => {
-    it('should process a valid warrant successfully', async () => {
-      const mockWarrant = {
-        type: 'NullWarrant@v0.2' as const,
-        warrant_id: 'test-warrant-1',
-        enterprise_id: 'test-enterprise',
-        subject: {
-          subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
-          anchors: [{
+    const buildMockWarrant = () => ({
+      type: 'NullWarrant@v0.2' as const,
+      warrant_id: 'test-warrant-1',
+      enterprise_id: 'test-enterprise',
+      subject: {
+        subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
+        anchors: [
+          {
             namespace: 'email',
             hash: '0xabcdef1234567890abcdef1234567890abcdef12',
-            hint: 'test@example.com'
-          }],
-        },
-        scope: ['delete_all'],
-        jurisdiction: 'GDPR',
-        legal_basis: 'GDPR',
-        issued_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 3600000).toISOString(),
-        return_channels: {
-          email: 'test@example.com',
-          callback_url: 'https://example.com/callback',
-        },
-        nonce: 'test-nonce',
-        signature: {
-          sig: 'test-signature',
-          kid: 'test-key-id',
-          alg: 'ed25519' as const,
-        },
-        aud: 'test-controller',
-        jti: 'test-jti',
-        nbf: Math.floor(Date.now() / 1000) - 3600,
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        audience_bindings: ['test-enterprise.com'],
-        version: 'v0.2',
-        evidence_requested: ['API_LOG'],
-        sla_seconds: 3600,
-      };
+            hint: 'test@example.com',
+          },
+        ],
+      },
+      scope: ['delete_all'],
+      jurisdiction: 'GDPR',
+      legal_basis: 'GDPR',
+      issued_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 3600000).toISOString(),
+      return_channels: {
+        email: 'test@example.com',
+        callback_url: 'https://example.com/callback',
+      },
+      nonce: 'test-nonce',
+      signature: {
+        sig: 'test-signature',
+        kid: 'test-key-id',
+        alg: 'ed25519' as const,
+      },
+      aud: 'test-controller',
+      jti: 'test-jti',
+      nbf: Math.floor(Date.now() / 1000) - 3600,
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      audience_bindings: ['test-enterprise.com'],
+      version: 'v0.2',
+      evidence_requested: ['API_LOG'],
+      sla_seconds: 3600,
+    });
+
+    it('should process a valid warrant successfully', async () => {
+      const mockWarrant = buildMockWarrant();
 
       // Mock successful validation
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
@@ -133,6 +143,87 @@ describe('RelayerService', () => {
       expect(result.data).toHaveProperty('subjectTag');
       expect(result.data).toHaveProperty('anchorTxHash');
       expect(mockCanonService.anchorWarrant).toHaveBeenCalled();
+    });
+
+    it('should generate stable subject tags for the same secret and subject', async () => {
+      const firstWarrant = buildMockWarrant();
+      const secondWarrant = buildMockWarrant();
+
+      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
+      jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
+      mockCanonService.anchorWarrant.mockResolvedValue('0xtx123');
+
+      const firstResult = await relayerService.processWarrant(firstWarrant);
+      const secondResult = await relayerService.processWarrant(secondWarrant);
+
+      expect(firstResult.success).toBe(true);
+      expect(secondResult.success).toBe(true);
+
+      const expectedTag = CryptoService.generateSubjectTag(
+        controllerSecret,
+        firstWarrant.subject.subject_handle,
+        `${firstWarrant.enterprise_id}:${firstWarrant.warrant_id}`
+      );
+
+      expect(firstResult.data?.subjectTag).toBe(expectedTag);
+      expect(secondResult.data?.subjectTag).toBe(expectedTag);
+    });
+
+    it('should generate different subject tags when the controller secret changes', async () => {
+      const firstWarrant = buildMockWarrant();
+      const secondWarrant = buildMockWarrant();
+
+      jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
+      jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
+      mockCanonService.anchorWarrant.mockResolvedValue('0xanchor1');
+
+      const firstResult = await relayerService.processWarrant(firstWarrant);
+
+      const altCanonService = new CanonService({
+        rpcUrl: 'http://localhost:8545',
+        privateKey: '0xabc',
+        contractAddress: '0xdef',
+      }) as jest.Mocked<CanonService>;
+      const altSbtService = new SBTService({
+        rpcUrl: 'http://localhost:8545',
+        privateKey: '0xabc',
+        contractAddress: '0xghi',
+      }) as jest.Mocked<SBTService>;
+      const altEmailService = new EmailService({
+        smtpHost: 'localhost',
+        smtpPort: 587,
+        smtpUser: 'test',
+        smtpPass: 'test',
+        fromEmail: 'alt@example.com',
+      }) as jest.Mocked<EmailService>;
+      const alternateSecret = 'alternate-controller-secret';
+      const alternateService = new RelayerService(
+        altCanonService,
+        altSbtService,
+        altEmailService,
+        alternateSecret
+      );
+
+      jest.spyOn(alternateService as any, 'validateWarrant').mockResolvedValue({ valid: true });
+      jest.spyOn(alternateService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
+      altCanonService.anchorWarrant.mockResolvedValue('0xanchor2');
+
+      const secondResult = await alternateService.processWarrant(secondWarrant);
+
+      const expectedFirstTag = CryptoService.generateSubjectTag(
+        controllerSecret,
+        firstWarrant.subject.subject_handle,
+        `${firstWarrant.enterprise_id}:${firstWarrant.warrant_id}`
+      );
+      const expectedSecondTag = CryptoService.generateSubjectTag(
+        alternateSecret,
+        secondWarrant.subject.subject_handle,
+        `${secondWarrant.enterprise_id}:${secondWarrant.warrant_id}`
+      );
+
+      expect(firstResult.data?.subjectTag).toBe(expectedFirstTag);
+      expect(secondResult.data?.subjectTag).toBe(expectedSecondTag);
+      expect(firstResult.data?.subjectTag).not.toBe(secondResult.data?.subjectTag);
     });
 
     it('should handle validation failures', async () => {
