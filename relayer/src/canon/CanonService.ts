@@ -128,15 +128,12 @@ export class CanonService {
     }
   }
 
-  async warrantExists(warrantId: string): Promise<boolean> {
+  async warrantExists(warrantDigest: string): Promise<boolean> {
     try {
-      logger.info('Checking if warrant exists', { warrantId });
-      // For now, we'll check if the warrant hash has been anchored
-      // In a real implementation, we might have a separate mapping for warrant IDs
-      const warrantHash = ethers.keccak256(ethers.toUtf8Bytes(warrantId));
-      return await this.isAnchored(warrantHash);
+      logger.info('Checking if warrant exists', { warrantDigest });
+      return await this.isAnchored(warrantDigest);
     } catch (error) {
-      logger.error('Failed to check if warrant exists', { warrantId, error });
+      logger.error('Failed to check if warrant exists', { warrantDigest, error });
       return false;
     }
   }
