@@ -841,6 +841,27 @@ When mandates land (state-level first, then EU/US federal), you're already the d
 
 "We don't need to wait for regulation to make money. Compliance metrics alone are a $50–100M ARR wedge. The mandate just flips the switch from tens of millions → billions."
 
+## 🏛 Regulatory Precedents for Central Registries
+
+| Precedent | Context Before Registry | Mandate | Outcome | Lesson |
+|-----------|------------------------|---------|---------|---------|
+| **Do Not Call Registry (U.S., 2003)** | Consumers had to opt out phone-by-phone; telemarketers ignored requests. | FTC mandated a central national registry for phone numbers. | >200M numbers registered; compliance became enforceable; telemarketing lawsuits dropped. | When consumer rights can't scale individually, regulators centralize. |
+| **PCI DSS (2004, payments)** | Credit card fraud rampant; every merchant had fragmented security rules. | Card networks mandated single global compliance framework. | Now universal; merchants must certify or lose ability to process cards. | Industry accepted systemic tax in exchange for safe harbor. |
+| **ICANN / WHOIS (1998–present)** | Domain name registration chaotic, duplicated, and insecure. | ICANN created a central registry/authority with mandatory compliance. | Standardized domain ownership; global internet governance stabilized. | Neutral central operator became the only viable model. |
+| **Credit Bureaus (FCRA, 1970)** | Consumer credit fragmented, unverifiable, prone to discrimination. | FCRA required centralized credit reporting utilities (Experian, Equifax, TransUnion). | Now multi-billion-dollar industry, mandated access rules. | Centralization created permanent, regulated oligopoly. |
+
+### 🔑 Key Takeaway
+
+Whenever consumer rights + fragmented compliance + systemic abuse collide:
+
+1. **Regulators impose a neutral central registry.**
+2. **Industry fights it at first, but adopts once safe harbor + standardization are on the table.**
+3. **The operator becomes a permanent monopoly utility.**
+
+### 💡 Your framing line:
+
+**"Null protocol is simply the next Do Not Call registry — but for the digital age."**
+
 ---
 
 *Null Protocol: Distributed Enforcement of Privacy and Adtech Compliance*  
