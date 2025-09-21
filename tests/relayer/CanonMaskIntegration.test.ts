@@ -25,12 +25,12 @@ describe('CanonMaskIntegration', () => {
     // Create mock contract
     mockContract = {
       on: jest.fn(),
-      removeAllListeners: jest.fn(),
+      off: jest.fn(),
     };
 
     // Create mock services
     mockCanonService = {
-      contract: mockContract,
+      getContract: jest.fn(() => mockContract),
     } as any;
 
     mockSBTService = {
@@ -60,9 +60,14 @@ describe('CanonMaskIntegration', () => {
     });
 
     it('should stop event listening successfully', async () => {
+      await integration.startEventListening();
       await integration.stopEventListening();
 
-      expect(mockContract.removeAllListeners).toHaveBeenCalledWith('Anchored');
+      const anchoredListener = mockContract.on.mock.calls.find(
+        ([eventName]) => eventName === 'Anchored'
+      )?.[1];
+
+      expect(mockContract.off).toHaveBeenCalledWith('Anchored', anchoredListener);
     });
   });
 
@@ -133,33 +138,39 @@ describe('CanonMaskIntegration', () => {
       const mockEvent = {
         warrantDigest: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         attestationDigest: '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321',
-        relayer: '0xrelayer',
-        subjectTag: '0xsubject',
-        controllerDidHash: '0xcontroller',
+        relayer: '0x3333333333333333333333333333333333333333',
+        subjectTag: '0x4444444444444444444444444444444444444444444444444444444444444444',
+        controllerDidHash: '0x5555555555555555555555555555555555555555555555555555555555555555',
         assurance: 1,
         timestamp: 1234567890,
         blockNumber: 100,
-        transactionHash: '0xtxhash',
+        transactionHash: '0x6666666666666666666666666666666666666666666666666666666666666666',
       };
 
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
       mockSBTService.mintReceipt.mockResolvedValue('0xtest');
 
-      // Simulate event emission
-      const eventHandler = mockContract.on.mock.calls[0][1];
-      await eventHandler(
-        mockEvent.warrantDigest,
-        mockEvent.attestationDigest,
-        mockEvent.relayer,
-        mockEvent.subjectTag,
-        mockEvent.controllerDidHash,
-        mockEvent.assurance,
-        { toNumber: () => mockEvent.timestamp },
-        {
-          blockNumber: mockEvent.blockNumber,
-          transactionHash: mockEvent.transactionHash,
-        }
-      );
+      await integration.startEventListening();
+
+      const anchoredListener = mockContract.on.mock.calls.find(
+        ([eventName]) => eventName === 'Anchored'
+      )?.[1];
+
+      expect(anchoredListener).toBeDefined();
+
+      await anchoredListener?.({
+        args: {
+          warrantDigest: mockEvent.warrantDigest,
+          attestationDigest: mockEvent.attestationDigest,
+          relayer: mockEvent.relayer,
+          subjectTag: mockEvent.subjectTag,
+          controllerDidHash: mockEvent.controllerDidHash,
+          assurance: mockEvent.assurance,
+          timestamp: mockEvent.timestamp,
+        },
+        blockNumber: mockEvent.blockNumber,
+        transactionHash: mockEvent.transactionHash,
+      });
 
       expect(mockSBTService.isReceiptMinted).toHaveBeenCalled();
       expect(mockSBTService.mintReceipt).toHaveBeenCalled();
@@ -179,30 +190,34 @@ describe('CanonMaskIntegration', () => {
       const mockEvent = {
         warrantDigest: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         attestationDigest: '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321',
-        relayer: '0xrelayer',
-        subjectTag: '0xsubject',
-        controllerDidHash: '0xcontroller',
+        relayer: '0x3333333333333333333333333333333333333333',
+        subjectTag: '0x4444444444444444444444444444444444444444444444444444444444444444',
+        controllerDidHash: '0x5555555555555555555555555555555555555555555555555555555555555555',
         assurance: 1,
         timestamp: 1234567890,
         blockNumber: 100,
-        transactionHash: '0xtxhash',
+        transactionHash: '0x6666666666666666666666666666666666666666666666666666666666666666',
       };
 
-      // Simulate event emission
-      const eventHandler = mockContract.on.mock.calls[0][1];
-      await eventHandler(
-        mockEvent.warrantDigest,
-        mockEvent.attestationDigest,
-        mockEvent.relayer,
-        mockEvent.subjectTag,
-        mockEvent.controllerDidHash,
-        mockEvent.assurance,
-        { toNumber: () => mockEvent.timestamp },
-        {
-          blockNumber: mockEvent.blockNumber,
-          transactionHash: mockEvent.transactionHash,
-        }
-      );
+      const anchoredListener = mockContract.on.mock.calls.find(
+        ([eventName]) => eventName === 'Anchored'
+      )?.[1];
+
+      expect(anchoredListener).toBeDefined();
+
+      await anchoredListener?.({
+        args: {
+          warrantDigest: mockEvent.warrantDigest,
+          attestationDigest: mockEvent.attestationDigest,
+          relayer: mockEvent.relayer,
+          subjectTag: mockEvent.subjectTag,
+          controllerDidHash: mockEvent.controllerDidHash,
+          assurance: mockEvent.assurance,
+          timestamp: mockEvent.timestamp,
+        },
+        blockNumber: mockEvent.blockNumber,
+        transactionHash: mockEvent.transactionHash,
+      });
 
       expect(mockSBTService.isReceiptMinted).not.toHaveBeenCalled();
       expect(mockSBTService.mintReceipt).not.toHaveBeenCalled();
