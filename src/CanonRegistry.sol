@@ -39,6 +39,7 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
     error NoBalance();
     error ZeroAddress();
     error InvalidTreasuryAddress();
+    error EtherTransferFailed();
 
     // Events
     // Hash instead of string for gas optimization
@@ -82,6 +83,9 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         address submitter,
         uint256 ts
     );
+
+    event Withdrawal(address indexed account, uint256 amount);
+    event EmergencyWithdrawal(address indexed admin, uint256 amount);
 
     // Storage
     mapping(bytes32 => uint256) private _lastAnchor;
@@ -425,7 +429,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         }
 
         balances[msg.sender] = 0;
-        payable(msg.sender).transfer(amount);
+
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        if (!success) {
+            revert EtherTransferFailed();
+        }
+
+        emit Withdrawal(msg.sender, amount);
     }
 
     /**
@@ -498,7 +508,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
             revert NoBalance();
         }
 
-        payable(msg.sender).transfer(balance);
+        (bool success, ) = payable(msg.sender).call{value: balance}("");
+        if (!success) {
+            revert EtherTransferFailed();
+        }
+
+        emit EmergencyWithdrawal(msg.sender, balance);
     }
 
     /**
