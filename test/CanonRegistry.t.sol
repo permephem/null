@@ -5,6 +5,44 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/CanonRegistry.sol";
 
+contract GasHeavyRecipient {
+    CanonRegistry public immutable registry;
+    bool public received;
+    uint256 public totalReceived;
+
+    constructor(CanonRegistry _registry) {
+        registry = _registry;
+    }
+
+    function claim() external {
+        registry.withdraw();
+    }
+
+    receive() external payable {
+        received = true;
+        totalReceived += msg.value;
+    }
+}
+
+contract GasHeavyAdmin {
+    CanonRegistry public immutable registry;
+    bool public received;
+    uint256 public totalReceived;
+
+    constructor(CanonRegistry _registry) {
+        registry = _registry;
+    }
+
+    function triggerEmergencyWithdraw() external {
+        registry.emergencyWithdraw();
+    }
+
+    receive() external payable {
+        received = true;
+        totalReceived += msg.value;
+    }
+}
+
 contract CanonRegistryTest is Test {
     CanonRegistry public canonRegistry;
     address public owner;
@@ -230,6 +268,40 @@ contract CanonRegistryTest is Test {
         assertEq(canonRegistry.balances(foundationTreasury), 0);
     }
 
+    function testWithdrawToGasHeavyContract() public {
+        GasHeavyRecipient implementerContract = new GasHeavyRecipient(canonRegistry);
+
+        vm.startPrank(owner);
+        canonRegistry.setTreasuries(foundationTreasury, address(implementerContract));
+        vm.stopPrank();
+
+        uint256 fee = 0.001 ether;
+        vm.deal(relayer, fee);
+
+        vm.startPrank(relayer);
+        canonRegistry.anchor{value: fee}(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
+        );
+        vm.stopPrank();
+
+        uint256 expectedImplementerBalance = (fee * 12) / 13;
+        assertEq(
+            canonRegistry.balances(address(implementerContract)),
+            expectedImplementerBalance
+        );
+
+        implementerContract.claim();
+
+        assertTrue(implementerContract.received());
+        assertEq(implementerContract.totalReceived(), expectedImplementerBalance);
+        assertEq(address(implementerContract).balance, expectedImplementerBalance);
+        assertEq(canonRegistry.balances(address(implementerContract)), 0);
+    }
+
     function testWithdrawNoBalance() public {
         vm.startPrank(foundationTreasury);
         vm.expectRevert(CanonRegistry.NoBalance.selector);
@@ -275,6 +347,37 @@ contract CanonRegistryTest is Test {
         vm.expectRevert(CanonRegistry.InvalidTreasuryAddress.selector);
         canonRegistry.setTreasuries(address(0), newFoundation);
         vm.stopPrank();
+    }
+
+    function testEmergencyWithdrawToGasHeavyAdmin() public {
+        GasHeavyAdmin admin = new GasHeavyAdmin(canonRegistry);
+
+        vm.startPrank(owner);
+        canonRegistry.grantRole(canonRegistry.DEFAULT_ADMIN_ROLE(), address(admin));
+        vm.stopPrank();
+
+        uint256 fee = 0.001 ether;
+        vm.deal(relayer, fee);
+
+        vm.startPrank(relayer);
+        canonRegistry.anchor{value: fee}(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
+        );
+        vm.stopPrank();
+
+        uint256 registryBalanceBefore = address(canonRegistry).balance;
+        assertGt(registryBalanceBefore, 0);
+
+        admin.triggerEmergencyWithdraw();
+
+        assertTrue(admin.received());
+        assertEq(admin.totalReceived(), registryBalanceBefore);
+        assertEq(address(admin).balance, registryBalanceBefore);
+        assertEq(address(canonRegistry).balance, 0);
     }
 
     function testPauseUnpause() public {
