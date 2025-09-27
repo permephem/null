@@ -331,13 +331,28 @@ contract CanonRegistryTest is Test {
     function testSetTreasuries() public {
         address newFoundation = makeAddr("newFoundation");
         address newImplementer = makeAddr("newImplementer");
-        
+
         vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit CanonRegistry.TreasuriesUpdated(
+            foundationTreasury,
+            newFoundation,
+            implementerTreasury,
+            newImplementer
+        );
         canonRegistry.setTreasuries(newFoundation, newImplementer);
         vm.stopPrank();
 
         assertEq(canonRegistry.foundationTreasury(), newFoundation);
         assertEq(canonRegistry.implementerTreasury(), newImplementer);
+        assertFalse(
+            canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), foundationTreasury)
+        );
+        assertFalse(
+            canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), implementerTreasury)
+        );
+        assertTrue(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), newFoundation));
+        assertTrue(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), newImplementer));
     }
 
     function testSetTreasuriesRejectsZeroAddress() public {

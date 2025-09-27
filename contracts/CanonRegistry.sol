@@ -67,6 +67,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         uint256 ts
     );
 
+    event TreasuriesUpdated(
+        address indexed previousFoundationTreasury,
+        address indexed newFoundationTreasury,
+        address indexed previousImplementerTreasury,
+        address newImplementerTreasury
+    );
+
     // Storage
     mapping(bytes32 => uint256) private _lastAnchor;
     mapping(address => uint256) public balances;
@@ -291,9 +298,29 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         if (_foundationTreasury == address(0) || _implementerTreasury == address(0)) {
             revert InvalidTreasuryAddress();
         }
-        
+
+        address previousFoundationTreasury = foundationTreasury;
+        address previousImplementerTreasury = implementerTreasury;
+
+        if (previousFoundationTreasury != address(0)) {
+            revokeRole(TREASURY_ROLE, previousFoundationTreasury);
+        }
+        if (previousImplementerTreasury != address(0)) {
+            revokeRole(TREASURY_ROLE, previousImplementerTreasury);
+        }
+
         foundationTreasury = _foundationTreasury;
         implementerTreasury = _implementerTreasury;
+
+        grantRole(TREASURY_ROLE, _foundationTreasury);
+        grantRole(TREASURY_ROLE, _implementerTreasury);
+
+        emit TreasuriesUpdated(
+            previousFoundationTreasury,
+            _foundationTreasury,
+            previousImplementerTreasury,
+            _implementerTreasury
+        );
     }
 
     /**
