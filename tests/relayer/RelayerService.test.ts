@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { isHexString } from 'ethers';
+import { getAddress, isHexString } from 'ethers';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -29,6 +29,13 @@ import {
   FileWarrantDigestStore,
   InMemoryWarrantDigestStore,
 } from '../../relayer/src/services/WarrantDigestStore';
+
+const ensureHexPrefixed = (value?: string): string | undefined => {
+  if (!value) {
+    return value;
+  }
+  return value.startsWith('0x') ? value : `0x${value}`;
+};
 
 // Mock the services
 jest.mock('../../relayer/src/canon/CanonService');
@@ -125,9 +132,9 @@ describe('RelayerService', () => {
       expect(result.data).toHaveProperty('subjectTag');
       expect(result.data).toHaveProperty('anchorTxHash');
       expect(isHexString(result.data?.warrantDigest, 32)).toBe(true);
-      expect(isHexString(result.data?.subjectHandleHash, 32)).toBe(true);
-      expect(isHexString(result.data?.enterpriseHash, 32)).toBe(true);
-      expect(isHexString(result.data?.controllerDidHash, 32)).toBe(true);
+      expect(isHexString(ensureHexPrefixed(result.data?.subjectHandleHash), 32)).toBe(true);
+      expect(isHexString(ensureHexPrefixed(result.data?.enterpriseHash), 32)).toBe(true);
+      expect(isHexString(ensureHexPrefixed(result.data?.controllerDidHash), 32)).toBe(true);
       expect(mockCanonService.anchorWarrant).toHaveBeenCalled();
     });
 

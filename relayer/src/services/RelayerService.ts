@@ -31,6 +31,7 @@ export class RelayerService {
   private sbtService: SBTService;
   private readonly controllerSecret: string;
   private warrantDigestStore: WarrantDigestStore;
+  private warrantReceiptWallets: Map<string, string>;
 
   constructor(
     canonService: CanonService,
@@ -47,6 +48,7 @@ export class RelayerService {
     }
     this.controllerSecret = resolvedSecret;
     this.warrantDigestStore = warrantDigestStore ?? new FileWarrantDigestStore();
+    this.warrantReceiptWallets = new Map();
   }
 
   /**
@@ -122,6 +124,7 @@ export class RelayerService {
       }
 
       await this.storeWarrantDigest(warrant.warrant_id, warrantDigest);
+      this.cacheReceiptWallet(warrant);
 
       // Send warrant to enterprise endpoint with timeout
       const enterpriseResult = await this.sendWarrantToEnterprise(warrant);
@@ -515,8 +518,12 @@ export class RelayerService {
       // Mint SBT if enabled
       if (process.env['SBT_MINTING_ENABLED'] === 'true') {
         const receiptHash = this.computeReceiptDigest(receipt);
+        const recipientWallet = this.resolveReceiptWallet(attestation);
+        if (!recipientWallet) {
+          throw new Error('No valid wallet address available for receipt minting');
+        }
         const sbtResult = await this.sbtService.mintReceipt(
-          attestation.subject_handle,
+          recipientWallet,
           receiptHash
         );
         return { receipt, sbt: sbtResult };
@@ -551,6 +558,34 @@ export class RelayerService {
 
   private async storeWarrantDigest(warrantId: string, digest: string): Promise<void> {
     await this.warrantDigestStore.set(warrantId, digest);
+  }
+
+  private cacheReceiptWallet(warrant: NullWarrant): void {
+    const wallet = warrant.return_channels?.subject_receipt_wallet;
+    if (wallet) {
+      this.warrantReceiptWallets.set(warrant.warrant_id, wallet);
+    } else {
+      this.warrantReceiptWallets.delete(warrant.warrant_id);
+    }
+  }
+
+  private resolveReceiptWallet(attestation: DeletionAttestation): string | undefined {
+    const cachedWallet = this.warrantReceiptWallets.get(attestation.warrant_id);
+    if (cachedWallet) {
+      if (ethers.isAddress(cachedWallet)) {
+        return ethers.getAddress(cachedWallet);
+      }
+      logger.warn('Invalid cached receipt wallet for warrant', {
+        warrantId: attestation.warrant_id,
+        providedWallet: cachedWallet,
+      });
+    }
+
+    if (ethers.isAddress(attestation.subject_handle)) {
+      return ethers.getAddress(attestation.subject_handle);
+    }
+
+    return undefined;
   }
 
   private async getStoredWarrantDigest(warrantId: string): Promise<string | undefined> {

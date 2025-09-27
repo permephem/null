@@ -1,5 +1,5 @@
-import { createHash, createHmac, randomBytes, sign as signData, verify as verifyData } from 'crypto';
-import { hash } from 'blake3';
+import { createHash, randomBytes, sign as signData, verify as verifyData } from 'crypto';
+import { createKeyed, hash } from 'blake3';
 import { ethers } from 'ethers';
 import * as ed25519 from '@noble/ed25519';
 import * as secp256k1 from '@noble/secp256k1';
@@ -39,10 +39,15 @@ export class CryptoService {
   /**
    * Generate HMAC using Blake3
    */
-  static hmacBlake3(key: string, data: string): string {
-    const hmac = createHmac('sha256', key);
-    hmac.update(data);
-    return hmac.digest('hex');
+  static hmacBlake3(key: string | Buffer, data: string): string {
+    const keyBuffer = Buffer.isBuffer(key) ? Buffer.from(key) : Buffer.from(key, 'utf8');
+    const derivedKey = keyBuffer.length === 32 ? keyBuffer : hash(keyBuffer);
+    if (!Buffer.isBuffer(derivedKey)) {
+      throw new Error('Failed to derive BLAKE3 key material');
+    }
+    const hasher = createKeyed(derivedKey);
+    hasher.update(data);
+    return hasher.digest('hex');
   }
 
   /**
@@ -50,7 +55,7 @@ export class CryptoService {
    */
   static generateWarrantHash(warrant: any): string {
     const canonical = this.canonicalizeJSON(warrant);
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
@@ -58,7 +63,7 @@ export class CryptoService {
    */
   static generateAttestationHash(attestation: any): string {
     const canonical = this.canonicalizeJSON(attestation);
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
@@ -66,7 +71,7 @@ export class CryptoService {
    */
   static generateReceiptHash(receipt: any): string {
     const canonical = this.canonicalizeJSON(receipt);
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
@@ -74,7 +79,7 @@ export class CryptoService {
    */
   static generateSubjectHandleHash(subjectHandle: string): string {
     const canonical = this.canonicalizeJSON({ subject_handle: subjectHandle });
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
@@ -82,7 +87,7 @@ export class CryptoService {
    */
   static generateEnterpriseHash(enterpriseId: string): string {
     const canonical = this.canonicalizeJSON({ enterprise_id: enterpriseId });
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
@@ -90,11 +95,11 @@ export class CryptoService {
    */
   static generateControllerDidHash(controllerDid: string): string {
     const canonical = this.canonicalizeJSON({ controller_did: controllerDid });
-    return this.hashBlake3(canonical);
+    return ethers.hexlify(hash(canonical));
   }
 
   /**
-   * Generate a subject tag using HMAC-Blake3 as specified in the whitepaper
+   * Generate a subject tag using keyed Blake3 as specified in the whitepaper
    */
   static generateSubjectTag(controllerKey: string, subjectDID: string, context: string): string {
     const message = `NULL_TAG${subjectDID}${context}`;
