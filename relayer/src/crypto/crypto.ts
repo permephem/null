@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes } from 'crypto';
+import { createHash, createHmac, randomBytes, sign as signData, verify as verifyData } from 'crypto';
 import { hash } from 'blake3';
 import { ethers } from 'ethers';
 import * as ed25519 from '@noble/ed25519';
@@ -19,7 +19,7 @@ export class CryptoService {
    * Generate a Blake3 hash of the input data
    */
   static hashBlake3(data: string): string {
-    return ethers.hexlify(hash(data));
+    return hash(data).toString('hex');
   }
 
   /**
@@ -109,13 +109,48 @@ export class CryptoService {
     privateKey: string,
     algorithm: string = 'EdDSA'
   ): Promise<string> {
-    const header = {
+    const header: jwt.JwtHeader & { crv?: string } = {
       alg: algorithm,
       typ: 'JWT',
     };
 
+    const curveByAlgorithm: Record<string, string> = {
+      EdDSA: 'Ed25519',
+      ES256: 'P-256',
+    };
+
+    if (curveByAlgorithm[algorithm]) {
+      header.crv = curveByAlgorithm[algorithm];
+    }
+
+    if (algorithm === 'EdDSA') {
+      if (typeof payload !== 'object' || payload === null) {
+        throw new Error('EdDSA signing requires an object payload');
+      }
+
+      const payloadWithIat: Record<string, unknown> = {
+        ...payload,
+      };
+
+      if (payloadWithIat.iat === undefined) {
+        payloadWithIat.iat = Math.floor(Date.now() / 1000);
+      }
+
+      const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+      const encodedPayload = Buffer.from(JSON.stringify(payloadWithIat)).toString('base64url');
+      const signingInput = `${encodedHeader}.${encodedPayload}`;
+      const signature = signData(null, Buffer.from(signingInput), privateKey);
+      const encodedSignature = Buffer.from(signature).toString('base64url');
+
+      return `${signingInput}.${encodedSignature}`;
+    }
+
+    if (!['ES256'].includes(algorithm)) {
+      throw new Error(`Unsupported JWS algorithm: ${algorithm}`);
+    }
+
     return jwt.sign(payload, privateKey, {
-      algorithm: algorithm === 'EdDSA' ? 'ES256' : 'ES256', // Use ES256 as fallback
+      algorithm: algorithm as jwt.Algorithm,
       header,
     });
   }
@@ -125,7 +160,32 @@ export class CryptoService {
    */
   static async verifyJWS(token: string, publicKey: string): Promise<any> {
     try {
-      return jwt.verify(token, publicKey, { algorithms: ['EdDSA', 'ES256'] as jwt.Algorithm[] });
+      const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
+
+      if (!encodedHeader || !encodedPayload || !encodedSignature) {
+        throw new Error('Invalid JWS format');
+      }
+
+      const headerJson = Buffer.from(encodedHeader, 'base64url').toString('utf8');
+      const header = JSON.parse(headerJson) as jwt.JwtHeader & { alg?: string };
+
+      if (header.alg === 'EdDSA') {
+        const verified = verifyData(
+          null,
+          Buffer.from(`${encodedHeader}.${encodedPayload}`),
+          publicKey,
+          Buffer.from(encodedSignature, 'base64url')
+        );
+
+        if (!verified) {
+          throw new Error('Invalid signature');
+        }
+
+        const payloadJson = Buffer.from(encodedPayload, 'base64url').toString('utf8');
+        return JSON.parse(payloadJson);
+      }
+
+      return jwt.verify(token, publicKey, { algorithms: ['ES256'] as jwt.Algorithm[] });
     } catch (error) {
       throw new Error(`JWS verification failed: ${error}`);
     }
