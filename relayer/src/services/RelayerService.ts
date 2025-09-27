@@ -73,7 +73,7 @@ export class RelayerService {
         };
       }
 
-      // Generate privacy-preserving subject tag using HMAC-Blake3
+      // Generate privacy-preserving subject tag using keyed Blake3
       const contextIdentifier = `${warrant.enterprise_id}:${warrant.warrant_id}`;
       const subjectTag = CryptoService.generateSubjectTag(
         this.controllerSecret,
