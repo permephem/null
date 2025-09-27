@@ -19,7 +19,7 @@ export class CryptoService {
    * Generate a Blake3 hash of the input data
    */
   static hashBlake3(data: string): string {
-    return hash(data).toString('hex');
+    return ethers.hexlify(hash(data));
   }
 
   /**

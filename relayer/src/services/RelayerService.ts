@@ -5,6 +5,7 @@
  */
 
 import { hash } from 'blake3';
+import { ethers } from 'ethers';
 // import { createHash } from 'crypto';
 import logger from '../utils/logger';
 import { CanonService } from '../canon/CanonService';
@@ -380,7 +381,7 @@ export class RelayerService {
    */
   private computeWarrantDigest(warrant: NullWarrant): string {
     const canonicalWarrant = this.canonicalizeWarrant(warrant);
-    return hash(canonicalWarrant).toString('hex');
+    return ethers.hexlify(hash(canonicalWarrant));
   }
 
   /**
@@ -390,7 +391,7 @@ export class RelayerService {
    */
   private computeAttestationDigest(attestation: DeletionAttestation): string {
     const canonicalAttestation = this.canonicalizeAttestation(attestation);
-    return hash(canonicalAttestation).toString('hex');
+    return ethers.hexlify(hash(canonicalAttestation));
   }
 
   /**
@@ -400,7 +401,7 @@ export class RelayerService {
    */
   private computeReceiptDigest(receipt: MaskReceipt): string {
     const canonicalReceipt = this.canonicalizeReceipt(receipt);
-    return hash(canonicalReceipt).toString('hex');
+    return ethers.hexlify(hash(canonicalReceipt));
   }
 
   /**
