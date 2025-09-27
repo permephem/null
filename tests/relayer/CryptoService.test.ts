@@ -4,6 +4,16 @@ import jwt from 'jsonwebtoken';
 
 import { CryptoService } from '../../relayer/src/crypto/crypto';
 
+describe('CryptoService.hmacBlake3', () => {
+  it('matches the known keyed BLAKE3 digest for a test vector', () => {
+    const key = Buffer.from(Array.from({ length: 32 }, (_, i) => i));
+    const message = 'The quick brown fox jumps over the lazy dog';
+    const expectedDigest = 'f1c78a63454ec51f42b9d88ac49133942182b5ecb380dc9ec90dcd7e6ad675e8';
+
+    expect(CryptoService.hmacBlake3(key, message)).toBe(expectedDigest);
+  });
+});
+
 describe('CryptoService.createJWS', () => {
   it.each([
     {
