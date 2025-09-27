@@ -1,6 +1,23 @@
 import { z } from 'zod';
 import { CryptoService } from '../crypto/crypto.js';
 
+const SignatureAlgorithmSchema = z
+  .string()
+  .transform(alg => alg.trim())
+  .transform(alg => alg.toLowerCase())
+  .pipe(z.enum(['eddsa', 'ed25519', 'es256', 'secp256k1']))
+  .transform(alg => {
+    switch (alg) {
+      case 'eddsa':
+      case 'ed25519':
+        return 'EdDSA' as const;
+      case 'es256':
+        return 'ES256' as const;
+      case 'secp256k1':
+        return 'secp256k1' as const;
+    }
+  });
+
 // Null Warrant Schema
 export const NullWarrantSchema = z.object({
   type: z.literal('NullWarrant@v0.2'),
@@ -71,7 +88,7 @@ export const DeletionAttestationSchema = z.object({
   completed_at: z.string(),
   evidence_hash: z.string(),
   signature: z.object({
-    alg: z.enum(['EdDSA', 'ES256', 'secp256k1']),
+    alg: SignatureAlgorithmSchema,
     kid: z.string(),
     sig: z.string(),
     type: z.string().optional(),
@@ -101,7 +118,7 @@ export const MaskReceiptSchema = z.object({
   completed_at: z.string(),
   evidence_hash: z.string(),
   signature: z.object({
-    alg: z.enum(['EdDSA', 'ES256', 'secp256k1']),
+    alg: SignatureAlgorithmSchema,
     kid: z.string(),
     sig: z.string(),
     type: z.string().optional(),
