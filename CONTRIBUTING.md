@@ -147,7 +147,8 @@ Brief description of changes
 
 ```
 null-protocol/
-├── contracts/           # Smart contracts (Foundry)
+├── src/                 # Canonical smart contracts (Foundry)
+├── contracts/           # Legacy and auxiliary Solidity modules
 ├── apps/
 │   ├── relayer-tickets/ # Fastify API server
 │   ├── indexer-tickets/ # PostgreSQL indexer
