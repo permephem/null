@@ -37,10 +37,10 @@ const ensureHexPrefixed = (value?: string): string | undefined => {
   return value.startsWith('0x') ? value : `0x${value}`;
 };
 
-const createReceipt = (hash: string, blockNumber = 100) => ({
-  hash,
-  blockNumber,
-}) as any;
+type CanonServiceWithAnchors = jest.Mocked<CanonService> & {
+  anchorWarrant: jest.Mock;
+  anchorAttestation: jest.Mock;
+};
 
 // Mock the services
 jest.mock('../../relayer/src/canon/CanonService');
@@ -48,16 +48,6 @@ jest.mock('../../relayer/src/sbt/SBTService');
 jest.mock('../../relayer/src/email/EmailService');
 
 // Mock crypto dependencies
-jest.mock('@noble/ed25519', () => ({
-  verify: jest.fn(),
-  sign: jest.fn(),
-}));
-
-jest.mock('@noble/secp256k1', () => ({
-  verify: jest.fn(),
-  sign: jest.fn(),
-}));
-
 jest.mock('jsonwebtoken', () => ({
   verify: jest.fn(),
   sign: jest.fn(),
@@ -69,11 +59,14 @@ jest.mock('did-resolver', () => ({
 
 describe('RelayerService', () => {
   let relayerService: RelayerService;
-  let mockCanonService: jest.Mocked<CanonService>;
+  let mockCanonService: CanonServiceWithAnchors;
   let mockSBTService: jest.Mocked<SBTService>;
   let mockEmailService: jest.Mocked<EmailService>;
   let mockDigestStore: InMemoryWarrantDigestStore;
   const controllerSecret = 'test-controller-secret';
+  const signingKey =
+    '0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f';
+  const signingKeyId = 'test-relayer-key';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -159,7 +152,7 @@ describe('RelayerService', () => {
 
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
-      mockCanonService.anchorWarrant.mockResolvedValue('0xtx123');
+      mockCanonService.anchor.mockResolvedValue(createReceipt('0xtx123'));
 
       const firstResult = await relayerService.processWarrant(firstWarrant);
       const secondResult = await relayerService.processWarrant(secondWarrant);
@@ -183,7 +176,7 @@ describe('RelayerService', () => {
 
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(relayerService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
-      mockCanonService.anchorWarrant.mockResolvedValue('0xanchor1');
+      mockCanonService.anchor.mockResolvedValue(createReceipt('0xanchor1'));
 
       const firstResult = await relayerService.processWarrant(firstWarrant);
 
@@ -214,7 +207,7 @@ describe('RelayerService', () => {
 
       jest.spyOn(alternateService as any, 'validateWarrant').mockResolvedValue({ valid: true });
       jest.spyOn(alternateService as any, 'sendWarrantToEnterprise').mockResolvedValue({ status: 'sent' });
-      altCanonService.anchorWarrant.mockResolvedValue('0xanchor2');
+      altCanonService.anchor.mockResolvedValue(createReceipt('0xanchor2'));
 
       const secondResult = await alternateService.processWarrant(secondWarrant);
 

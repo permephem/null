@@ -3,6 +3,7 @@ import { createKeyed, hash } from 'blake3';
 import { ethers } from 'ethers';
 import * as ed25519 from '@noble/ed25519';
 import * as secp256k1 from '@noble/secp256k1';
+import { p256 } from '@noble/curves/p256';
 import jwt from 'jsonwebtoken';
 import { Resolver } from 'did-resolver';
 // import { getResolver } from 'did-resolver';

@@ -92,21 +92,21 @@ export class RelayerService {
 
       // Anchor warrant to Canon Registry with retry logic
       let anchorTxHash: string = '';
+      let anchorBlockNumber: number | undefined;
+      let anchorReceipt: ContractTransactionReceipt | null = null;
       let retryCount = 0;
       const maxRetries = 3;
 
       while (retryCount < maxRetries) {
         try {
-          anchorTxHash = await this.canonService.anchorWarrant(
+          anchorReceipt = await this.canonService.anchor({
             warrantDigest,
-            subjectHandleHash,
-            enterpriseHash,
-            warrant.enterprise_id,
-            warrant.warrant_id,
-            controllerDidHash,
             subjectTag,
-            this.determineAssuranceLevel(warrant)
-          );
+            controllerDidHash,
+            assurance: this.determineAssuranceLevel(warrant),
+          });
+          anchorTxHash = anchorReceipt.hash;
+          anchorBlockNumber = anchorReceipt.blockNumber;
           break;
         } catch (error) {
           retryCount++;
@@ -122,6 +122,10 @@ export class RelayerService {
           // Exponential backoff
           await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
         }
+      }
+
+      if (!anchorReceipt) {
+        throw new Error('Failed to anchor warrant: missing receipt');
       }
 
       await this.storeWarrantDigest(warrant.warrant_id, warrantDigest);
@@ -146,6 +150,7 @@ export class RelayerService {
           controllerDidHash,
           subjectTag,
           anchorTxHash,
+          anchorBlock: anchorBlockNumber,
           enterpriseResponse: enterpriseResult,
           processingTime,
         },
@@ -200,28 +205,22 @@ export class RelayerService {
           code: 'WARRANT_DIGEST_NOT_FOUND',
         };
       }
-      const enterpriseHash = CryptoService.generateEnterpriseHash(attestation.enterprise_id);
       const controllerDidHash = CryptoService.generateControllerDidHash(attestation.aud);
 
       // Anchor attestation to Canon Registry
-      const anchorResult = await this.canonService.anchorAttestation(
-        attestationDigest,
-        warrantDigest,
-        enterpriseHash,
-        attestation.enterprise_id,
-        attestation.attestation_id,
-        controllerDidHash,
+      const subjectTag = CryptoService.generateSubjectTag(
+        this.controllerSecret,
         attestation.subject_handle,
-        this.determineAssuranceLevel({ evidence_requested: [] } as any)
+        `${attestation.enterprise_id}:${attestation.warrant_id}`
       );
 
-      if (!anchorResult.success) {
-        return {
-          success: false,
-          error: anchorResult.error || 'Anchor failed',
-          code: 'ANCHOR_ERROR',
-        };
-      }
+      const anchorReceipt = await this.canonService.anchor({
+        warrantDigest,
+        attestationDigest,
+        subjectTag,
+        controllerDidHash,
+        assurance: this.determineAssuranceLevel({ evidence_requested: [] } as any),
+      });
 
       // Generate receipt if deletion was successful
       if (attestation.status === 'deleted') {
@@ -232,7 +231,8 @@ export class RelayerService {
             attestationDigest,
             warrantDigest,
             receipt: receiptResult,
-            anchorBlock: anchorResult.blockNumber,
+            anchorBlock: anchorReceipt.blockNumber,
+            anchorTxHash: anchorReceipt.hash,
           },
         };
       }
@@ -242,7 +242,8 @@ export class RelayerService {
         data: {
           attestationDigest,
           warrantDigest,
-          anchorBlock: anchorResult.blockNumber,
+          anchorBlock: anchorReceipt.blockNumber,
+          anchorTxHash: anchorReceipt.hash,
         },
       };
     } catch (error) {
