@@ -127,7 +127,7 @@ The Null Protocol MVP represents a **production-ready technical implementation**
 # Deploy to testnet
 forge script script/Deploy.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast
 # Security audit
-npx slither contracts/
+npx slither src/
 # Foundry fuzzing
 forge test --fuzz-runs 1000
 ```

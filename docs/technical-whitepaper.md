@@ -342,7 +342,7 @@ This architecture represents the evolution from the current MVP implementation t
 
 ### 2.1 Canon Registry Contract (Current Implementation)
 
-**File:** `contracts/CanonRegistry.sol` (338 lines)
+**File:** `src/CanonRegistry.sol` (338 lines)
 
 The Canon Registry uses a **unified anchor function** with role-based access control and the Obol economic model:
 
