@@ -24,6 +24,7 @@ import { SBTService } from '../../relayer/src/sbt/SBTService';
 import { EmailService } from '../../relayer/src/email/EmailService';
 import { CryptoService } from '../../relayer/src/crypto/crypto';
 import * as validators from '../../relayer/src/schemas/validators';
+import type { MaskReceipt } from '../../relayer/src/types/index';
 import { createMockAttestation, createMockWarrant } from './fixtures';
 import {
   FileWarrantDigestStore,
@@ -37,10 +38,12 @@ const ensureHexPrefixed = (value?: string): string | undefined => {
   return value.startsWith('0x') ? value : `0x${value}`;
 };
 
-type CanonServiceWithAnchors = jest.Mocked<CanonService> & {
-  anchorWarrant: jest.Mock;
-  anchorAttestation: jest.Mock;
-};
+type CanonServiceWithAnchors = jest.Mocked<CanonService>;
+
+const createReceipt = (txHash: string, blockNumber: number = 100) => ({
+  hash: txHash,
+  blockNumber,
+});
 
 // Mock the services
 jest.mock('../../relayer/src/canon/CanonService');
@@ -465,7 +468,7 @@ describe('RelayerService', () => {
         signature: {
           sig: 'valid-signature',
           kid: 'test-key-id',
-          alg: 'ed25519',
+          alg: 'EdDSA',
         },
       });
 
@@ -483,7 +486,7 @@ describe('RelayerService', () => {
         signature: {
           sig: 'invalid-signature',
           kid: 'test-key-id',
-          alg: 'ed25519',
+          alg: 'EdDSA',
         },
       });
 

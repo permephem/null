@@ -52,11 +52,22 @@ async function main() {
       fromEmail: process.env['FROM_EMAIL'] || '',
     });
     const controllerSecret = process.env['RELAYER_CONTROLLER_SECRET'];
+    const signingKey = process.env['RELAYER_SIGNING_PRIVATE_KEY'];
+    const signingKeyId = process.env['RELAYER_SIGNING_KEY_ID'];
+    const signingAlgorithm = process.env['RELAYER_SIGNING_ALGORITHM'];
+    const controllerDid = process.env['RELAYER_CONTROLLER_DID'];
     const _relayerService = new RelayerService(
       canonService,
       sbtService,
       emailService,
-      controllerSecret
+      controllerSecret,
+      undefined,
+      {
+        controllerDid,
+        signingKey,
+        signingKeyId,
+        signingAlgorithm,
+      }
     );
 
     // Set the relayer service for routes

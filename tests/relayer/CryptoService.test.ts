@@ -11,6 +11,7 @@ import { CryptoService } from '../../relayer/src/crypto/crypto';
 const ed25519Lib = ed25519 as unknown as typeof import('@noble/ed25519');
 const secp256k1Lib = secp256k1 as unknown as typeof import('@noble/secp256k1');
 
+
 const encoder = new TextEncoder();
 const verificationPayload = 'signature verification payload';
 
@@ -20,17 +21,25 @@ const toBase64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('bas
 
 async function createEd25519Fixture(): Promise<SignatureFixture> {
   const privateKey = ed25519Lib.utils.randomPrivateKey();
-  const publicKeyBytes = await ed25519Lib.getPublicKey(privateKey);
-  const messageBytes = encoder.encode(verificationPayload);
-  const signatureBytes = await ed25519Lib.sign(messageBytes, privateKey);
+  const privateKeyHex = ethers.hexlify(privateKey);
+  const signatureHex = await CryptoService.signCanonicalData(
+    verificationPayload,
+    privateKeyHex,
+    'ed25519'
+  );
+  const publicKeyHex = await CryptoService.derivePublicKey(privateKeyHex, 'ed25519');
 
   const invalidPrivateKey = ed25519Lib.utils.randomPrivateKey();
-  const invalidSignature = await ed25519Lib.sign(messageBytes, invalidPrivateKey);
+  const invalidSignatureHex = await CryptoService.signCanonicalData(
+    verificationPayload,
+    ethers.hexlify(invalidPrivateKey),
+    'ed25519'
+  );
 
   return {
-    valid: toBase64(signatureBytes),
-    invalid: toBase64(invalidSignature),
-    publicKey: ethers.hexlify(publicKeyBytes),
+    valid: toBase64(ethers.getBytes(signatureHex)),
+    invalid: toBase64(ethers.getBytes(invalidSignatureHex)),
+    publicKey: publicKeyHex,
   };
 }
 
@@ -197,6 +206,7 @@ describe('CryptoService.verifySignature', () => {
     { algorithm: 'EdDSA', factory: createEd25519Fixture },
     { algorithm: 'secp256k1', factory: createSecp256k1Fixture },
     { algorithm: 'ES256', factory: createES256Fixture },
+    { algorithm: 'p256', factory: createES256Fixture },
   ])('routes %s signatures through the appropriate verifier', async ({ algorithm, factory }) => {
     const fixture = await factory();
 

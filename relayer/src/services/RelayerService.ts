@@ -33,6 +33,11 @@ export class RelayerService {
   private readonly controllerSecret: string;
   private warrantDigestStore: WarrantDigestStore;
   private warrantReceiptWallets: Map<string, string>;
+  private controllerDid?: string;
+  private signingKey?: string;
+  private signingKeyId?: string;
+  private signingAlgorithm: MaskReceipt['signature']['alg'];
+  private signingPublicKey?: string;
 
   constructor(
     canonService: CanonService,
@@ -506,7 +511,7 @@ export class RelayerService {
         completed_at: attestation.completed_at,
         evidence_hash: attestation.evidence_hash,
         signature: {
-          alg: 'ed25519',
+          alg: 'EdDSA',
           kid: 'relayer-key-1',
           sig: 'placeholder-signature', // Would be actual signature
         },

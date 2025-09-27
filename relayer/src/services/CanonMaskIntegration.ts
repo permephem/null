@@ -1,9 +1,3 @@
-/**
- * CanonMaskIntegration Service
- * Wires Mask SBT minting to Canon Registry anchoring events
- * Implements tokenId = keccak256(warrant||attest) as requested
- */
-
 import { solidityPacked, keccak256 } from 'ethers';
 import { CanonService } from '../canon/CanonService';
 import { SBTService } from '../sbt/SBTService';

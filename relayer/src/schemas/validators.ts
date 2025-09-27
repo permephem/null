@@ -5,13 +5,14 @@ const SignatureAlgorithmSchema = z
   .string()
   .transform(alg => alg.trim())
   .transform(alg => alg.toLowerCase())
-  .pipe(z.enum(['eddsa', 'ed25519', 'es256', 'secp256k1']))
+  .pipe(z.enum(['eddsa', 'ed25519', 'es256', 'p256', 'secp256k1']))
   .transform(alg => {
     switch (alg) {
       case 'eddsa':
       case 'ed25519':
         return 'EdDSA' as const;
       case 'es256':
+      case 'p256':
         return 'ES256' as const;
       case 'secp256k1':
         return 'secp256k1' as const;
@@ -59,7 +60,7 @@ export const NullWarrantSchema = z.object({
     evidence_required: z.boolean().optional(),
   }).optional(),
   signature: z.object({
-    alg: z.enum(['ed25519', 'secp256k1', 'p256']),
+    alg: SignatureAlgorithmSchema,
     kid: z.string(),
     sig: z.string(),
     type: z.string().optional(),

@@ -1,5 +1,9 @@
-import { DeletionAttestationSchema, MaskReceiptSchema } from '../../../relayer/src/schemas/validators';
-import { createMockAttestation } from '../fixtures';
+import {
+  DeletionAttestationSchema,
+  MaskReceiptSchema,
+  NullWarrantSchema,
+} from '../../../relayer/src/schemas/validators';
+import { createMockAttestation, createMockWarrant } from '../fixtures';
 
 const createMockMaskReceipt = () => ({
   type: 'MaskReceipt@v0.2',
@@ -47,6 +51,14 @@ describe('Signature algorithm normalization', () => {
   it('normalizes lowercase ed25519 for mask receipts', () => {
     const parsed = MaskReceiptSchema.parse(createMockMaskReceipt());
     expect(parsed.signature.alg).toBe('EdDSA');
+  });
+
+  it('normalizes p256 to ES256 for warrants', () => {
+    const warrant = createMockWarrant();
+    (warrant.signature as any).alg = 'p256';
+
+    const parsed = NullWarrantSchema.parse(warrant);
+    expect(parsed.signature.alg).toBe('ES256');
   });
 });
 

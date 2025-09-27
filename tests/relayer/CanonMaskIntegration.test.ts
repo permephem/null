@@ -71,31 +71,6 @@ describe('CanonMaskIntegration', () => {
     });
   });
 
-  describe('Token ID Calculation', () => {
-    it('should calculate tokenId as keccak256(warrant||attest)', async () => {
-      const warrantDigest = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-      const attestationDigest =
-        '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321';
-
-      // Calculate expected tokenId
-      const combined = solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest]);
-      const expectedTokenId = keccak256(combined);
-
-      // Mock the manual mint function to test tokenId calculation
-      mockSBTService.isReceiptMinted.mockResolvedValue(false);
-      mockSBTService.mintReceipt.mockResolvedValue('0xtest');
-
-      const result = await integration.manualMintForCanonEvent(
-        warrantDigest,
-        attestationDigest,
-        '0xrecipient'
-      );
-
-      expect(result.tokenId).toBe(expectedTokenId);
-      expect(isHexString(result.tokenId, 32)).toBe(true);
-      expect(isHexString(result.receiptHash, 32)).toBe(true);
-    });
-  });
 
   describe('Manual Minting', () => {
     it('should manually mint Mask SBT for Canon event', async () => {
@@ -105,7 +80,10 @@ describe('CanonMaskIntegration', () => {
       const recipient = '0xrecipient';
 
       mockSBTService.isReceiptMinted.mockResolvedValue(false);
-      mockSBTService.mintReceipt.mockResolvedValue('0xtest');
+      mockSBTService.mintReceipt.mockResolvedValue({
+        transactionHash: '0xtest',
+        tokenId: '123',
+      });
 
       const result = await integration.manualMintForCanonEvent(
         warrantDigest,
@@ -113,10 +91,14 @@ describe('CanonMaskIntegration', () => {
         recipient
       );
 
-      expect(mockSBTService.isReceiptMinted).toHaveBeenCalledWith(result.tokenId);
+      const expectedReceiptHash = keccak256(
+        solidityPacked(['bytes32', 'bytes32'], [warrantDigest, attestationDigest])
+      );
+
+      expect(mockSBTService.isReceiptMinted).toHaveBeenCalledWith(expectedReceiptHash);
       expect(mockSBTService.mintReceipt).toHaveBeenCalledWith(recipient, result.receiptHash);
       expect(result.transactionHash).toBe('0xtest');
-      expect(isHexString(result.tokenId, 32)).toBe(true);
+      expect(result.tokenId).toBe('123');
       expect(isHexString(result.receiptHash, 32)).toBe(true);
     });
 

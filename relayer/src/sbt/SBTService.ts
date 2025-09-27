@@ -9,6 +9,11 @@ export interface SBTServiceConfig {
   contractAddress: string;
 }
 
+export interface MintReceiptResult {
+  transactionHash: string;
+  tokenId: string;
+}
+
 export class SBTService {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
@@ -20,7 +25,7 @@ export class SBTService {
     this.contract = MaskSBT__factory.connect(config.contractAddress, this.wallet);
   }
 
-  async mintReceipt(to: string, receiptHash: string): Promise<string> {
+  async mintReceipt(to: string, receiptHash: string): Promise<MintReceiptResult> {
     try {
       logger.info('Minting SBT receipt', { to, receiptHash });
 
@@ -34,14 +39,45 @@ export class SBTService {
         throw new Error('Transaction receipt is null');
       }
 
+      let mintedTokenId: string | undefined;
+
+      for (const log of receipt.logs) {
+        if (log.address.toLowerCase() !== this.contract.target.toLowerCase()) {
+          continue;
+        }
+
+        try {
+          const parsedLog = this.contract.interface.parseLog(log);
+          if (parsedLog && parsedLog.name === 'ReceiptMinted') {
+            const tokenIdArg = parsedLog.args?.tokenId;
+            if (tokenIdArg !== undefined) {
+              mintedTokenId = tokenIdArg.toString();
+              break;
+            }
+          }
+        } catch (parseError) {
+          const logIndex = (log as any).index ?? (log as any).logIndex;
+          logger.warn('Failed to parse log while extracting tokenId', {
+            receiptHash,
+            logIndex,
+            error: parseError,
+          });
+        }
+      }
+
+      if (!mintedTokenId) {
+        throw new Error('Unable to determine minted tokenId from transaction logs');
+      }
+
       logger.info('SBT receipt minted successfully', {
         to,
         receiptHash,
         txHash: receipt.hash,
         blockNumber: receipt.blockNumber,
+        tokenId: mintedTokenId,
       });
 
-      return receipt.hash;
+      return { transactionHash: receipt.hash, tokenId: mintedTokenId };
     } catch (error) {
       logger.error('Failed to mint SBT receipt', { to, receiptHash, error });
       throw error;

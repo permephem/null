@@ -222,8 +222,8 @@ export class CryptoService {
   ): Promise<boolean> {
     try {
       const message = new TextEncoder().encode(data);
-      const sig = ethers.getBytes(signature);
-      const pubKey = ethers.getBytes(publicKey);
+      const sig = this.decodeBytes(signature);
+      const pubKey = this.decodeBytes(publicKey);
 
       return await ed25519.verify(sig, message, pubKey);
     } catch (error) {
@@ -241,8 +241,8 @@ export class CryptoService {
   ): Promise<boolean> {
     try {
       const message = new TextEncoder().encode(data);
-      const sig = ethers.getBytes(signature);
-      const pubKey = ethers.getBytes(publicKey);
+      const sig = this.decodeBytes(signature);
+      const pubKey = this.decodeBytes(publicKey);
 
       return secp256k1.verify(sig, message, pubKey);
     } catch (error) {
@@ -263,9 +263,14 @@ export class CryptoService {
       switch (algorithm) {
         case 'EdDSA':
         case 'ed25519':
+        case 'eddsa':
           return await this.verifyEd25519Signature(data, signature, publicKey);
         case 'ES256':
+        case 'es256':
+        case 'p256':
+          return await this.verifyES256Signature(data, signature, publicKey);
         case 'secp256k1':
+        case 'Secp256k1':
           return await this.verifySecp256k1Signature(data, signature, publicKey);
         default:
           throw new Error(`Unsupported signature algorithm: ${algorithm}`);
@@ -312,5 +317,52 @@ export class CryptoService {
     }
     
     return canonicalized;
+  }
+
+  private static decodeBytes(value: string): Uint8Array {
+    const trimmed = value.trim();
+
+    try {
+      return ethers.getBytes(trimmed);
+    } catch (error) {
+      return this.decodeBase64(trimmed);
+    }
+  }
+
+  private static decodeBase64(value: string): Uint8Array {
+    const sanitized = value.replace(/\s+/g, '');
+
+    if (sanitized.length === 0) {
+      throw new Error('Invalid base64 string');
+    }
+
+    const normalized = sanitized.replace(/-/g, '+').replace(/_/g, '/');
+    const remainder = normalized.length % 4;
+
+    if (remainder === 1) {
+      throw new Error('Invalid base64 string');
+    }
+
+    const paddingLength = remainder === 0 ? 0 : 4 - remainder;
+    const padded = normalized.padEnd(normalized.length + paddingLength, '=');
+
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(padded)) {
+      throw new Error('Invalid base64 string');
+    }
+
+    const decoded = Buffer.from(padded, 'base64');
+
+    if (decoded.length === 0) {
+      throw new Error('Invalid base64 string');
+    }
+
+    const reencoded = decoded.toString('base64').replace(/=+$/, '');
+    const normalizedInput = padded.replace(/=+$/, '');
+
+    if (reencoded !== normalizedInput) {
+      throw new Error('Invalid base64 string');
+    }
+
+    return new Uint8Array(decoded);
   }
 }

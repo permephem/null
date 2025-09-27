@@ -4,6 +4,8 @@
  */
 
 // Base types
+export type SignatureAlgorithm = 'EdDSA' | 'ES256' | 'secp256k1';
+
 export interface ProcessingResult {
   success: boolean;
   data?: any;
@@ -47,7 +49,7 @@ export interface NullWarrant {
     evidence_required?: boolean;
   };
   signature: {
-    alg: 'ed25519' | 'secp256k1' | 'p256';
+    alg: SignatureAlgorithm;
     kid: string;
     sig: string;
   };
@@ -74,7 +76,7 @@ export interface DeletionAttestation {
   evidence_hash: string;
   retention_policy?: string;
   signature: {
-    alg: 'ed25519' | 'secp256k1' | 'p256';
+    alg: SignatureAlgorithm;
     kid: string;
     sig: string;
   };
@@ -121,7 +123,7 @@ export interface MaskReceipt {
   completed_at: string;
   evidence_hash: string;
   signature: {
-    alg: 'ed25519' | 'secp256k1' | 'p256';
+    alg: SignatureAlgorithm;
     kid: string;
     sig: string;
   };
