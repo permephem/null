@@ -3,7 +3,7 @@
  * Tests the integration between Canon Registry events and Mask SBT minting
  */
 
-import { solidityPacked, keccak256 } from 'ethers';
+import { solidityPacked, keccak256, isHexString } from 'ethers';
 import {
   CanonMaskIntegration,
   type CanonMaskIntegrationConfig,
@@ -92,6 +92,8 @@ describe('CanonMaskIntegration', () => {
       );
 
       expect(result.tokenId).toBe(expectedTokenId);
+      expect(isHexString(result.tokenId, 32)).toBe(true);
+      expect(isHexString(result.receiptHash, 32)).toBe(true);
     });
   });
 
@@ -114,6 +116,8 @@ describe('CanonMaskIntegration', () => {
       expect(mockSBTService.isReceiptMinted).toHaveBeenCalledWith(result.tokenId);
       expect(mockSBTService.mintReceipt).toHaveBeenCalledWith(recipient, result.receiptHash);
       expect(result.transactionHash).toBe('0xtest');
+      expect(isHexString(result.tokenId, 32)).toBe(true);
+      expect(isHexString(result.receiptHash, 32)).toBe(true);
     });
 
     it('should throw error if SBT already exists', async () => {
