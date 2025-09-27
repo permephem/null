@@ -86,6 +86,12 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
 
     event Withdrawal(address indexed account, uint256 amount);
     event EmergencyWithdrawal(address indexed admin, uint256 amount);
+    event TreasuriesUpdated(
+        address indexed previousFoundationTreasury,
+        address indexed newFoundationTreasury,
+        address indexed previousImplementerTreasury,
+        address newImplementerTreasury
+    );
 
     // Storage
     mapping(bytes32 => uint256) private _lastAnchor;
@@ -466,12 +472,38 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        address oldFoundationTreasury = foundationTreasury;
+        address oldImplementerTreasury = implementerTreasury;
+
         if (_foundationTreasury == address(0) || _implementerTreasury == address(0)) {
             revert InvalidTreasuryAddress();
         }
 
+        if (oldFoundationTreasury != address(0) && oldFoundationTreasury != _foundationTreasury) {
+            uint256 foundationBalance = balances[oldFoundationTreasury];
+            if (foundationBalance > 0) {
+                balances[oldFoundationTreasury] = 0;
+                balances[_foundationTreasury] += foundationBalance;
+            }
+
+            revokeRole(TREASURY_ROLE, oldFoundationTreasury);
+        }
+
+        if (oldImplementerTreasury != address(0) && oldImplementerTreasury != _implementerTreasury) {
+            uint256 implementerBalance = balances[oldImplementerTreasury];
+            if (implementerBalance > 0) {
+                balances[oldImplementerTreasury] = 0;
+                balances[_implementerTreasury] += implementerBalance;
+            }
+
+            revokeRole(TREASURY_ROLE, oldImplementerTreasury);
+        }
+
         foundationTreasury = _foundationTreasury;
         implementerTreasury = _implementerTreasury;
+
+        grantRole(TREASURY_ROLE, _foundationTreasury);
+        grantRole(TREASURY_ROLE, _implementerTreasury);
     }
 
     /**

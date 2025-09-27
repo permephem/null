@@ -331,26 +331,35 @@ contract CanonRegistryTest is Test {
     function testSetTreasuries() public {
         address newFoundation = makeAddr("newFoundation");
         address newImplementer = makeAddr("newImplementer");
+        
+        uint256 fee = canonRegistry.baseFee();
+        vm.deal(relayer, fee);
+
+        vm.startPrank(relayer);
+        canonRegistry.anchor{value: fee}(
+            keccak256("warrant"),
+            keccak256("attestation"),
+            keccak256("subject"),
+            keccak256("controller"),
+            1
+        );
+        vm.stopPrank();
+
+        uint256 foundationBalanceBefore = canonRegistry.balances(foundationTreasury);
+        uint256 implementerBalanceBefore = canonRegistry.balances(implementerTreasury);
 
         vm.startPrank(owner);
-        vm.expectEmit(true, true, true, true);
-        emit CanonRegistry.TreasuriesUpdated(
-            foundationTreasury,
-            newFoundation,
-            implementerTreasury,
-            newImplementer
-        );
         canonRegistry.setTreasuries(newFoundation, newImplementer);
         vm.stopPrank();
 
         assertEq(canonRegistry.foundationTreasury(), newFoundation);
         assertEq(canonRegistry.implementerTreasury(), newImplementer);
-        assertFalse(
-            canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), foundationTreasury)
-        );
-        assertFalse(
-            canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), implementerTreasury)
-        );
+        assertEq(canonRegistry.balances(foundationTreasury), 0);
+        assertEq(canonRegistry.balances(implementerTreasury), 0);
+        assertEq(canonRegistry.balances(newFoundation), foundationBalanceBefore);
+        assertEq(canonRegistry.balances(newImplementer), implementerBalanceBefore);
+        assertFalse(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), foundationTreasury));
+        assertFalse(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), implementerTreasury));
         assertTrue(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), newFoundation));
         assertTrue(canonRegistry.hasRole(canonRegistry.TREASURY_ROLE(), newImplementer));
     }

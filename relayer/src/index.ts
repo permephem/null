@@ -31,10 +31,13 @@ async function main() {
     logger.info('Starting Null Protocol Relayer...');
 
     // Initialize services with configuration
+    const canonBaseFee = process.env['CANON_REGISTRY_BASE_FEE_WEI'];
+
     const canonService = new CanonService({
       rpcUrl: process.env['ETHEREUM_RPC_URL'] || 'http://localhost:8545',
       privateKey: process.env['RELAYER_PRIVATE_KEY'] || '',
       contractAddress: process.env['CANON_REGISTRY_ADDRESS'] || '',
+      baseFee: canonBaseFee && canonBaseFee.trim() !== '' ? canonBaseFee : undefined,
     });
     const sbtService = new SBTService({
       rpcUrl: process.env['ETHEREUM_RPC_URL'] || 'http://localhost:8545',

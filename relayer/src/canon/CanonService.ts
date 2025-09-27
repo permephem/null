@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import type { BigNumberish } from 'ethers';
 import type { CanonRegistry } from '../../../typechain-types';
 import { CanonRegistry__factory } from '../../../typechain-types';
 import logger from '../utils/logger.js';
@@ -7,21 +8,39 @@ export interface CanonServiceConfig {
   rpcUrl: string;
   privateKey: string;
   contractAddress: string;
+  /**
+   * Optional override for the base fee (in wei) that should be paid when anchoring.
+   * When omitted the service will query the Canon Registry contract for the
+   * latest base fee before each transaction.
+   */
+  baseFee?: BigNumberish;
 }
 
 export class CanonService {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
   private contract: CanonRegistry;
+  private readonly baseFeeOverride?: bigint;
 
   constructor(config: CanonServiceConfig) {
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
     this.wallet = new ethers.Wallet(config.privateKey, this.provider);
     this.contract = CanonRegistry__factory.connect(config.contractAddress, this.wallet);
+    this.baseFeeOverride =
+      config.baseFee !== undefined ? ethers.toBigInt(config.baseFee) : undefined;
   }
 
   getContract(): CanonRegistry {
     return this.contract;
+  }
+
+  private async resolveBaseFee(): Promise<bigint> {
+    if (this.baseFeeOverride !== undefined) {
+      return this.baseFeeOverride;
+    }
+
+    const baseFee = await this.contract.baseFee();
+    return baseFee;
   }
 
   async anchorWarrant(
@@ -41,13 +60,15 @@ export class CanonService {
         throw new Error('Contract not initialized');
       }
 
+      const baseFee = await this.resolveBaseFee();
+
       const tx = await this.contract.anchorWarrant(
         warrantHash,
         subjectHandleHash,
         enterpriseHash,
         enterpriseId,
         warrantId,
-        { value: ethers.parseEther('0.01') } // Pay the base fee
+        { value: baseFee } // Pay the base fee
       );
 
       const receipt = await tx.wait();
@@ -91,13 +112,15 @@ export class CanonService {
     try {
       logger.info('Anchoring attestation to canon registry', { attestationId });
 
+      const baseFee = await this.resolveBaseFee();
+
       const tx = await this.contract.anchorAttestation(
         attestationHash,
         warrantHash,
         enterpriseHash,
         enterpriseId,
         attestationId,
-        { value: ethers.parseEther('0.01') } // Pay the base fee
+        { value: baseFee } // Pay the base fee
       );
 
       const receipt = await tx.wait();

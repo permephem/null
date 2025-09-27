@@ -24,8 +24,36 @@ export function commitTicketId(ticketSerial: string, eventId: string): Hex {
   return keccakHex(`ticket:${eventId}:${ticketSerial}`);
 }
 
+/**
+ * Canonicalize JSON data according to RFC 8785 (JCS) by recursively
+ * sorting object keys while leaving arrays untouched.
+ */
+export function canonicalizeJSON(data: unknown): string {
+  return JSON.stringify(canonicalizeValue(data));
+}
+
+function canonicalizeValue(value: unknown): unknown {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => canonicalizeValue(item));
+  }
+
+  const obj = value as Record<string, unknown>;
+  const sortedKeys = Object.keys(obj).sort();
+  const canonicalized: Record<string, unknown> = {};
+
+  for (const key of sortedKeys) {
+    canonicalized[key] = canonicalizeValue(obj[key]);
+  }
+
+  return canonicalized;
+}
+
 export function commitPolicy(policy: unknown): Hex {
-  const json = JSON.stringify(policy);
+  const json = canonicalizeJSON(policy);
   return keccakHex(`policy:${json}`);
 }
 

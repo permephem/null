@@ -295,18 +295,31 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
         address _foundationTreasury,
         address _implementerTreasury
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        address oldFoundationTreasury = foundationTreasury;
+        address oldImplementerTreasury = implementerTreasury;
+
         if (_foundationTreasury == address(0) || _implementerTreasury == address(0)) {
             revert InvalidTreasuryAddress();
         }
 
-        address previousFoundationTreasury = foundationTreasury;
-        address previousImplementerTreasury = implementerTreasury;
+        if (oldFoundationTreasury != address(0) && oldFoundationTreasury != _foundationTreasury) {
+            uint256 foundationBalance = balances[oldFoundationTreasury];
+            if (foundationBalance > 0) {
+                balances[oldFoundationTreasury] = 0;
+                balances[_foundationTreasury] += foundationBalance;
+            }
 
-        if (previousFoundationTreasury != address(0)) {
-            revokeRole(TREASURY_ROLE, previousFoundationTreasury);
+            revokeRole(TREASURY_ROLE, oldFoundationTreasury);
         }
-        if (previousImplementerTreasury != address(0)) {
-            revokeRole(TREASURY_ROLE, previousImplementerTreasury);
+
+        if (oldImplementerTreasury != address(0) && oldImplementerTreasury != _implementerTreasury) {
+            uint256 implementerBalance = balances[oldImplementerTreasury];
+            if (implementerBalance > 0) {
+                balances[oldImplementerTreasury] = 0;
+                balances[_implementerTreasury] += implementerBalance;
+            }
+
+            revokeRole(TREASURY_ROLE, oldImplementerTreasury);
         }
 
         foundationTreasury = _foundationTreasury;
@@ -314,13 +327,6 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable {
 
         grantRole(TREASURY_ROLE, _foundationTreasury);
         grantRole(TREASURY_ROLE, _implementerTreasury);
-
-        emit TreasuriesUpdated(
-            previousFoundationTreasury,
-            _foundationTreasury,
-            previousImplementerTreasury,
-            _implementerTreasury
-        );
     }
 
     /**
