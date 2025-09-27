@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { isHexString } from 'ethers';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -118,8 +119,15 @@ describe('RelayerService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('warrantDigest');
+      expect(result.data).toHaveProperty('subjectHandleHash');
+      expect(result.data).toHaveProperty('enterpriseHash');
+      expect(result.data).toHaveProperty('controllerDidHash');
       expect(result.data).toHaveProperty('subjectTag');
       expect(result.data).toHaveProperty('anchorTxHash');
+      expect(isHexString(result.data?.warrantDigest, 32)).toBe(true);
+      expect(isHexString(result.data?.subjectHandleHash, 32)).toBe(true);
+      expect(isHexString(result.data?.enterpriseHash, 32)).toBe(true);
+      expect(isHexString(result.data?.controllerDidHash, 32)).toBe(true);
       expect(mockCanonService.anchorWarrant).toHaveBeenCalled();
     });
 
@@ -280,6 +288,7 @@ describe('RelayerService', () => {
 
       expect(attestationResult.success).toBe(true);
       expect(attestationResult.data.warrantDigest).toBe(canonicalDigest);
+      expect(isHexString(attestationResult.data.attestationDigest, 32)).toBe(true);
 
       expect(mockCanonService.anchorAttestation).toHaveBeenCalledWith(
         attestationResult.data.attestationDigest,
@@ -364,7 +373,8 @@ describe('RelayerService', () => {
       jest.spyOn(CryptoService, 'canonicalizeJSON').mockReturnValue('canonical');
       jest.spyOn(CryptoService, 'verifySignature').mockResolvedValue(true);
 
-      const chainDigest = 'abcdef1234567890';
+      const chainDigest =
+        '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
       mockCanonService.getWarrantDigestById.mockResolvedValue(chainDigest);
       mockCanonService.warrantExists.mockResolvedValue(true);
       mockCanonService.anchorAttestation.mockResolvedValue({ success: true, blockNumber: 789 });
@@ -373,6 +383,7 @@ describe('RelayerService', () => {
 
       expect(attestationResult.success).toBe(true);
       expect(attestationResult.data.warrantDigest).toBe(chainDigest);
+      expect(isHexString(attestationResult.data.warrantDigest, 32)).toBe(true);
       expect(mockCanonService.getWarrantDigestById).toHaveBeenCalledWith(mockAttestation.warrant_id);
       expect(await mockDigestStore.get(mockAttestation.warrant_id)).toBe(chainDigest);
     });
