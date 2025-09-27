@@ -61,7 +61,7 @@ export const createMockAttestation = (
     subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
     status: 'deleted',
     completed_at: new Date().toISOString(),
-    evidence_hash: '0xevidencehash',
+    evidence_hash: '0xabcdef1234567890abcdef1234567890',
     signature: {
       sig: 'attestation-signature',
       kid: 'test-key-id',

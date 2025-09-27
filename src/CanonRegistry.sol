@@ -504,6 +504,13 @@ contract CanonRegistry is AccessControl, ReentrancyGuard, Pausable, EIP712 {
 
         grantRole(TREASURY_ROLE, _foundationTreasury);
         grantRole(TREASURY_ROLE, _implementerTreasury);
+
+        emit TreasuriesUpdated(
+            oldFoundationTreasury,
+            _foundationTreasury,
+            oldImplementerTreasury,
+            _implementerTreasury
+        );
     }
 
     /**

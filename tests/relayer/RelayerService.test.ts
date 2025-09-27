@@ -37,6 +37,11 @@ const ensureHexPrefixed = (value?: string): string | undefined => {
   return value.startsWith('0x') ? value : `0x${value}`;
 };
 
+const createReceipt = (hash: string, blockNumber = 100) => ({
+  hash,
+  blockNumber,
+}) as any;
+
 // Mock the services
 jest.mock('../../relayer/src/canon/CanonService');
 jest.mock('../../relayer/src/sbt/SBTService');
@@ -115,7 +120,7 @@ describe('RelayerService', () => {
       jest.spyOn(relayerService as any, 'validateWarrant').mockResolvedValue({ valid: true });
 
       // Mock successful anchoring
-      mockCanonService.anchorWarrant.mockResolvedValue('0xtx123');
+      mockCanonService.anchor.mockResolvedValue(createReceipt('0xtx123'));
 
       // Mock successful enterprise communication
       jest
@@ -131,11 +136,21 @@ describe('RelayerService', () => {
       expect(result.data).toHaveProperty('controllerDidHash');
       expect(result.data).toHaveProperty('subjectTag');
       expect(result.data).toHaveProperty('anchorTxHash');
+      expect(result.data).toHaveProperty('anchorBlock', 100);
+      expect(result.data?.anchorTxHash).toBe('0xtx123');
       expect(isHexString(result.data?.warrantDigest, 32)).toBe(true);
       expect(isHexString(ensureHexPrefixed(result.data?.subjectHandleHash), 32)).toBe(true);
       expect(isHexString(ensureHexPrefixed(result.data?.enterpriseHash), 32)).toBe(true);
       expect(isHexString(ensureHexPrefixed(result.data?.controllerDidHash), 32)).toBe(true);
-      expect(mockCanonService.anchorWarrant).toHaveBeenCalled();
+      expect(mockCanonService.anchor).toHaveBeenCalled();
+
+      const [anchorArgs] = mockCanonService.anchor.mock.calls[0];
+      expect(anchorArgs).toMatchObject({
+        warrantDigest: result.data?.warrantDigest,
+        controllerDidHash: result.data?.controllerDidHash,
+        subjectTag: result.data?.subjectTag,
+      });
+      expect(anchorArgs.attestationDigest).toBeUndefined();
     });
 
     it('should generate stable subject tags for the same secret and subject', async () => {

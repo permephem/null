@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import type { BigNumberish } from 'ethers';
+import type { BigNumberish, ContractTransactionReceipt } from 'ethers';
 import type { CanonRegistry } from '../../../typechain-types';
 import { CanonRegistry__factory } from '../../../typechain-types';
 import logger from '../utils/logger.js';
@@ -43,47 +43,68 @@ export class CanonService {
     return baseFee;
   }
 
-  async anchorWarrant(
-    warrantHash: string,
-    subjectHandleHash: string,
-    enterpriseHash: string,
-    enterpriseId: string,
-    warrantId: string,
-    _controllerDidHash: string,
-    _subjectTag: string,
-    _assurance: number
-  ): Promise<string> {
-    try {
-      logger.info('Anchoring warrant to canon registry', { warrantId, enterpriseId });
+  private ensureBytes32(value: string): string {
+    return value.startsWith('0x') ? value : `0x${value}`;
+  }
 
-      if (!this.contract) {
-        throw new Error('Contract not initialized');
-      }
+  async anchor(
+    params: {
+      warrantDigest: string;
+      attestationDigest?: string;
+      subjectTag: string;
+      controllerDidHash: string;
+      assurance: number;
+    }
+  ): Promise<ContractTransactionReceipt> {
+    const {
+      warrantDigest,
+      attestationDigest,
+      subjectTag,
+      controllerDidHash,
+      assurance,
+    } = params;
+
+    try {
+      logger.info('Anchoring closure event to canon registry', {
+        warrantDigest,
+        attestationDigest,
+      });
 
       const baseFee = await this.resolveBaseFee();
 
-      const tx = await this.contract.anchorWarrant(
-        warrantHash,
-        subjectHandleHash,
-        enterpriseHash,
-        enterpriseId,
-        warrantId,
-        { value: baseFee } // Pay the base fee
+      const normalizedWarrantDigest = this.ensureBytes32(warrantDigest);
+      const normalizedAttestationDigest = attestationDigest
+        ? this.ensureBytes32(attestationDigest)
+        : ethers.ZeroHash;
+      const normalizedSubjectTag = this.ensureBytes32(subjectTag);
+      const normalizedControllerDidHash = this.ensureBytes32(controllerDidHash);
+
+      const tx = await this.contract.anchor(
+        normalizedWarrantDigest,
+        normalizedAttestationDigest,
+        normalizedSubjectTag,
+        normalizedControllerDidHash,
+        assurance,
+        { value: baseFee }
       );
 
       const receipt = await tx.wait();
       if (!receipt) {
         throw new Error('Transaction receipt is null');
       }
-      logger.info('Warrant anchored successfully', {
-        warrantId,
+
+      logger.info('Closure event anchored successfully', {
         txHash: receipt.hash,
         blockNumber: receipt.blockNumber,
       });
 
-      return receipt.hash;
+      return receipt;
     } catch (error) {
-      logger.error('Failed to anchor warrant', { warrantId, error });
+      logger.error('Failed to anchor closure event', {
+        warrantDigest,
+        attestationDigest,
+        error,
+      });
       throw error;
     }
   }
@@ -96,47 +117,6 @@ export class CanonService {
     } catch (error) {
       logger.error('Failed to get last anchor block', { hash, error });
       throw error;
-    }
-  }
-
-  async anchorAttestation(
-    attestationHash: string,
-    warrantHash: string,
-    enterpriseHash: string,
-    enterpriseId: string,
-    attestationId: string,
-    _controllerDidHash: string,
-    _subjectTag: string,
-    _assurance: number
-  ): Promise<{ success: boolean; blockNumber?: number; error?: string }> {
-    try {
-      logger.info('Anchoring attestation to canon registry', { attestationId });
-
-      const baseFee = await this.resolveBaseFee();
-
-      const tx = await this.contract.anchorAttestation(
-        attestationHash,
-        warrantHash,
-        enterpriseHash,
-        enterpriseId,
-        attestationId,
-        { value: baseFee } // Pay the base fee
-      );
-
-      const receipt = await tx.wait();
-      if (!receipt) {
-        throw new Error('Transaction receipt is null');
-      }
-      logger.info('Attestation anchored successfully', {
-        attestationId,
-        txHash: receipt.hash,
-        blockNumber: receipt.blockNumber,
-      });
-
-      return { success: true, blockNumber: receipt.blockNumber };
-    } catch (error) {
-      logger.error('Failed to anchor attestation', { attestationId, error });
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 

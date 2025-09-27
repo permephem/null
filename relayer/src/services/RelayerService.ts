@@ -6,6 +6,7 @@
 
 import { hash } from 'blake3';
 import { ethers } from 'ethers';
+import type { ContractTransactionReceipt } from 'ethers';
 // import { createHash } from 'crypto';
 import logger from '../utils/logger';
 import { CanonService } from '../canon/CanonService';

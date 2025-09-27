@@ -1,6 +1,27 @@
 import { DeletionAttestationSchema, MaskReceiptSchema } from '../../../relayer/src/schemas/validators';
 import { createMockAttestation } from '../fixtures';
 
+const createMockMaskReceipt = () => ({
+  type: 'MaskReceipt@v0.2',
+  receipt_id: 'receipt-1',
+  warrant_hash: '0xabcdef1234567890abcdef1234567890',
+  attestation_hash: '0xabcdef1234567890abcdef1234567890',
+  subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
+  status: 'deleted' as const,
+  completed_at: new Date().toISOString(),
+  evidence_hash: '0xabcdef1234567890abcdef1234567890',
+  signature: {
+    sig: 'mask-receipt-signature',
+    kid: 'test-key-id',
+    alg: 'ed25519' as const,
+  },
+  version: '1',
+  controller_did_hash: 'controller-hash',
+  jurisdiction_bits: 1,
+  evidence_class_bits: 1,
+  timestamp: Math.floor(Date.now() / 1000),
+});
+
 describe('Signature algorithm normalization', () => {
   it('accepts lowercase ed25519 for deletion attestations and normalizes casing', () => {
     const attestation = createMockAttestation({
@@ -24,28 +45,35 @@ describe('Signature algorithm normalization', () => {
   });
 
   it('normalizes lowercase ed25519 for mask receipts', () => {
-    const maskReceipt = {
-      type: 'MaskReceipt@v0.2',
-      receipt_id: 'receipt-1',
-      warrant_hash: '0xwarrant',
-      attestation_hash: '0xattestation',
-      subject_handle: '0x1234567890abcdef1234567890abcdef12345678',
-      status: 'deleted',
-      completed_at: new Date().toISOString(),
-      evidence_hash: '0xevidencehash',
-      signature: {
-        sig: 'mask-receipt-signature',
-        kid: 'test-key-id',
-        alg: 'ed25519',
-      },
-      version: '1',
-      controller_did_hash: 'controller-hash',
-      jurisdiction_bits: 1,
-      evidence_class_bits: 1,
-      timestamp: Date.now(),
-    } as const;
-
-    const parsed = MaskReceiptSchema.parse(maskReceipt);
+    const parsed = MaskReceiptSchema.parse(createMockMaskReceipt());
     expect(parsed.signature.alg).toBe('EdDSA');
+  });
+});
+
+describe('Status enums', () => {
+  it.each(['deleted', 'suppressed', 'not_found', 'rejected'] as const)(
+    'allows %s status for deletion attestations',
+    status => {
+      const attestation = createMockAttestation({ status });
+      expect(DeletionAttestationSchema.parse(attestation).status).toBe(status);
+    }
+  );
+
+  it.each(['deleted', 'suppressed', 'not_found', 'rejected'] as const)(
+    'allows %s status for mask receipts',
+    status => {
+      const maskReceipt = { ...createMockMaskReceipt(), status };
+      expect(MaskReceiptSchema.parse(maskReceipt).status).toBe(status);
+    }
+  );
+
+  it('rejects unknown statuses for deletion attestations', () => {
+    const attestation = createMockAttestation({ status: 'pending' as any });
+    expect(() => DeletionAttestationSchema.parse(attestation)).toThrowError(/Invalid enum value/);
+  });
+
+  it('rejects unknown statuses for mask receipts', () => {
+    const maskReceipt = { ...createMockMaskReceipt(), status: 'pending' };
+    expect(() => MaskReceiptSchema.parse(maskReceipt)).toThrowError(/Invalid enum value/);
   });
 });

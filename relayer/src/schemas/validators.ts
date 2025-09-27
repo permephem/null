@@ -83,10 +83,15 @@ export const DeletionAttestationSchema = z.object({
   attestation_id: z.string(),
   warrant_id: z.string(),
   enterprise_id: z.string(),
-  subject_handle: z.string(),
-  status: z.enum(['deleted', 'not_found', 'denied']),
-  completed_at: z.string(),
-  evidence_hash: z.string(),
+  subject_handle: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid subject handle format'),
+  status: z.enum(['deleted', 'suppressed', 'not_found', 'rejected']),
+  completed_at: z.string().datetime(),
+  evidence_hash: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid evidence hash format'),
+  retention_policy: z.string().max(200).optional(),
   signature: z.object({
     alg: SignatureAlgorithmSchema,
     kid: z.string(),
@@ -101,7 +106,39 @@ export const DeletionAttestationSchema = z.object({
   processing_window: z.number(),
   accepted_claims: z.array(z.string()),
   controller_policy_digest: z.string(),
-  evidence: z.record(z.any()).optional(),
+  evidence: z
+    .object({
+      TEE_QUOTE: z
+        .object({
+          vendor: z.string(),
+          mrenclave: z.string(),
+          reportDigest: z.string(),
+        })
+        .optional(),
+      API_LOG: z
+        .object({
+          logService: z.string(),
+          range: z.string(),
+          digest: z.string(),
+        })
+        .optional(),
+      KEY_DESTROY: z
+        .object({
+          hsmVendor: z.string(),
+          keyIdHash: z.string(),
+          time: z.number(),
+        })
+        .optional(),
+      DKIM_ATTESTATION: z
+        .object({
+          domain: z.string(),
+          selector: z.string(),
+          signature: z.string(),
+          headers: z.string(),
+        })
+        .optional(),
+    })
+    .optional(),
   denial_reason: z
     .enum(['not_found', 'legal_obligation', 'technical_constraint', 'policy_violation'])
     .optional(),
@@ -111,12 +148,20 @@ export const DeletionAttestationSchema = z.object({
 export const MaskReceiptSchema = z.object({
   type: z.literal('MaskReceipt@v0.2'),
   receipt_id: z.string(),
-  warrant_hash: z.string(),
-  attestation_hash: z.string(),
-  subject_handle: z.string(),
-  status: z.enum(['deleted']),
-  completed_at: z.string(),
-  evidence_hash: z.string(),
+  warrant_hash: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid warrant hash format'),
+  attestation_hash: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid attestation hash format'),
+  subject_handle: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid subject handle format'),
+  status: z.enum(['deleted', 'suppressed', 'not_found', 'rejected']),
+  completed_at: z.string().datetime(),
+  evidence_hash: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{16,}$/, 'Invalid evidence hash format'),
   signature: z.object({
     alg: SignatureAlgorithmSchema,
     kid: z.string(),
