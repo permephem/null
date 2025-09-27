@@ -136,7 +136,7 @@ export class CanonService {
       if (!digest) {
         return undefined;
       }
-      return digest.replace(/^0x/, '').toLowerCase();
+      return ethers.hexlify(digest);
     } catch (error) {
       logger.error('Failed to fetch warrant digest from blockchain', { warrantId, error });
       return undefined;
