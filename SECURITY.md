@@ -232,7 +232,7 @@ The Null Protocol ticket system handles sensitive operations including ticket is
 
 For security-related questions or to report vulnerabilities:
 
-- **Email**: security@null.xyz
+- **Email**: tech@nullengine.io
 - **PGP**: [Key fingerprint]
 - **Response Time**: 24 hours
 - **Disclosure**: Coordinated disclosure preferred
