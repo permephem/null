@@ -122,7 +122,7 @@ The Null Protocol ticket system handles sensitive operations including ticket is
 
 ### Reporting Process
 
-1. **Email**: security@null.xyz
+1. **Email**: tech@nullengine.io
 2. **Response Time**: 24 hours for acknowledgment
 3. **Resolution**: 90 days for critical issues
 4. **Disclosure**: Coordinated disclosure after fix
@@ -136,8 +136,8 @@ The Null Protocol ticket system handles sensitive operations including ticket is
 
 ### Security Contacts
 
-- **Primary**: security@null.xyz
-- **Backup**: ops@null.xyz
+- **Primary**: tech@nullengine.io
+- **Backup**: tech@nullengine.io
 - **PGP Key**: Available on request
 
 ## Compliance
